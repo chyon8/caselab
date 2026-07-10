@@ -1,0 +1,172 @@
+/* ==========================================================================
+   CaseLab 디자인 토큰 — design.md (Apple 디자인 시스템) 기반
+   ========================================================================== */
+
+:root {
+  /* --- Brand & Accent --- */
+  --color-primary: #0066cc;
+  --color-primary-focus: #0071e3;
+  --color-primary-on-dark: #2997ff;
+
+  /* --- Surface --- */
+  --color-canvas: #ffffff;
+  --color-canvas-parchment: #f5f5f7;
+  --color-surface-pearl: #fafafc;
+  --color-surface-tile-1: #272729;
+  --color-surface-tile-2: #2a2a2c;
+  --color-surface-tile-3: #252527;
+  --color-surface-black: #000000;
+  --color-chip-translucent: rgba(210, 210, 215, 0.64);
+
+  /* --- Text --- */
+  --color-ink: #1d1d1f;
+  --color-body-on-dark: #ffffff;
+  --color-body-muted-on-dark: #cccccc;
+  --color-ink-muted-80: #333333;
+  --color-ink-muted-60: #6e6e73;
+  --color-ink-muted-48: #7a7a7a;
+  --color-ink-faint: #86868b;
+
+  /* --- Hairlines & Borders --- */
+  --color-divider-soft: #f0f0f0;
+  --color-hairline: #e0e0e0;
+  --color-rule: #d2d2d7;
+
+  /* --- 상태 칩 (파이프라인 단계) --- */
+  --status-review-bg: #f5f5f7;
+  --status-review-fg: #1d1d1f;
+  --status-recruit-bg: #eaf2ff;
+  --status-recruit-fg: #0066cc;
+  --status-contract-bg: #dce9fb;
+  --status-contract-fg: #004a99;
+  --status-progress-bg: #fff3dc;
+  --status-progress-fg: #946300;
+  --status-success-bg: #e8f5e9;
+  --status-success-fg: #248a3d;
+  --status-success-border: #b7dfc0;
+  --status-cancel-bg: #fdecea;
+  --status-cancel-fg: #d70015;
+
+  /* --- 이슈 로그 타입 태그 --- */
+  --tag-legal-bg: #f2e8fd;
+  --tag-legal-fg: #6b21a8;
+  --tag-agree-bg: #f5f5f7;
+  --tag-agree-fg: #48484a;
+
+  /* --- 기타 액센트 --- */
+  --color-star: #f5a623;
+  --color-star-off: #c7c7cc;
+  --color-qna-accent: #ff7a45;
+  --color-toggle-on: #34c759;
+  --color-slack: #4a154b;
+  --color-saved-badge: #30d158;
+  --color-pending-badge: #ffd60a;
+  --color-pending-border: #8a7000;
+  --color-ai-chip-border: #b9d7f5;
+  --status-cancel-border: #f5c4c8;
+  --color-iron: #48484a;
+  --color-steel: #3a3a3c;
+  --color-tile-hover: #323234;
+  --color-slack-preview-bg: #1a1d21;
+  --color-slack-preview-text: #d1d2d3;
+  --color-slack-preview-muted: #9a9a9a;
+
+  /* --- Spacing (8px base) --- */
+  --space-xxs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 17px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-xxl: 48px;
+  --space-section: 80px;
+
+  /* --- Radius --- */
+  --rounded-xs: 5px;
+  --rounded-sm: 8px;
+  --rounded-md: 11px;
+  --rounded-lg: 18px;
+  --rounded-pill: 9999px;
+
+  /* --- Shadow (시스템 유일 섀도우 — 제품/이미지 전용) --- */
+  --shadow-product: rgba(0, 0, 0, 0.22) 3px 5px 30px 0;
+
+  /* --- Typography --- */
+  --font-sans: system-ui, -apple-system, var(--font-inter), "Apple SD Gothic Neo",
+    "Noto Sans KR", sans-serif;
+
+  /* ========================================================================
+     시맨틱 테마 변수 (라이트)
+     ======================================================================== */
+  --page-bg: var(--color-canvas);
+  --page-text: var(--color-ink);
+  --text-muted: var(--color-ink-muted-60);
+  --text-faint: var(--color-ink-faint);
+  --card-bg: var(--color-canvas);
+  --card-border: var(--color-hairline);
+  --input-bg: var(--color-canvas);
+  --input-border: var(--color-hairline);
+  --row-border: var(--color-divider-soft);
+  --header-rule: var(--color-rule);
+  --row-hover: var(--color-canvas-parchment);
+  --panel-bg: var(--color-canvas-parchment);
+  --text-body-soft: #3d3d3a;
+  --notif-unread-bg: #f7fafd;
+}
+
+/* ==========================================================================
+   다크 모드 오버라이드
+   ========================================================================== */
+[data-theme="dark"] {
+  --page-bg: #1c1c1e;
+  --page-text: #f5f5f7;
+  --text-muted: #98989d;
+  --text-faint: #8e8e93;
+  --card-bg: #2c2c2e;
+  --card-border: #3a3a3c;
+  --input-bg: #2c2c2e;
+  --input-border: #48484a;
+  --row-border: #3a3a3c;
+  --header-rule: #48484a;
+  --row-hover: rgba(255, 255, 255, 0.06);
+  --panel-bg: #2c2c2e;
+  --text-body-soft: #d0d0d3;
+  --notif-unread-bg: rgba(41, 151, 255, 0.08);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.47;
+  letter-spacing: -0.2px;
+  color: var(--page-text);
+  background: var(--page-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}

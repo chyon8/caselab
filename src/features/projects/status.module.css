@@ -1,0 +1,71 @@
+/* 파이프라인 상태 칩 */
+.chip {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--rounded-pill);
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+
+.chip.review {
+  background: var(--status-review-bg);
+  color: var(--status-review-fg);
+}
+
+.chip.recruit {
+  background: var(--status-recruit-bg);
+  color: var(--status-recruit-fg);
+}
+
+.chip.contract {
+  background: var(--status-contract-bg);
+  color: var(--status-contract-fg);
+}
+
+.chip.progress {
+  background: var(--status-progress-bg);
+  color: var(--status-progress-fg);
+}
+
+.chip.success {
+  background: var(--status-success-bg);
+  color: var(--status-success-fg);
+}
+
+.chip.cancel {
+  background: var(--status-cancel-bg);
+  color: var(--status-cancel-fg);
+}
+
+/* 칸반 컬럼 상태 도트 */
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--rounded-pill);
+  flex-shrink: 0;
+}
+
+.dot.review {
+  background: var(--status-review-fg);
+}
+
+.dot.recruit {
+  background: var(--status-recruit-fg);
+}
+
+.dot.contract {
+  background: var(--status-contract-fg);
+}
+
+.dot.progress {
+  background: var(--status-progress-fg);
+}
+
+.dot.success {
+  background: var(--status-success-fg);
+}
+
+.dot.cancel {
+  background: var(--status-cancel-fg);
+}

@@ -1,0 +1,291 @@
+.container {
+  max-width: 760px;
+  margin: 0;
+  padding: 56px 48px 80px 48px;
+}
+
+.title {
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+  line-height: 1.1;
+  margin: 0 0 40px 0;
+  color: var(--page-text);
+}
+
+.section-head {
+  border-top: 1px solid var(--header-rule);
+  padding-top: 18px;
+  margin-bottom: 8px;
+}
+
+.section-title {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--page-text);
+}
+
+/* ===== Slack 카드 ===== */
+.slack-card {
+  border: 1px solid var(--card-border);
+  border-radius: var(--rounded-lg);
+  padding: 22px 24px;
+  margin-bottom: 48px;
+  background: var(--card-bg);
+}
+
+.slack-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.slack-id {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.slack-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--rounded-sm);
+  background: var(--color-slack);
+  color: var(--color-body-on-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.slack-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--page-text);
+}
+
+.slack-status {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.slack-status.connected {
+  color: var(--status-success-fg);
+}
+
+.connect-btn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: var(--rounded-pill);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid var(--color-slack);
+  background: var(--color-slack);
+  color: var(--color-body-on-dark);
+}
+
+.connect-btn.connected {
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--page-text);
+}
+
+.channel-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.channel-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.channel-input {
+  flex: 1;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--card-border);
+  border-radius: var(--rounded-sm);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--page-text);
+  background: var(--card-bg);
+}
+
+.slack-toggles {
+  display: flex;
+  flex-direction: column;
+}
+
+.slack-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--row-border);
+}
+
+.slack-toggle-row:last-child {
+  border-bottom: none;
+}
+
+.slack-toggle-label {
+  font-size: 14px;
+  color: var(--page-text);
+}
+
+/* ===== 토글 스위치 ===== */
+.track {
+  width: 44px;
+  height: 26px;
+  border-radius: var(--rounded-pill);
+  padding: 2px;
+  box-sizing: border-box;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  background: var(--header-rule);
+}
+
+.track.on-slack {
+  background: var(--color-slack);
+}
+
+.track.on-green {
+  background: var(--color-toggle-on);
+}
+
+.knob {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--rounded-pill);
+  background: var(--color-canvas);
+  transition: transform 0.15s;
+}
+
+.knob.on {
+  transform: translateX(18px);
+}
+
+/* ===== Slack 미리보기 ===== */
+.preview-wrap {
+  margin-top: 18px;
+  border-top: 1px solid var(--row-border);
+  padding-top: 16px;
+}
+
+.preview-label {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin-bottom: 8px;
+}
+
+.preview {
+  background: var(--color-slack-preview-bg);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.preview-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.preview-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-body-on-dark);
+  margin-bottom: 2px;
+}
+
+.preview-channel {
+  font-weight: 400;
+  color: var(--color-slack-preview-muted);
+}
+
+.preview-text {
+  font-size: 13px;
+  color: var(--color-slack-preview-text);
+  line-height: 1.5;
+}
+
+/* ===== 알림 토글 목록 ===== */
+.toggle-list {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 48px;
+}
+
+.toggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 4px;
+  border-bottom: 1px solid var(--row-border);
+}
+
+.toggle-label {
+  font-size: 15px;
+  color: var(--page-text);
+  margin-bottom: 2px;
+}
+
+.toggle-desc {
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+/* ===== 어드민 API ===== */
+.api-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.api-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 4px;
+  border-bottom: 1px solid var(--row-border);
+}
+
+.api-id {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.api-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--rounded-pill);
+  background: var(--color-toggle-on);
+}
+
+.api-name {
+  font-size: 15px;
+  color: var(--page-text);
+}
+
+.api-status {
+  font-size: 12px;
+  color: var(--text-faint);
+}
