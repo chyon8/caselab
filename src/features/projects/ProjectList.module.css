@@ -115,17 +115,6 @@
   box-sizing: border-box;
 }
 
-.select {
-  height: 44px;
-  padding: 0 16px;
-  border: 1px solid var(--input-border);
-  border-radius: var(--rounded-pill);
-  font-size: 14px;
-  font-family: inherit;
-  color: var(--page-text);
-  background: var(--input-bg);
-}
-
 /* ===== 리스트 뷰 ===== */
 .table-head {
   display: grid;

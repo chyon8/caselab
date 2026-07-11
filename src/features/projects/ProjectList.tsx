@@ -2,9 +2,34 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Select from "@/components/Select";
 import type { Project } from "@/data/types";
 import { onActivate } from "@/lib/a11y";
 import { useApp } from "@/state/AppContext";
+
+const STATUS_OPTIONS = [
+  { value: "전체", label: "상태 전체" },
+  { value: "검수", label: "검수" },
+  { value: "모집", label: "모집" },
+  { value: "계약", label: "계약" },
+  { value: "진행", label: "프로젝트 진행" },
+  { value: "완료(성공)", label: "완료(성공)" },
+  { value: "완료(취소)", label: "완료(취소)" },
+];
+
+const MANAGER_OPTIONS = [
+  { value: "전체", label: "검수매니저 전체" },
+  { value: "김세민", label: "김세민" },
+  { value: "장수룡", label: "장수룡" },
+  { value: "이상민", label: "이상민" },
+];
+
+const PERIOD_OPTIONS = [
+  { value: "전체", label: "기간 전체" },
+  { value: "오늘", label: "오늘" },
+  { value: "1주일", label: "최근 1주일" },
+  { value: "1개월", label: "최근 1개월" },
+];
 import st from "./status.module.css";
 import { KANBAN_STATUSES, STATUS_KEY, statusLabel } from "./status";
 import styles from "./ProjectList.module.css";
@@ -110,39 +135,24 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="프로젝트명 · 고객사 · 키워드 검색 (예: LLM, 크롤링, 쇼핑몰)"
           />
-          <select
-            className={styles.select}
+          <Select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="전체">상태 전체</option>
-            <option value="검수">검수</option>
-            <option value="모집">모집</option>
-            <option value="계약">계약</option>
-            <option value="진행">프로젝트 진행</option>
-            <option value="완료(성공)">완료(성공)</option>
-            <option value="완료(취소)">완료(취소)</option>
-          </select>
-          <select
-            className={styles.select}
+            options={STATUS_OPTIONS}
+            onChange={setStatusFilter}
+            ariaLabel="상태 필터"
+          />
+          <Select
             value={managerFilter}
-            onChange={(e) => setManagerFilter(e.target.value)}
-          >
-            <option value="전체">검수매니저 전체</option>
-            <option value="김세민">김세민</option>
-            <option value="장수룡">장수룡</option>
-            <option value="이상민">이상민</option>
-          </select>
-          <select
-            className={styles.select}
+            options={MANAGER_OPTIONS}
+            onChange={setManagerFilter}
+            ariaLabel="검수매니저 필터"
+          />
+          <Select
             value={periodFilter}
-            onChange={(e) => setPeriodFilter(e.target.value)}
-          >
-            <option value="전체">기간 전체</option>
-            <option value="오늘">오늘</option>
-            <option value="1주일">최근 1주일</option>
-            <option value="1개월">최근 1개월</option>
-          </select>
+            options={PERIOD_OPTIONS}
+            onChange={setPeriodFilter}
+            ariaLabel="기간 필터"
+          />
         </div>
 
         {viewMode === "list" && (
