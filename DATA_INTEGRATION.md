@@ -4,12 +4,14 @@
 > 원본 스키마 레퍼런스: [DATA_SCHEMA.md](./DATA_SCHEMA.md)
 >
 > **확정된 결정:**
-> - CaseLab 자체 DB = 클라우드 Postgres (pgvector 포함, 별도 벡터 DB 없음)
+> - CaseLab 자체 DB = **Neon** (클라우드 Postgres, pgvector 지원 — 별도 벡터 DB 없음)
 > - 구조 = **초기 백필+임베딩 1회 → 이후 증분 동기화 상시** (§5)
 > - 녹취 = **요약만 저장.** 전화번호·녹취 원문은 CaseLab에 아예 전송되지 않음 (§3)
 > - 초기 백필 = 최근 1년 · 본진 DB에는 절대 쓰지 않음(read-only)
 >
 > **대기 중인 결정:** 동기화 방향(push/pull) — 개발팀 확인 후 확정 (§7). 어느 쪽이든 이 문서의 설계는 동일하고, n8n 마지막 노드 하나만 달라진다.
+>
+> **DATA_SCHEMA 대조 검증:** ✅ 완료. §2 상태매핑·§3 필드매핑을 원본 스키마와 대조하여 계약 완료/진행 판정을 `agreement.date_completed`/`date_start_progress` 기준으로 정정, 과업범위 변경 추적을 특약 기준으로 반영 (아래 각 절 참조).
 
 ---
 
@@ -49,15 +51,16 @@
 | 순서 | 본진 조건 | CaseLab 상태 | stage |
 |---|---|---|---|
 | 1 | `is_cancelled=1` OR `is_rejected=1` OR `date_cancelled/date_rejected NOT NULL` | 완료(취소) | 5 |
-| 2 | `status='completed'` | 완료(성공) | 5 |
-| 3 | **유효 계약 존재** AND (`agreement.status=1` OR `date_start_progress NOT NULL`) | 진행 | 4 |
-| 4 | `status='contracted'` OR **유효 계약 존재** | 계약 | 3 |
+| 2 | `status='completed'` OR (유효 계약 AND `agreement.date_completed NOT NULL`) | 완료(성공) | 5 |
+| 3 | 유효 계약 AND `agreement.date_start_progress NOT NULL` AND `date_completed IS NULL` | 진행 | 4 |
+| 4 | `status='contracted'` OR 유효 계약 존재 | 계약 | 3 |
 | 5 | `status IN ('recruiting','close_recruiting')` | 모집 | 2 |
 | 6 | `status='submitted'` | 검수 | 1 |
 | 7 | `status IN ('open','saved','frozen')` | **동기화 제외** (등록 전 단계) | — |
 
 **유효 계약 존재** = `agreement_agreement(hide=0, date_deleted IS NULL)` + `sub_contract(is_incomplete_addon=0, is_cancel_addon=0)` 존재.
-→ 본진 status가 뒤처져 있어도(예: `close_recruiting`인데 계약 체결됨) 계약/진행으로 승격한다. DATA_SCHEMA §2 성공 판단식과 동일한 원리.
+→ 본진 status가 뒤처져 있어도(예: `close_recruiting`인데 계약 체결됨) 계약/진행/완료로 승격한다. DATA_SCHEMA §2 성공 판단식과 동일 원리.
+→ 완료/진행 판정은 `project.status`보다 **`agreement`의 `date_completed`/`date_start_progress`가 더 정확**(DATA_SCHEMA §10-1 검증). project.status가 'contracted'에 머물러도 실제 진행/완료를 잡아낸다.
 
 **취소 발생 단계**(`cancel.stage`): 취소 시점에 마지막으로 도달했던 단계를 역산 — `date_start_recruitment` 없으면 "검수", 있으면 "모집", 유효 계약 존재 시 "계약".
 
@@ -84,7 +87,7 @@
 | 관여 매니저 전체 | DATA_SCHEMA §13 `caselab_manager_visibility` 조합 | ⓐ | "내 케이스 추적"용 역정규화 |
 | `updated` / `daysAgo` | `date_modified` | ⓐ | |
 | `contractAmount` | `agreement_agreement.agreement_price` | ⓐ | `hide=0`, `date_deleted IS NULL` |
-| `contractPeriod` | `sub_contract_subcontract` 기간 관련 | ⓐ | 원계약(`is_incomplete_addon=0`) 기준 |
+| `contractPeriod` | **직접 컬럼 없음** → 유도: `milestone` `work_period` 합 또는 `sub_contract.project_start_date`~마지막 `milestone.date_end`, 없으면 `project.term` fallback | ⓐ | ⚠️ 검증: 계약 기간 단일 컬럼 부재 확인(DATA_SCHEMA §10). 표시 우선순위만 정하면 됨 |
 | `cancel.reason` | `management_cancel_reason`, `cancel_type` | ⓐ | 부족하면 ⓒ 노트 요약 보조 |
 | `intake.posting` (원문) | `project_project.description` | ⓐ | 공고 원문 텍스트 |
 | `intake.posting` (구조화) | description 파싱 | ⓒ | 실패 시 원문 그대로 표시 |
@@ -93,7 +96,7 @@
 | `meeting.summary` (AI 요약) | 녹취 기반 | ⓒ | |
 | `issueLog` | 녹취·`management_managenote` 기반 추출 | ⓒ | 핵심 AI 기능 |
 | `riskTags` | 녹취·노트 기반 분류 | ⓒ | |
-| `qna` | `comment_projectcomment` + `comment_commentreply` (`status=1` 공개만) | ⓐ | → `timeline_events(source='qna')`, meta에 작성자·단계 |
+| `qna` | `comment_projectcomment` + `comment_commentreply` (`status=1` 공개만) | ⓐ | → `timeline_events(source='qna')`. **단계(at)는 직접 컬럼 없음** → 댓글 `date_created` vs 프로젝트 상태 전환 시점 비교로 유도 |
 | `timeline` | 노트·미팅·계약·마일스톤·상태전환·**변경이력** 통합 | ⓐ | `timeline_events` 테이블 |
 | 완료 리뷰 | — (CaseLab 고유) | 자체 | 본진에 없음 |
 
@@ -223,6 +226,11 @@ CREATE TABLE sync_state (
 | `budget` 변경 | `source='change'`, meta `{field:'budget', before, after}` | "예산 4,500 → 6,000만원" |
 | `term_days` 변경 | `source='change'` | "기간 45 → 60일" |
 | `contract_amount` 변경 | `source='change'` | 특약 증액 반영 |
+| **과업 범위 변경 (새 특약)** | `source='change'`, meta `{field:'scope'}` | "특약 추가: 채팅 모듈 +500만원" — ★리스크 인사이트 핵심 |
+| **담당 매니저 변경** | `source='change'`, meta `{field:'manager'}` | "검수 → 운영 담당 이관" |
+| **마감일(`date_deadline`) 변경** | `source='change'` | 모집 마감 연장 |
+
+과업 범위 변경 원천 = `sub_contract_subcontract` 신규 행(`is_incomplete_addon=0`, `is_cancel_addon` 구분), `work_scope`/`total_price` (DATA_SCHEMA §10-3 "과업 범위 변경/예산 증액 이력 추적" 근거). 이 특약 이벤트가 "이런 프로젝트는 채팅에서 scope가 팽창한다"류 인사이트의 **1차 데이터**다.
 
 `source_id = "{project_id}:{field}:{event_at}"`로 멱등성 보장. **덮어쓰기 전에 이벤트를 남기므로 "무엇이 어떻게 바뀌었는지"가 절대 유실되지 않는다.**
 
