@@ -15,6 +15,7 @@
 SELECT
   pp.id,
   pp.title,
+  pp.project_type,
   pp.description,
   pp.budget,
   pp.term,
