@@ -1,4 +1,5 @@
 import { query } from "@/lib/db";
+import { managerName } from "@/lib/managers";
 import {
   daysSince,
   formatDays,
@@ -45,9 +46,10 @@ interface ProjectRow {
   posting_structured: Posting | null;
 }
 
+/** json_agg로 묶여 오므로 날짜는 Date가 아니라 ISO 문자열이다 */
 interface TimelineRow {
   source: string;
-  event_at: Date;
+  event_at: string;
   stage: string | null;
   title: string | null;
   body: string | null;
@@ -57,7 +59,7 @@ interface TimelineRow {
 interface CallRow {
   call_type: string | null;
   summary: string | null;
-  created_at: Date | null;
+  created_at: string | null;
 }
 
 const LIST_COLUMNS = `
@@ -152,7 +154,7 @@ function toProject(
     period: formatDays(row.term_days) ?? "",
     status: row.status as ProjectStatus,
     stage: row.stage as 1 | 2 | 3 | 4 | 5,
-    manager: row.inspection_manager ?? "",
+    manager: managerName(row.inspection_manager),
     updated: formatMonthDay(row.source_modified_at),
     daysAgo: daysSince(row.source_modified_at),
     contractAmount: formatWon(row.contract_amount),
@@ -191,8 +193,16 @@ export class PostgresDataSource implements DataSource {
     // DB의 id가 BIGINT 타입이므로, 숫자가 아닌 문자열(예: 'p3')이 들어오면 DB 에러 대신 404를 위해 undefined 반환
     if (!/^\d+$/.test(id)) return undefined;
 
-    const rows = await query<ProjectRow>(
-      `SELECT ${LIST_COLUMNS}
+    // 한 번의 왕복으로 끝낸다 — Neon이 싱가포르라 쿼리당 왕복 비용이 크다.
+    // 쿼리를 3번 나눠 날리면 네트워크 지연만 3배가 된다.
+    const rows = await query<ProjectRow & { events: TimelineRow[] | null; calls: CallRow[] | null }>(
+      `SELECT ${LIST_COLUMNS},
+         (SELECT json_agg(e ORDER BY e.event_at)
+            FROM (SELECT source, event_at, stage, title, body, meta
+                    FROM timeline_events WHERE project_id = p.id) e) AS events,
+         (SELECT json_agg(c ORDER BY c.created_at)
+            FROM (SELECT call_type, summary, created_at
+                    FROM calls WHERE project_id = p.id) c) AS calls
          FROM projects p
          LEFT JOIN ai_insights ai ON ai.project_id = p.id
         WHERE p.id = $1 AND p.deleted_at IS NULL AND p.hidden = false`,
@@ -201,18 +211,8 @@ export class PostgresDataSource implements DataSource {
     const row = rows[0];
     if (!row) return undefined;
 
-    const [events, calls] = await Promise.all([
-      query<TimelineRow>(
-        `SELECT source, event_at, stage, title, body, meta
-           FROM timeline_events WHERE project_id = $1 ORDER BY event_at ASC`,
-        [id],
-      ),
-      query<CallRow>(
-        `SELECT call_type, summary, created_at
-           FROM calls WHERE project_id = $1 ORDER BY created_at ASC`,
-        [id],
-      ),
-    ]);
+    const events = row.events ?? [];
+    const calls = row.calls ?? [];
 
     return toProject(row, {
       call: calls[0] ? toCallRecord(calls[0]) : EMPTY_CALL,

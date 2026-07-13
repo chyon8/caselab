@@ -396,3 +396,37 @@
   color: var(--text-muted);
   border: 1px solid var(--card-border);
 }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px 0 8px;
+}
+
+.page-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--rounded-pill);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-muted);
+  background: var(--panel-bg);
+}
+
+.page-btn:hover:not(:disabled) {
+  color: var(--text-body);
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.page-info {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}

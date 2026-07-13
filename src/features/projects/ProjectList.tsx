@@ -5,6 +5,7 @@ import { useState } from "react";
 import Select from "@/components/Select";
 import type { Project } from "@/data/types";
 import { onActivate } from "@/lib/a11y";
+import { matchesManager, OTHER_MANAGERS, PRIMARY_MANAGERS } from "@/lib/managers";
 import { useApp } from "@/state/AppContext";
 
 const STATUS_OPTIONS = [
@@ -19,10 +20,12 @@ const STATUS_OPTIONS = [
 
 const MANAGER_OPTIONS = [
   { value: "전체", label: "검수매니저 전체" },
-  { value: "김세민", label: "김세민" },
-  { value: "장수룡", label: "장수룡" },
-  { value: "이상민", label: "이상민" },
+  ...PRIMARY_MANAGERS.map((m) => ({ value: m, label: m })),
+  { value: OTHER_MANAGERS, label: OTHER_MANAGERS },
 ];
+
+/** 한 페이지에 보여줄 건수 */
+const PAGE_SIZE = 50;
 
 const PERIOD_OPTIONS = [
   { value: "전체", label: "기간 전체" },
@@ -51,20 +54,32 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
   const [periodFilter, setPeriodFilter] = useState("전체");
   const [starredOnly, setStarredOnly] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [page, setPage] = useState(1);
 
   const q = query.trim();
   const periodMax = PERIOD_MAX[periodFilter] ?? Infinity;
 
+  /** 필터가 바뀌면 1페이지로 — 3페이지 보던 중 필터를 좁히면 빈 화면이 뜬다 */
+  const withReset = <T,>(set: (v: T) => void) => (v: T) => {
+    set(v);
+    setPage(1);
+  };
+
   const matches = (p: Project, withStatus: boolean) => {
     if (q && !(p.name + p.client + p.tech + p.cat).includes(q)) return false;
     if (withStatus && statusFilter !== "전체" && p.status !== statusFilter) return false;
-    if (managerFilter !== "전체" && p.manager !== managerFilter) return false;
+    if (!matchesManager(p.manager, managerFilter)) return false;
     if (p.daysAgo > periodMax) return false;
     if (starredOnly && !app.starred[p.id]) return false;
     return true;
   };
 
   const rows = projects.filter((p) => matches(p, true));
+
+  // 페이지가 범위를 벗어나면(필터로 건수가 줄면) 마지막 페이지로 당긴다
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageRows = rows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const kanbanCols = KANBAN_STATUSES.map((stg) => ({
     status: stg,
@@ -132,25 +147,28 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
           <input
             className={styles.search}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
             placeholder="프로젝트명 · 고객사 · 키워드 검색 (예: LLM, 크롤링, 쇼핑몰)"
           />
           <Select
             value={statusFilter}
             options={STATUS_OPTIONS}
-            onChange={setStatusFilter}
+            onChange={withReset(setStatusFilter)}
             ariaLabel="상태 필터"
           />
           <Select
             value={managerFilter}
             options={MANAGER_OPTIONS}
-            onChange={setManagerFilter}
+            onChange={withReset(setManagerFilter)}
             ariaLabel="검수매니저 필터"
           />
           <Select
             value={periodFilter}
             options={PERIOD_OPTIONS}
-            onChange={setPeriodFilter}
+            onChange={withReset(setPeriodFilter)}
             ariaLabel="기간 필터"
           />
         </div>
@@ -165,7 +183,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
               <div className={styles.th}>검수담당</div>
               <div className={`${styles.th} ${styles.right}`}>업데이트</div>
             </div>
-            {rows.map((p) => (
+            {pageRows.map((p) => (
               <div
                 key={p.id}
                 className={styles.row}
@@ -192,6 +210,28 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
                 <div className={styles.updated}>{p.updated}</div>
               </div>
             ))}
+
+            {totalPages > 1 && (
+              <div className={styles.pagination}>
+                <button
+                  className={styles["page-btn"]}
+                  onClick={() => setPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  ← 이전
+                </button>
+                <span className={styles["page-info"]}>
+                  {currentPage} / {totalPages} 페이지
+                </span>
+                <button
+                  className={styles["page-btn"]}
+                  onClick={() => setPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  다음 →
+                </button>
+              </div>
+            )}
           </>
         )}
 
