@@ -243,6 +243,8 @@
   line-height: 1.65;
   color: var(--text-body-soft);
   margin: 0;
+  /* 본진 공고 원문은 줄바꿈(\r\n)으로만 구조가 잡혀 있다 — 보존하지 않으면 한 덩어리로 뭉친다 */
+  white-space: pre-wrap;
 }
 
 .sub-label {
