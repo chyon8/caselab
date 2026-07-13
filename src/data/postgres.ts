@@ -1,0 +1,255 @@
+import { query } from "@/lib/db";
+import {
+  daysSince,
+  formatDays,
+  formatMonthDay,
+  formatMonthDayTime,
+  formatWon,
+} from "@/lib/format";
+import type { DataSource } from "./source";
+import type {
+  AppNotification,
+  CallRecord,
+  CaseReview,
+  IssueLogEntry,
+  Posting,
+  Project,
+  ProjectStatus,
+  QnaItem,
+  TimelineEvent,
+} from "./types";
+
+/** BIGINT·NUMERIC은 pg 드라이버에서 문자열로 돌아온다 */
+interface ProjectRow {
+  id: string;
+  title: string;
+  client_name: string | null;
+  category: string | null;
+  tech: string | null;
+  budget: string | null;
+  term_days: number | null;
+  status: string;
+  stage: number;
+  inspection_manager: string | null;
+  contract_amount: string | null;
+  contract_term_days: number | null;
+  cancel_stage: string | null;
+  cancel_reason: string | null;
+  posting_raw: string | null;
+  source_modified_at: Date | null;
+  risk_tags: string[] | null;
+  issue_log: IssueLogEntry[] | null;
+  posting_structured: Posting | null;
+}
+
+interface TimelineRow {
+  source: string;
+  event_at: Date;
+  stage: string | null;
+  title: string | null;
+  body: string | null;
+  meta: { field?: string; before?: unknown; after?: unknown; by?: string; at_stage?: string } | null;
+}
+
+interface CallRow {
+  call_type: string | null;
+  summary: string | null;
+  created_at: Date | null;
+}
+
+const LIST_COLUMNS = `
+  p.id, p.title, p.client_name, p.category, p.tech, p.budget, p.term_days,
+  p.status, p.stage, p.inspection_manager, p.contract_amount, p.contract_term_days,
+  p.cancel_stage, p.cancel_reason, p.posting_raw, p.source_modified_at,
+  ai.risk_tags, ai.issue_log, ai.posting_structured
+`;
+
+/** AI 공고문 구조화 전(프롬프트 검토 대기)에는 원문을 배경 자리에 그대로 노출한다 (§3) */
+function fallbackPosting(title: string, raw: string | null): Posting {
+  return {
+    title,
+    background: raw ?? "",
+    scopeSummary: [],
+    featureGroups: [],
+    nonFunctional: [],
+    techStack: [],
+    schedule: { start: "", milestones: [], due: "" },
+    qualRequired: [],
+    qualPreferred: [],
+    deliverables: [],
+  };
+}
+
+const EMPTY_CALL: CallRecord = { title: "", date: "", summary: [], lines: [] };
+
+/** 녹취 원문·전화번호는 CaseLab에 저장되지 않는다 → lines는 항상 비어 있다 (§3) */
+function toCallRecord(c: CallRow): CallRecord {
+  return {
+    title: c.call_type ?? "통화 요약",
+    date: formatMonthDay(c.created_at),
+    summary: (c.summary ?? "")
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean),
+    lines: [],
+  };
+}
+
+/** 서버가 생성한 change 이벤트의 meta → 사람이 읽는 문장 (포맷은 여기 한 곳에서만) */
+function changeDesc(meta: TimelineRow["meta"]): string {
+  if (!meta) return "";
+  const { field, before, after } = meta;
+  const pair = (fmt: (v: unknown) => string | null): string =>
+    `${fmt(before as never) ?? "-"} → ${fmt(after as never) ?? "-"}`;
+
+  switch (field) {
+    case "budget":
+    case "contract_amount":
+      return pair((v) => formatWon(v as number | string | null));
+    case "term_days":
+      return pair((v) => formatDays(v as number | string | null));
+    case "deadline":
+      return pair((v) => formatMonthDay(v as string | null) || null);
+    default:
+      return `${before ?? "-"} → ${after ?? "-"}`;
+  }
+}
+
+function toTimelineEvent(r: TimelineRow): TimelineEvent {
+  const isStatusChange = r.source === "status";
+  return {
+    stage: r.stage ?? "",
+    date: formatMonthDay(r.event_at),
+    title: r.title ?? "",
+    desc: r.source === "change" ? changeDesc(r.meta) : (r.body ?? ""),
+    ...(isStatusChange && r.meta?.after === "완료(취소)" ? { cancel: true } : {}),
+  };
+}
+
+function toQna(r: TimelineRow): QnaItem {
+  return {
+    q: r.title ?? r.body ?? "",
+    by: r.meta?.by ?? "",
+    at: r.meta?.at_stage ?? r.stage ?? "",
+  };
+}
+
+function toProject(
+  row: ProjectRow,
+  detail: { call: CallRecord; qna: QnaItem[]; timeline: TimelineEvent[] },
+): Project {
+  return {
+    id: row.id,
+    name: row.title,
+    client: row.client_name ?? "",
+    cat: row.category ?? "",
+    tech: row.tech ?? "",
+    budget: formatWon(row.budget) ?? "",
+    period: formatDays(row.term_days) ?? "",
+    status: row.status as ProjectStatus,
+    stage: row.stage as 1 | 2 | 3 | 4 | 5,
+    manager: row.inspection_manager ?? "",
+    updated: formatMonthDay(row.source_modified_at),
+    daysAgo: daysSince(row.source_modified_at),
+    contractAmount: formatWon(row.contract_amount),
+    contractPeriod: formatDays(row.contract_term_days),
+    ...(row.cancel_stage
+      ? { cancel: { stage: row.cancel_stage, reason: row.cancel_reason ?? "" } }
+      : {}),
+    intake: {
+      posting: row.posting_structured ?? fallbackPosting(row.title, row.posting_raw),
+      call: detail.call,
+    },
+    issueLog: row.issue_log ?? [],
+    riskTags: row.risk_tags ?? [],
+    qna: detail.qna,
+    timeline: detail.timeline,
+  };
+}
+
+/** 상세 전용 필드(공고문·통화·타임라인)는 목록에서 읽지 않는다 — getProject()가 채운다 */
+const NO_DETAIL = { call: EMPTY_CALL, qna: [], timeline: [] };
+
+export class PostgresDataSource implements DataSource {
+  async getProjects(): Promise<Project[]> {
+    const rows = await query<ProjectRow>(
+      `SELECT ${LIST_COLUMNS}
+         FROM projects p
+         LEFT JOIN ai_insights ai ON ai.project_id = p.id
+        WHERE p.deleted_at IS NULL AND p.hidden = false
+        ORDER BY p.source_modified_at DESC`,
+    );
+    return rows.map((r) => toProject(r, NO_DETAIL));
+  }
+
+  async getProject(id: string): Promise<Project | undefined> {
+    // DB의 id가 BIGINT 타입이므로, 숫자가 아닌 문자열(예: 'p3')이 들어오면 DB 에러 대신 404를 위해 undefined 반환
+    if (!/^\d+$/.test(id)) return undefined;
+
+    const rows = await query<ProjectRow>(
+      `SELECT ${LIST_COLUMNS}
+         FROM projects p
+         LEFT JOIN ai_insights ai ON ai.project_id = p.id
+        WHERE p.id = $1 AND p.deleted_at IS NULL AND p.hidden = false`,
+      [id],
+    );
+    const row = rows[0];
+    if (!row) return undefined;
+
+    const [events, calls] = await Promise.all([
+      query<TimelineRow>(
+        `SELECT source, event_at, stage, title, body, meta
+           FROM timeline_events WHERE project_id = $1 ORDER BY event_at ASC`,
+        [id],
+      ),
+      query<CallRow>(
+        `SELECT call_type, summary, created_at
+           FROM calls WHERE project_id = $1 ORDER BY created_at ASC`,
+        [id],
+      ),
+    ]);
+
+    return toProject(row, {
+      call: calls[0] ? toCallRecord(calls[0]) : EMPTY_CALL,
+      qna: events.filter((e) => e.source === "qna").map(toQna),
+      timeline: events.filter((e) => e.source !== "qna").map(toTimelineEvent),
+    });
+  }
+
+  /** 알림은 아직 원천이 없다 (본진에 대응 테이블 없음) */
+  async getNotifications(): Promise<AppNotification[]> {
+    return [];
+  }
+
+  async getReviews(): Promise<Record<string, CaseReview>> {
+    const rows = await query<{
+      project_id: string;
+      checks: boolean[];
+      comment: string | null;
+      saved_at: Date;
+    }>("SELECT project_id, checks, comment, saved_at FROM reviews");
+
+    return Object.fromEntries(
+      rows.map((r) => [
+        r.project_id,
+        {
+          checks: r.checks,
+          comment: r.comment ?? "",
+          savedAt: formatMonthDayTime(r.saved_at),
+        },
+      ]),
+    );
+  }
+
+  async saveReview(projectId: string, review: CaseReview): Promise<void> {
+    await query(
+      `INSERT INTO reviews (project_id, checks, comment, saved_at)
+       VALUES ($1, $2::boolean[], $3, now())
+       ON CONFLICT (project_id) DO UPDATE SET
+         checks   = EXCLUDED.checks,
+         comment  = EXCLUDED.comment,
+         saved_at = now()`,
+      [projectId, review.checks, review.comment],
+    );
+  }
+}

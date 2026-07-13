@@ -1,10 +1,11 @@
 import { MOCK_NOTIFICATIONS, MOCK_PROJECTS, MOCK_REVIEWS } from "./mock-data";
+import { PostgresDataSource } from "./postgres";
 import type { AppNotification, CaseReview, Project } from "./types";
 
 /**
  * 데이터 소스 어댑터 인터페이스.
- * 지금은 Mock 구현만 존재하며, 실주소(n8n 웹훅 등)가 확정되면
- * 같은 인터페이스의 어댑터로 교체한다. (CASELAB_DECISIONS.md §5)
+ * CASELAB_DATA_SOURCE=postgres 이면 CaseLab DB(Neon)를, 아니면 Mock을 바라본다.
+ * (CASELAB_DECISIONS.md §5 / DATA_INTEGRATION.md §9-4)
  */
 export interface DataSource {
   getProjects(): Promise<Project[]>;
@@ -38,4 +39,7 @@ class MockDataSource implements DataSource {
   }
 }
 
-export const dataSource: DataSource = new MockDataSource();
+export const dataSource: DataSource =
+  process.env.CASELAB_DATA_SOURCE === "postgres"
+    ? new PostgresDataSource()
+    : new MockDataSource();
