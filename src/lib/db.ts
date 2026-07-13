@@ -18,3 +18,12 @@ export async function query<T>(text: string, params: unknown[] = []): Promise<T[
   const rows = await db().query(text, params);
   return rows as unknown as T[];
 }
+
+/** 여러 문장을 한 트랜잭션으로 커밋 — 전부 성공하거나 전부 롤백 */
+export async function transaction(
+  stmts: { text: string; params?: unknown[] }[],
+): Promise<void> {
+  const c = db();
+  // neon http 드라이버의 query()는 지연 실행 — transaction()에 넘겨야 한 요청으로 묶인다
+  await c.transaction(stmts.map((s) => c.query(s.text, s.params ?? [])));
+}

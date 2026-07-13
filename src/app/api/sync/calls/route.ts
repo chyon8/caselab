@@ -2,6 +2,7 @@ import { query } from "@/lib/db";
 import { MAX_BATCH, requireSyncKey } from "@/lib/sync/auth";
 import { formatCursor, maxByCursor } from "@/lib/sync/cursor";
 import { readCursor, saveCursor } from "@/lib/sync/sync-state";
+import { scrubPii } from "@/lib/sync/pii";
 import { valuesClause } from "@/lib/sync/sql";
 
 /**
@@ -65,7 +66,8 @@ export async function POST(req: Request): Promise<Response> {
       String(r.project_id),
       r.call_type ?? null,
       r.call_time_secs ?? null,
-      r.summary ?? null,
+      // 통화 요약에 "010-…로 연락 요청" 류가 섞일 수 있다 — 저장 전 스크럽
+      scrubPii(r.summary ?? null),
       r.drive_url ?? null,
       r.created_at,
     ]);

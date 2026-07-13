@@ -9,7 +9,8 @@
 > - 녹취 = **요약만 저장.** 전화번호·녹취 원문은 CaseLab에 아예 전송되지 않음 (§3)
 > - 초기 백필 = 최근 1년 · 본진 DB에는 절대 쓰지 않음(read-only)
 >
-> **대기 중인 결정:** 동기화 방향(push/pull) — 개발팀 확인 후 확정 (§7). 어느 쪽이든 이 문서의 설계는 동일하고, n8n 마지막 노드 하나만 달라진다.
+> - 동기화 방향 = **push 확정** (2026-07-13 n8n 아웃바운드 테스트로 확인 — §7-1 해소). n8n 크론이 본진 `/query` 조회 후 CaseLab `/api/sync/*`로 POST.
+> - **PII 정책: 고객 식별 정보(client_id·전화번호·이메일·담당자명 등)는 어떤 형태로도 CaseLab에 전송하지 않는다.** 컬럼 단위는 n8n SQL에서 SELECT 자체를 안 하고, 자유 텍스트(공고 원문·통화 요약·노트)는 수신 시 정규식 스크럽(전화/이메일/주민번호) 후 저장. 회사명(company_name)은 법인 정보로서 화면 표시용으로 유지.
 >
 > **DATA_SCHEMA 대조 검증:** ✅ 완료. §2 상태매핑·§3 필드매핑을 원본 스키마와 대조하여 계약 완료/진행 판정을 `agreement.date_completed`/`date_start_progress` 기준으로 정정, 과업범위 변경 추적을 특약 기준으로 반영 (아래 각 절 참조).
 
@@ -264,7 +265,7 @@ SELECT p.id, p.title, p.description, p.budget, p.term, p.term_type,
        p.date_modified, p.date_submitted, p.date_start_recruitment,
        p.date_cancelled, p.date_rejected, p.date_deleted, p.management_hide,
        p.inspection_manager_id, p.management_manager_one_id, p.management_manager_two_id,
-       p.skills_slug, p.client_id,
+       p.skills_slug,  -- client_id는 SELECT하지 않는다 (고객 식별자 미전송 — PII 정책)
        iv.budget AS initial_budget, iv.term AS initial_term
 FROM project_project p
 LEFT JOIN project_projectinitialvalue iv ON iv.project_id = p.id
@@ -309,9 +310,9 @@ LIMIT 500;
 
 | # | 질문 | 결정되는 것 |
 |---|---|---|
-| 1 | n8n → 외부 인터넷 아웃바운드 HTTP 가능? | push 가능 여부 (가능하면 push 확정) |
-| 2 | n8n 웹훅 외부(공개 URL) 호출 가능? | pull 가능 여부 |
-| 3 | n8n에 read replica SELECT 커넥션 존재? | 조회 파이프라인 |
+| 1 | ~~n8n → 외부 인터넷 아웃바운드 HTTP 가능?~~ | ✅ 확인됨 (httpbin 테스트 성공) → **push 확정** |
+| 2 | ~~n8n 웹훅 외부(공개 URL) 호출 가능?~~ | 불필요 (push 확정으로 해소) |
+| 3 | ~~n8n에 read replica SELECT 커넥션 존재?~~ | ✅ 확인됨 (`http://wishket-api-server:8001/query`) |
 | 4 | n8n → 통화 API(192.168.10.217) 호출 가능? | 녹취 파이프라인 |
 | 5 | 통화 **요약**의 외부 클라우드 저장 가능 여부 (원문·전화번호는 애초에 전송 안 함) | `calls.summary` 저장 여부 |
 | 6 | n8n 크론 워크플로 추가 가능? 주기 제약? | 동기화 주기 |

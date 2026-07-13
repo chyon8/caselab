@@ -36,14 +36,14 @@ SELECT
   -- 등록 시 원본 (변경 추적의 기준점)
   iv.budget    AS initial_budget,
   iv.term      AS initial_term,
-  iv.term_type AS initial_term_type,
 
   -- 아래는 전부 스칼라 서브쿼리 — JOIN 으로 붙이면 행이 뻥튀기된다
-  (SELECT COALESCE(ci.company_name, cc.company_name)
-     FROM client_clientinfo ci
-     LEFT JOIN client_client cc ON cc.id = pp.client_id
-    WHERE ci.project_id = pp.id
-    LIMIT 1) AS client_name,
+  -- ⚠️ PII 정책: 회사명만 가져온다. clientinfo 의 full_name(담당자명)·cell_phone_number·
+  --    이메일, client_id 등 고객 식별 정보는 어떤 컬럼도 SELECT 하지 않는다.
+  COALESCE(
+    (SELECT ci.company_name FROM client_clientinfo ci WHERE ci.project_id = pp.id LIMIT 1),
+    (SELECT cc.company_name FROM client_client cc WHERE cc.id = pp.client_id)
+  ) AS client_name,
 
   (SELECT fsc.name
      FROM project_field_projectfieldsubcategory pfs
@@ -88,6 +88,9 @@ WHERE
   )
   -- 등록 전 단계는 동기화 대상이 아니다 (§2-7)
   AND pp.status NOT IN ('open', 'saved', 'frozen')
+  -- 핫엣지 가드: 지금 이 순간 커밋 중인 행과 같은 초의 date_modified 를 커서가
+  -- 지나쳐 버리면 그 행은 영원히 누락된다. 최신 2분은 읽지 않는다 (다음 주기에 잡힘)
+  AND pp.date_modified < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 2 MINUTE)
   -- ⚠️ date_deleted IS NULL 필터를 넣지 않는다.
   --    삭제된 행도 가져와야 CaseLab 에 deleted_at 을 마킹할 수 있다 (§5)
 

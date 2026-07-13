@@ -2,6 +2,7 @@ import { query } from "@/lib/db";
 import { MAX_BATCH, requireSyncKey } from "@/lib/sync/auth";
 import { formatCursor, maxByCursor } from "@/lib/sync/cursor";
 import { readCursor, saveCursor } from "@/lib/sync/sync-state";
+import { scrubPii } from "@/lib/sync/pii";
 import { valuesClause } from "@/lib/sync/sql";
 
 /** 본진 원본 이벤트 (노트·미팅·계약·마일스톤·Q&A) */
@@ -88,8 +89,9 @@ export async function POST(req: Request): Promise<Response> {
       String(r.source_id),
       r.event_at,
       r.stage ?? null,
-      r.title ?? null,
-      r.body ?? null,
+      // 매니저 노트·미팅 메모에는 고객 연락처가 자주 박혀 있다 — 저장 전 스크럽
+      scrubPii(r.title ?? null),
+      scrubPii(r.body ?? null),
       r.meta ? JSON.stringify(r.meta) : null,
     ]);
 

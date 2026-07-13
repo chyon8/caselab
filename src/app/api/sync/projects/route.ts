@@ -1,7 +1,7 @@
-import { query } from "@/lib/db";
+import { query, transaction } from "@/lib/db";
 import { MAX_BATCH, requireSyncKey } from "@/lib/sync/auth";
 import { formatCursor, maxByCursor } from "@/lib/sync/cursor";
-import { readCursor, saveCursor } from "@/lib/sync/sync-state";
+import { readCursor, SAVE_CURSOR_SQL } from "@/lib/sync/sync-state";
 import { mapProject, type MappedProject, type RawProject } from "@/lib/sync/mapping";
 import { valuesClause } from "@/lib/sync/sql";
 
@@ -163,10 +163,19 @@ export async function POST(req: Request): Promise<Response> {
   }
   const mappedRows = [...byId.values()];
 
+  // 커서 전진분 — 스킵된 행도 포함해 배치에서 가장 큰 (date_modified, id).
+  // n8n이 ASC로 보내지만, 순서가 흔들려도 행을 놓치지 않도록 최댓값을 직접 구한다.
+  const last = maxByCursor(rows, (r) => r.date_modified, (r) => r.id);
+  const cursor = formatCursor(last.date_modified, last.id);
+
+  // upsert·diff 이벤트·커서는 반드시 한 트랜잭션이어야 한다.
+  // 나눠 커밋하면 upsert만 성공하고 이벤트 저장이 실패했을 때, 재전송이 와도
+  // 기존 행이 이미 새 값이라 diff가 잡히지 않아 변경 이력이 영구 유실된다.
+  const stmts: { text: string; params?: unknown[] }[] = [];
   let events = 0;
 
   if (mappedRows.length > 0) {
-    // 1) 덮어쓰기 전 기존 값 확보
+    // 덮어쓰기 전 기존 값 확보 (읽기 전용 — 트랜잭션 밖)
     const ids = mappedRows.map((m) => m.id);
     const existing = await query<ExistingRow>(
       `SELECT id, status, budget, term_days, contract_amount, inspection_manager, deadline_at
@@ -175,15 +184,15 @@ export async function POST(req: Request): Promise<Response> {
     );
     const prev = new Map(existing.map((e) => [String(e.id), e]));
 
-    // 2) upsert (content_hash가 바뀌면 임베딩 무효화 → 재임베딩 대상이 됨)
+    // upsert (content_hash가 바뀌면 임베딩 무효화 → 재임베딩 대상이 됨)
     const updates = COLS.filter((c) => c !== "id")
       .map((c) => `${c} = EXCLUDED.${c}`)
       .join(", ");
     const reembed = "projects.content_hash IS DISTINCT FROM EXCLUDED.content_hash";
     const params = mappedRows.flatMap((m) => COLS.map((c) => m[c]));
 
-    await query(
-      `INSERT INTO projects (${COLS.join(", ")})
+    stmts.push({
+      text: `INSERT INTO projects (${COLS.join(", ")})
        VALUES ${valuesClause(mappedRows.length, COLS.length)}
        ON CONFLICT (id) DO UPDATE SET
          ${updates},
@@ -192,9 +201,9 @@ export async function POST(req: Request): Promise<Response> {
          embedded_at     = CASE WHEN ${reembed} THEN NULL ELSE projects.embedded_at END,
          embedding_model = CASE WHEN ${reembed} THEN NULL ELSE projects.embedding_model END`,
       params,
-    );
+    });
 
-    // 3) 변경 이벤트 생성 (기존 행이 있던 것만 — 신규 등록은 변경이 아님)
+    // 변경 이벤트 생성 (기존 행이 있던 것만 — 신규 등록은 변경이 아님)
     const eventRows: unknown[][] = [];
     for (const m of mappedRows) {
       const before = prev.get(m.id);
@@ -214,21 +223,18 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     if (eventRows.length > 0) {
-      await query(
-        `INSERT INTO timeline_events (project_id, source, source_id, event_at, stage, title, body, meta)
+      stmts.push({
+        text: `INSERT INTO timeline_events (project_id, source, source_id, event_at, stage, title, body, meta)
          VALUES ${valuesClause(eventRows.length, 8)}
          ON CONFLICT (source, source_id) DO NOTHING`,
-        eventRows.flat(),
-      );
+        params: eventRows.flat(),
+      });
       events = eventRows.length;
     }
   }
 
-  // 4) 커서 전진 — 스킵된 행도 포함해 배치에서 가장 큰 (date_modified, id).
-  //    n8n이 ASC로 보내지만, 순서가 흔들려도 행을 놓치지 않도록 최댓값을 직접 구한다.
-  const last = maxByCursor(rows, (r) => r.date_modified, (r) => r.id);
-  const cursor = formatCursor(last.date_modified, last.id);
-  await saveCursor("projects", cursor);
+  stmts.push({ text: SAVE_CURSOR_SQL, params: ["projects", cursor] });
+  await transaction(stmts);
 
   return Response.json({ upserted: mappedRows.length, skipped, events, cursor });
 }

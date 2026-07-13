@@ -1,0 +1,29 @@
+/**
+ * 자유 텍스트에 박힌 고객 연락처 제거.
+ *
+ * 컬럼 단위 PII(전화번호·이메일·담당자명·client_id)는 애초에 전송 자체를 안 하지만
+ * (n8n SQL이 SELECT하지 않음), 공고 원문·통화 요약·매니저 노트 같은 자유 텍스트에는
+ * 클라이언트가 직접 써넣은 연락처가 섞여 들어올 수 있다. 모든 수신 경로에서
+ * 저장 전에 이 함수를 통과시킨다 — CaseLab DB(외부 클라우드)에는 절대 남기지 않는다.
+ *
+ * 한계: 정규식은 사람 이름을 못 잡는다. 이름 스크럽은 LLM이 필요하고 비용·오탐 대비
+ * 실익이 없다고 판단하여 **하지 않기로 확정**(2026-07-13). 연락처만 제거한다.
+ */
+
+// 주민등록번호를 전화번호보다 먼저 — 뒷자리가 전화 패턴에 부분 매칭되는 것 방지
+const RRN = /\d{6}[-\s]?[1-4]\d{6}\b/g;
+const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+// 휴대폰(010~019)·지역번호(02, 0XX)·인터넷전화(070)·안심번호(0507),
+// +82 국가번호 표기(+82-10-… 처럼 앞 0이 빠지는 형태 포함)
+const PHONE = /(?:\+82[-\s.]?0?|0)\d{1,2}[-\s.)]?\d{3,4}[-\s.]?\d{4}\b/g;
+
+export function scrubPii(text: string): string;
+export function scrubPii(text: null): null;
+export function scrubPii(text: string | null): string | null;
+export function scrubPii(text: string | null): string | null {
+  if (text === null) return null;
+  return text
+    .replace(RRN, "[주민번호 제거]")
+    .replace(EMAIL, "[이메일 제거]")
+    .replace(PHONE, "[전화번호 제거]");
+}

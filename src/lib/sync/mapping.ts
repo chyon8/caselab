@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { scrubPii } from "./pii";
 import type { ProjectStatus } from "@/data/types";
 
 /**
@@ -141,8 +142,8 @@ function cancelStage(r: RawProject): string {
 }
 
 /** 임베딩 대상 텍스트의 해시 — 이 값이 바뀐 프로젝트만 재임베딩한다 (§5) */
-function contentHash(r: RawProject): string {
-  const text = [r.title, r.description ?? "", r.category ?? "", r.skills_slug ?? ""].join("\n");
+function contentHash(title: string, description: string | null, r: RawProject): string {
+  const text = [title, description ?? "", r.category ?? "", r.skills_slug ?? ""].join("\n");
   return createHash("sha256").update(text).digest("hex");
 }
 
@@ -153,9 +154,13 @@ export function mapProject(r: RawProject): MappedProject | null {
 
   const cancelled = mapped.status === "완료(취소)";
 
+  // 자유 텍스트는 저장 전 연락처 스크럽 — 해시·임베딩도 스크럽된 텍스트 기준
+  const title = scrubPii(r.title);
+  const description = scrubPii(r.description);
+
   return {
     id: String(r.id),
-    title: r.title,
+    title,
     client_name: r.client_name ?? null,
     category: r.category ?? null,
     tech: r.skills_slug,
@@ -171,9 +176,9 @@ export function mapProject(r: RawProject): MappedProject | null {
     contract_term_days: r.contract_term_days ?? null,
     deadline_at: r.date_deadline,
     cancel_stage: cancelled ? cancelStage(r) : null,
-    cancel_reason: cancelled ? (r.cancel_reason ?? null) : null,
-    posting_raw: r.description,
-    content_hash: contentHash(r),
+    cancel_reason: cancelled ? scrubPii(r.cancel_reason ?? null) : null,
+    posting_raw: description,
+    content_hash: contentHash(title, description, r),
     deleted_at: r.date_deleted,
     hidden: truthy(r.management_hide),
     source_modified_at: r.date_modified,
