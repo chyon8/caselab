@@ -22,6 +22,12 @@ export function formatWon(v: number | string | null | undefined): string | null 
   return `${Math.round(n / 10000).toLocaleString("ko-KR")}만원`;
 }
 
+/** 기간제(월 단가) 예산 → "월 600만원" */
+export function formatMonthlyWon(v: number | string | null | undefined): string | null {
+  const won = formatWon(v);
+  return won === null ? null : `월 ${won}`;
+}
+
 /** 일수 → "160일" */
 export function formatDays(v: number | string | null | undefined): string | null {
   const n = toNumber(v);

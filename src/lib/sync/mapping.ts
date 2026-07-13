@@ -29,7 +29,6 @@ export interface RawProject {
   skills_slug: string | null;
   initial_budget: number | string | null;
   initial_term: number | null;
-  initial_term_type: string | null;
 
   /** 아래는 조인으로 채워지는 값 (n8n 워크플로 상세 명세 — §5) */
   client_name?: string | null;
@@ -38,6 +37,8 @@ export interface RawProject {
   manager_ids?: (number | string)[] | null;
   /** 유효 계약 = agreement(hide=0, date_deleted IS NULL) + 체결된 sub_contract 존재 (§2) */
   has_valid_agreement?: number | boolean | null;
+  /** 계약 어드민 링크용 PK — 프로젝트 id와 다르다 */
+  agreement_id?: number | string | null;
   agreement_price?: number | string | null;
   agreement_date_start_progress?: string | null;
   agreement_date_completed?: string | null;
@@ -53,6 +54,8 @@ export interface MappedProject {
   category: string | null;
   tech: string | null;
   budget: number | null;
+  /** true면 budget은 총액이 아니라 월 단가 (기간제) */
+  budget_monthly: boolean;
   term_days: number | null;
   initial_budget: number | null;
   initial_term_days: number | null;
@@ -60,6 +63,7 @@ export interface MappedProject {
   stage: number;
   inspection_manager: string | null;
   manager_ids: string | null;
+  agreement_id: string | null;
   contract_amount: number | null;
   contract_term_days: number | null;
   deadline_at: string | null;
@@ -83,13 +87,26 @@ function num(v: number | string | null | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** term + term_type → 일 단위 (DATA_SCHEMA §1: term_type은 'month' | 'day') */
-export function toTermDays(
-  term: number | null,
-  termType: string | null,
-): number | null {
-  if (term === null || term === undefined) return null;
-  return termType === "month" ? term * 30 : term;
+/**
+ * term은 term_type과 무관하게 **항상 일(day) 단위**다. (2026-07-13 실데이터로 확인:
+ * term_type='month'인 프로젝트도 "1개월 진행"에 term=30, "6개월 진행"에 term=180)
+ * term_type='month'는 기간 단위가 아니라 **예산이 월 단가(기간제)** 라는 뜻이다.
+ */
+export function toTermDays(term: number | null): number | null {
+  return term ?? null;
+}
+
+/** 기간제 프로젝트 = 예산이 총액이 아니라 월 단가 (DATA_SCHEMA §1) */
+function isMonthlyBudget(termType: string | null): boolean {
+  return termType === "month";
+}
+
+/**
+ * 등록 시 원본값의 0은 "0원"이 아니라 "기록 안 됨"이다 (실데이터의 절반이 0).
+ * null로 바꾸지 않으면 "예산이 0 → 5,500만원으로 폭증" 같은 가짜 인사이트가 나온다.
+ */
+function nullIfZero(v: number | null): number | null {
+  return v === 0 ? null : v;
 }
 
 /**
@@ -165,13 +182,15 @@ export function mapProject(r: RawProject): MappedProject | null {
     category: r.category ?? null,
     tech: r.skills_slug,
     budget: num(r.budget),
-    term_days: toTermDays(r.term, r.term_type),
-    initial_budget: num(r.initial_budget),
-    initial_term_days: toTermDays(r.initial_term, r.initial_term_type),
+    budget_monthly: isMonthlyBudget(r.term_type),
+    term_days: toTermDays(r.term),
+    initial_budget: nullIfZero(num(r.initial_budget)),
+    initial_term_days: nullIfZero(toTermDays(r.initial_term)),
     status: mapped.status,
     stage: mapped.stage,
     inspection_manager: r.inspection_manager ?? null,
     manager_ids: r.manager_ids ? JSON.stringify(r.manager_ids.map(String)) : null,
+    agreement_id: r.agreement_id != null ? String(r.agreement_id) : null,
     contract_amount: num(r.agreement_price),
     contract_term_days: r.contract_term_days ?? null,
     deadline_at: r.date_deadline,

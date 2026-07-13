@@ -81,6 +81,8 @@ export interface Project {
   daysAgo: number;
   contractAmount: string | null;
   contractPeriod: string | null;
+  /** 계약 어드민 링크용 — 프로젝트 id와 다른 PK. 계약 전이면 null */
+  agreementId?: string | null;
   cancel?: { stage: string; reason: string };
   intake: { posting: Posting; call: CallRecord };
   issueLog: IssueLogEntry[];

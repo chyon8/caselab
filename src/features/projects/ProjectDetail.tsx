@@ -65,26 +65,32 @@ export default function ProjectDetail({ project: p }: { project: Project }) {
 
       <div className={styles["admin-links"]}>
         <a
-          href={`https://admin.caselab.example/review/${p.id}`}
+          href={`https://www.wishket.com/manage/project/inspection/detail/${p.id}`}
           target="_blank"
+          rel="noreferrer"
           className={styles["admin-link"]}
         >
           검수 어드민 ↗
         </a>
         <a
-          href={`https://admin.caselab.example/card/${p.id}`}
+          href={`https://www.wishket.com/card_admin/project/${p.id}`}
           target="_blank"
+          rel="noreferrer"
           className={styles["admin-link"]}
         >
           카드 어드민 ↗
         </a>
-        <a
-          href={`https://admin.caselab.example/contract/${p.id}`}
-          target="_blank"
-          className={styles["admin-link"]}
-        >
-          계약 어드민 ↗
-        </a>
+        {/* 계약 어드민만 project.id가 아니라 agreement.id를 쓴다. 계약 전이면 링크가 없다 */}
+        {p.agreementId && (
+          <a
+            href={`https://www.wishket.com/card_admin/agreement/${p.agreementId}/`}
+            target="_blank"
+            rel="noreferrer"
+            className={styles["admin-link"]}
+          >
+            계약 어드민 ↗
+          </a>
+        )}
       </div>
 
       <div className={styles["head-row"]}>

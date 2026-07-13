@@ -66,6 +66,11 @@ SELECT
        AND sc.is_incomplete_addon = 0 AND sc.is_cancel_addon = 0
   ) AS has_valid_agreement,
 
+  -- 계약 어드민 링크용 PK (project_id로는 계약을 특정할 수 없다)
+  (SELECT a.id FROM agreement_agreement a
+    WHERE a.project_id = pp.id AND a.hide = 0 AND a.date_deleted IS NULL
+    ORDER BY a.id DESC LIMIT 1) AS agreement_id,
+
   (SELECT a.agreement_price FROM agreement_agreement a
     WHERE a.project_id = pp.id AND a.hide = 0 AND a.date_deleted IS NULL
     ORDER BY a.id DESC LIMIT 1) AS agreement_price,

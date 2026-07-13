@@ -4,6 +4,7 @@ import {
   formatDays,
   formatMonthDay,
   formatMonthDayTime,
+  formatMonthlyWon,
   formatWon,
 } from "@/lib/format";
 import type { DataSource } from "./source";
@@ -27,10 +28,12 @@ interface ProjectRow {
   category: string | null;
   tech: string | null;
   budget: string | null;
+  budget_monthly: boolean;
   term_days: number | null;
   status: string;
   stage: number;
   inspection_manager: string | null;
+  agreement_id: string | null;
   contract_amount: string | null;
   contract_term_days: number | null;
   cancel_stage: string | null;
@@ -58,8 +61,8 @@ interface CallRow {
 }
 
 const LIST_COLUMNS = `
-  p.id, p.title, p.client_name, p.category, p.tech, p.budget, p.term_days,
-  p.status, p.stage, p.inspection_manager, p.contract_amount, p.contract_term_days,
+  p.id, p.title, p.client_name, p.category, p.tech, p.budget, p.budget_monthly, p.term_days,
+  p.status, p.stage, p.inspection_manager, p.agreement_id, p.contract_amount, p.contract_term_days,
   p.cancel_stage, p.cancel_reason, p.posting_raw, p.source_modified_at,
   ai.risk_tags, ai.issue_log, ai.posting_structured
 `;
@@ -144,7 +147,8 @@ function toProject(
     client: row.client_name ?? "",
     cat: row.category ?? "",
     tech: row.tech ?? "",
-    budget: formatWon(row.budget) ?? "",
+    // 기간제는 월 단가라 총액과 구분해서 표기해야 한다 ("월 600만원")
+    budget: (row.budget_monthly ? formatMonthlyWon(row.budget) : formatWon(row.budget)) ?? "",
     period: formatDays(row.term_days) ?? "",
     status: row.status as ProjectStatus,
     stage: row.stage as 1 | 2 | 3 | 4 | 5,
@@ -153,6 +157,7 @@ function toProject(
     daysAgo: daysSince(row.source_modified_at),
     contractAmount: formatWon(row.contract_amount),
     contractPeriod: formatDays(row.contract_term_days),
+    agreementId: row.agreement_id,
     ...(row.cancel_stage
       ? { cancel: { stage: row.cancel_stage, reason: row.cancel_reason ?? "" } }
       : {}),
