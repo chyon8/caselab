@@ -26,6 +26,10 @@ const MANAGER_OPTIONS = [
 
 /** 한 페이지에 보여줄 건수 */
 const PAGE_SIZE = 50;
+/** 한 번에 보여줄 페이지 번호 개수 */
+const PAGE_BLOCK = 10;
+/** 칸반 컬럼당 렌더링할 카드 수 — 전부 그리면 카드 수천 개가 DOM에 쌓인다 */
+const KANBAN_PAGE = 30;
 
 const PERIOD_OPTIONS = [
   { value: "전체", label: "기간 전체" },
@@ -55,6 +59,8 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
   const [starredOnly, setStarredOnly] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [page, setPage] = useState(1);
+  /** 칸반 컬럼별로 몇 장까지 그렸는지 (status → 개수) */
+  const [kanbanShown, setKanbanShown] = useState<Record<string, number>>({});
 
   const q = query.trim();
   const periodMax = PERIOD_MAX[periodFilter] ?? Infinity;
@@ -81,10 +87,22 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
   const currentPage = Math.min(page, totalPages);
   const pageRows = rows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
+  // 페이지 번호는 10개씩 묶어서 보여준다 (1~10, 11~20 …)
+  const blockStart = Math.floor((currentPage - 1) / PAGE_BLOCK) * PAGE_BLOCK + 1;
+  const blockEnd = Math.min(blockStart + PAGE_BLOCK - 1, totalPages);
+  const pageNumbers = Array.from(
+    { length: blockEnd - blockStart + 1 },
+    (_, i) => blockStart + i,
+  );
+
   const kanbanCols = KANBAN_STATUSES.map((stg) => ({
     status: stg,
     items: projects.filter((p) => matches(p, false) && p.status === stg),
   }));
+
+  const shownOf = (status: string) => kanbanShown[status] ?? KANBAN_PAGE;
+  const showMore = (status: string) =>
+    setKanbanShown((m) => ({ ...m, [status]: shownOf(status) + KANBAN_PAGE }));
 
   // AI 유사사례 제안: 검색어가 있을 때 같은 카테고리의 완료 사례를 추천
   let aiRows: { project: Project; sim: "high" | "mid" }[] = [];
@@ -215,21 +233,52 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
               <div className={styles.pagination}>
                 <button
                   className={styles["page-btn"]}
-                  onClick={() => setPage(currentPage - 1)}
+                  onClick={() => setPage(1)}
                   disabled={currentPage === 1}
+                  aria-label="첫 페이지"
                 >
-                  ← 이전
+                  ««
                 </button>
-                <span className={styles["page-info"]}>
-                  {currentPage} / {totalPages} 페이지
-                </span>
                 <button
                   className={styles["page-btn"]}
-                  onClick={() => setPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
+                  onClick={() => setPage(blockStart - 1)}
+                  disabled={blockStart === 1}
+                  aria-label="이전 10페이지"
                 >
-                  다음 →
+                  ‹
                 </button>
+
+                {pageNumbers.map((n) => (
+                  <button
+                    key={n}
+                    className={`${styles["page-btn"]} ${n === currentPage ? styles["page-btn-active"] : ""}`}
+                    onClick={() => setPage(n)}
+                    aria-current={n === currentPage ? "page" : undefined}
+                  >
+                    {n}
+                  </button>
+                ))}
+
+                <button
+                  className={styles["page-btn"]}
+                  onClick={() => setPage(blockEnd + 1)}
+                  disabled={blockEnd === totalPages}
+                  aria-label="다음 10페이지"
+                >
+                  ›
+                </button>
+                <button
+                  className={styles["page-btn"]}
+                  onClick={() => setPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  aria-label="마지막 페이지"
+                >
+                  »»
+                </button>
+
+                <span className={styles["page-info"]}>
+                  {rows.length.toLocaleString()}건 · {currentPage} / {totalPages}
+                </span>
               </div>
             )}
           </>
@@ -245,7 +294,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
                   <div className={styles["kcol-count"]}>{col.items.length}</div>
                 </div>
                 <div className={styles["kcol-list"]}>
-                  {col.items.map((p) => (
+                  {col.items.slice(0, shownOf(col.status)).map((p) => (
                     <div
                       key={p.id}
                       className={styles.kcard}
@@ -269,6 +318,14 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
                       </div>
                     </div>
                   ))}
+                  {col.items.length > shownOf(col.status) && (
+                    <button
+                      className={styles["kcol-more"]}
+                      onClick={() => showMore(col.status)}
+                    >
+                      {(col.items.length - shownOf(col.status)).toLocaleString()}건 더 보기
+                    </button>
+                  )}
                   {col.items.length === 0 && (
                     <div className={styles["kcol-empty"]}>없음</div>
                   )}

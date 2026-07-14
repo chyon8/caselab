@@ -74,6 +74,24 @@
   color: var(--text-muted);
 }
 
+/* 개발 범위·턴키·기획자료·지원자 수 */
+.spec-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.spec-chip {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: var(--rounded-pill);
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 /* ===== 단계 스테퍼 ===== */
 .stepper {
   display: flex;

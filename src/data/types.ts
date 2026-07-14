@@ -83,10 +83,26 @@ export interface Project {
   contractPeriod: string | null;
   /** 계약 어드민 링크용 — 프로젝트 id와 다른 PK. 계약 전이면 null */
   agreementId?: string | null;
+  /** 개발 범위 — 개발·디자인·기획 등 복수 선택 */
+  devScope?: string[];
+  isTurnkey?: boolean | null;
+  /** 보유 기획 자료 수준 — idea | detail | document */
+  planningStatus?: string | null;
+  /** 지원 개발사 수 (모집 퍼널 1단) */
+  proposalCount?: number | null;
   cancel?: { stage: string; reason: string };
+  /** 리포트가 목록 전체를 집계하므로 목록에도 싣는다 (문자열 몇 개라 가볍다) */
+  riskTags: string[];
+}
+
+/**
+ * 상세 페이지 전용. 공고문·타임라인·Q&A는 **목록에 실으면 안 된다.**
+ * 내용이 비어 있어도 빈 껍데기 구조만으로 프로젝트당 ~800바이트라,
+ * 6천 건이면 5MB가 브라우저로 넘어간다 (posting의 빈 배열 9개 + call + qna + timeline).
+ */
+export interface ProjectFull extends Project {
   intake: { posting: Posting; call: CallRecord };
   issueLog: IssueLogEntry[];
-  riskTags: string[];
   meeting?: CallRecord;
   qna: QnaItem[];
   timeline: TimelineEvent[];

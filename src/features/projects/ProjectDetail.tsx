@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import { CHECK_ITEMS } from "@/data/mock-data";
-import type { IssueType, Project } from "@/data/types";
+import type { IssueType, Project, ProjectFull } from "@/data/types";
 import { useApp } from "@/state/AppContext";
 import st from "./status.module.css";
 import { STATUS_KEY, statusLabel } from "./status";
@@ -20,7 +20,25 @@ const ISSUE_TAG_KEY: Record<IssueType, string> = {
   합의: "agree",
 };
 
-export default function ProjectDetail({ project: p }: { project: Project }) {
+/** 본진 project_project.planning_status — 값이 늘어나면 원문 그대로 보여준다 */
+const PLANNING_LABEL: Record<string, string> = {
+  idea: "아이디어 단계",
+  detail: "상세 기획 있음",
+  document: "기획서 보유",
+};
+
+/** 제목 아래 한 줄 — 개발 범위·턴키·기획자료·지원자 수 */
+function specChips(p: Project): string[] {
+  const chips = [...(p.devScope ?? [])];
+  if (p.isTurnkey) chips.push("턴키");
+  if (p.planningStatus) {
+    chips.push(PLANNING_LABEL[p.planningStatus] ?? p.planningStatus);
+  }
+  if (p.proposalCount != null) chips.push(`지원 ${p.proposalCount}건`);
+  return chips;
+}
+
+export default function ProjectDetail({ project: p }: { project: ProjectFull }) {
   const app = useApp();
   const saved = app.reviews[p.id];
 
@@ -35,6 +53,7 @@ export default function ProjectDetail({ project: p }: { project: Project }) {
   const canceled = p.status === "완료(취소)";
   const isDone = p.status.startsWith("완료");
   const posting = p.intake.posting;
+  const specs = specChips(p);
 
   const toggleCheck = (i: number) => {
     setDraftChecks((c) => c.map((v, idx) => (idx === i ? !v : v)));
@@ -99,6 +118,15 @@ export default function ProjectDetail({ project: p }: { project: Project }) {
           <div className={styles.meta}>
             {p.client} · 검수담당 {p.manager} · {p.tech}
           </div>
+          {specs.length > 0 && (
+            <div className={styles["spec-row"]}>
+              {specs.map((s) => (
+                <span key={s} className={styles["spec-chip"]}>
+                  {s}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <span className={`${st.chip} ${st[STATUS_KEY[p.status]]}`}>
           현재 단계: {statusLabel(p.status)}

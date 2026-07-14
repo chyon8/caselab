@@ -246,6 +246,22 @@
   padding: 8px 2px;
 }
 
+.kcol-more {
+  width: 100%;
+  padding: 10px;
+  border: 1px dashed var(--card-border);
+  border-radius: 12px;
+  background: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.kcol-more:hover {
+  color: var(--text-body);
+}
+
 .kcard {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -401,12 +417,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 6px;
   padding: 20px 0 8px;
 }
 
 .page-btn {
-  padding: 8px 16px;
+  min-width: 36px;
+  padding: 8px 12px;
   border: none;
   border-radius: var(--rounded-pill);
   font-size: 13px;
@@ -414,6 +432,12 @@
   cursor: pointer;
   color: var(--text-muted);
   background: var(--panel-bg);
+  font-variant-numeric: tabular-nums;
+}
+
+.page-btn-active {
+  color: var(--color-body-on-dark);
+  background: var(--color-primary);
 }
 
 .page-btn:hover:not(:disabled) {
@@ -426,6 +450,7 @@
 }
 
 .page-info {
+  margin-left: 10px;
   font-size: 13px;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;

@@ -1,6 +1,6 @@
 import { MOCK_NOTIFICATIONS, MOCK_PROJECTS, MOCK_REVIEWS } from "./mock-data";
 import { PostgresDataSource } from "./postgres";
-import type { AppNotification, CaseReview, Project } from "./types";
+import type { AppNotification, CaseReview, Project, ProjectFull } from "./types";
 
 /**
  * 데이터 소스 어댑터 인터페이스.
@@ -9,7 +9,7 @@ import type { AppNotification, CaseReview, Project } from "./types";
  */
 export interface DataSource {
   getProjects(): Promise<Project[]>;
-  getProject(id: string): Promise<Project | undefined>;
+  getProject(id: string): Promise<ProjectFull | undefined>;
   getNotifications(): Promise<AppNotification[]>;
   getReviews(): Promise<Record<string, CaseReview>>;
   saveReview(projectId: string, review: CaseReview): Promise<void>;
@@ -22,7 +22,7 @@ class MockDataSource implements DataSource {
     return MOCK_PROJECTS;
   }
 
-  async getProject(id: string): Promise<Project | undefined> {
+  async getProject(id: string): Promise<ProjectFull | undefined> {
     return MOCK_PROJECTS.find((p) => p.id === id);
   }
 

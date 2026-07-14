@@ -16,6 +16,7 @@ import type {
   IssueLogEntry,
   Posting,
   Project,
+  ProjectFull,
   ProjectStatus,
   QnaItem,
   TimelineEvent,
@@ -28,6 +29,11 @@ interface ProjectRow {
   client_name: string | null;
   category: string | null;
   tech: string | null;
+  /** "개발,디자인,기획" — 본진 job_jobcategory.title_kor 를 콤마로 이어붙인 값 */
+  dev_scope: string | null;
+  is_turnkey: boolean | null;
+  planning_status: string | null;
+  proposal_count: number | null;
   budget: string | null;
   budget_monthly: boolean;
   term_days: number | null;
@@ -39,11 +45,12 @@ interface ProjectRow {
   contract_term_days: number | null;
   cancel_stage: string | null;
   cancel_reason: string | null;
-  posting_raw: string | null;
   source_modified_at: Date | null;
-  risk_tags: string[] | null;
-  issue_log: IssueLogEntry[] | null;
-  posting_structured: Posting | null;
+  /** 아래는 상세(DETAIL_COLUMNS)에서만 조회된다 — 목록에서는 undefined */
+  posting_raw?: string | null;
+  risk_tags?: string[] | null;
+  issue_log?: IssueLogEntry[] | null;
+  posting_structured?: Posting | null;
 }
 
 /** json_agg로 묶여 오므로 날짜는 Date가 아니라 ISO 문자열이다 */
@@ -62,11 +69,24 @@ interface CallRow {
   created_at: string | null;
 }
 
+/**
+ * 목록용 — 상세 전용 컬럼은 절대 넣지 않는다.
+ * posting_raw(공고 원문)는 5,300건 합계가 12MB다. 목록은 쓰지도 않는데 가져오면
+ * 싱가포르에서 12MB를 끌어와 "use client"인 ProjectList의 RSC 페이로드로 브라우저까지 실어나른다.
+ * 목록이 실제로 쓰는 필드 합계는 421KB다.
+ */
 const LIST_COLUMNS = `
   p.id, p.title, p.client_name, p.category, p.tech, p.budget, p.budget_monthly, p.term_days,
+  p.dev_scope, p.is_turnkey, p.planning_status, p.proposal_count,
   p.status, p.stage, p.inspection_manager, p.agreement_id, p.contract_amount, p.contract_term_days,
-  p.cancel_stage, p.cancel_reason, p.posting_raw, p.source_modified_at,
-  ai.risk_tags, ai.issue_log, ai.posting_structured
+  p.cancel_stage, p.cancel_reason, p.source_modified_at,
+  ai.risk_tags
+`;
+
+/** 상세용 — 목록 컬럼 + 공고 원문 + 무거운 AI JSONB */
+const DETAIL_COLUMNS = `
+  ${LIST_COLUMNS}, p.posting_raw,
+  ai.issue_log, ai.posting_structured
 `;
 
 /** AI 공고문 구조화 전(프롬프트 검토 대기)에는 원문을 배경 자리에 그대로 노출한다 (§3) */
@@ -139,16 +159,18 @@ function toQna(r: TimelineRow): QnaItem {
   };
 }
 
-function toProject(
-  row: ProjectRow,
-  detail: { call: CallRecord; qna: QnaItem[]; timeline: TimelineEvent[] },
-): Project {
+/** 목록용 — 상세 필드는 붙이지 않는다 (빈 껍데기만으로 6천 건 × ~800B = 5MB) */
+function toProject(row: ProjectRow): Project {
   return {
     id: row.id,
     name: row.title,
     client: row.client_name ?? "",
     cat: row.category ?? "",
     tech: row.tech ?? "",
+    devScope: row.dev_scope ? row.dev_scope.split(",").filter(Boolean) : [],
+    isTurnkey: row.is_turnkey,
+    planningStatus: row.planning_status,
+    proposalCount: row.proposal_count,
     // 기간제는 월 단가라 총액과 구분해서 표기해야 한다 ("월 600만원")
     budget: (row.budget_monthly ? formatMonthlyWon(row.budget) : formatWon(row.budget)) ?? "",
     period: formatDays(row.term_days) ?? "",
@@ -163,19 +185,25 @@ function toProject(
     ...(row.cancel_stage
       ? { cancel: { stage: row.cancel_stage, reason: row.cancel_reason ?? "" } }
       : {}),
+    riskTags: row.risk_tags ?? [],
+  };
+}
+
+function toProjectFull(
+  row: ProjectRow,
+  detail: { call: CallRecord; qna: QnaItem[]; timeline: TimelineEvent[] },
+): ProjectFull {
+  return {
+    ...toProject(row),
     intake: {
-      posting: row.posting_structured ?? fallbackPosting(row.title, row.posting_raw),
+      posting: row.posting_structured ?? fallbackPosting(row.title, row.posting_raw ?? null),
       call: detail.call,
     },
     issueLog: row.issue_log ?? [],
-    riskTags: row.risk_tags ?? [],
     qna: detail.qna,
     timeline: detail.timeline,
   };
 }
-
-/** 상세 전용 필드(공고문·통화·타임라인)는 목록에서 읽지 않는다 — getProject()가 채운다 */
-const NO_DETAIL = { call: EMPTY_CALL, qna: [], timeline: [] };
 
 export class PostgresDataSource implements DataSource {
   async getProjects(): Promise<Project[]> {
@@ -186,17 +214,17 @@ export class PostgresDataSource implements DataSource {
         WHERE p.deleted_at IS NULL AND p.hidden = false
         ORDER BY p.source_modified_at DESC`,
     );
-    return rows.map((r) => toProject(r, NO_DETAIL));
+    return rows.map(toProject);
   }
 
-  async getProject(id: string): Promise<Project | undefined> {
+  async getProject(id: string): Promise<ProjectFull | undefined> {
     // DB의 id가 BIGINT 타입이므로, 숫자가 아닌 문자열(예: 'p3')이 들어오면 DB 에러 대신 404를 위해 undefined 반환
     if (!/^\d+$/.test(id)) return undefined;
 
     // 한 번의 왕복으로 끝낸다 — Neon이 싱가포르라 쿼리당 왕복 비용이 크다.
     // 쿼리를 3번 나눠 날리면 네트워크 지연만 3배가 된다.
     const rows = await query<ProjectRow & { events: TimelineRow[] | null; calls: CallRow[] | null }>(
-      `SELECT ${LIST_COLUMNS},
+      `SELECT ${DETAIL_COLUMNS},
          (SELECT json_agg(e ORDER BY e.event_at)
             FROM (SELECT source, event_at, stage, title, body, meta
                     FROM timeline_events WHERE project_id = p.id) e) AS events,
@@ -214,7 +242,7 @@ export class PostgresDataSource implements DataSource {
     const events = row.events ?? [];
     const calls = row.calls ?? [];
 
-    return toProject(row, {
+    return toProjectFull(row, {
       call: calls[0] ? toCallRecord(calls[0]) : EMPTY_CALL,
       qna: events.filter((e) => e.source === "qna").map(toQna),
       timeline: events.filter((e) => e.source !== "qna").map(toTimelineEvent),

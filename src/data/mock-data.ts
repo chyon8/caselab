@@ -1,7 +1,7 @@
-import type { AppNotification, CaseReview, Project } from "./types";
+import type { AppNotification, CaseReview, ProjectFull } from "./types";
 
 /** 프로토타입(CaseLab_v2.0)에서 이식한 mock 프로젝트 데이터 */
-export const MOCK_PROJECTS: Project[] = [
+export const MOCK_PROJECTS: ProjectFull[] = [
   {
     id: "p5",
     name: "PHP 기반 스포츠 맞춤형 O2O 플랫폼 구축",
