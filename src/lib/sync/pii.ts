@@ -17,6 +17,9 @@ const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
 // +82 국가번호 표기(+82-10-… 처럼 앞 0이 빠지는 형태 포함)
 const PHONE = /(?:\+82[-\s.]?0?|0)\d{1,2}[-\s.)]?\d{3,4}[-\s.]?\d{4}\b/g;
 
+export function scrubPii(text: string | number): string;
+export function scrubPii(text: null): null;
+export function scrubPii(text: string | number | null): string | null;
 export function scrubPii(text: string | number | null): string | null {
   if (text === null || text === undefined) return null;
   return String(text)
