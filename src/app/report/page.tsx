@@ -5,6 +5,7 @@ import Report from "@/features/report/Report";
 export const dynamic = "force-dynamic";
 
 export default async function ReportPage() {
-  const projects = await dataSource.getProjects();
-  return <Report projects={projects} />;
+  // 집계는 SQL로 계산해서 받는다 — 5,998건을 브라우저로 실어나르지 않는다
+  const stats = await dataSource.getReportStats();
+  return <Report stats={stats} />;
 }

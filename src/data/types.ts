@@ -83,11 +83,19 @@ export interface Project {
   stage: 1 | 2 | 3 | 4 | 5;
   manager: string;
   updated: string;
+  /** 클라이언트가 검수를 요청한 날 (date_submitted) */
   submittedAt: string;
+  /**
+   * 매니저가 검수를 끝내고 모집으로 넘긴 날 (date_start_recruitment).
+   * **목록의 정렬·표시·필터가 전부 이 날짜 기준이다** — 첫 화면의 목적이
+   * "오늘 뭐 검수했지?"이기 때문. 백필 범위상 모든 프로젝트가 이미 모집 전환됐으므로
+   * 이 값은 항상 존재한다 (검수 중인 프로젝트는 CaseLab에 들어오지 않는다).
+   */
+  reviewedAt: string;
   /** 본진 최종 수정일 기준 경과일 — "언제 들어온 건"이 아니다 */
   daysAgo: number;
-  /** 검수 시작(date_submitted) 후 경과일 — 기간 필터의 기준. 검수 기록이 없으면 null */
-  submittedDaysAgo?: number | null;
+  /** 검수 완료 후 경과일 — 기간 필터의 기준 */
+  reviewedDaysAgo?: number | null;
   /** 단계별 소요일. 아직 그 단계에 도달하지 않았거나 원본 날짜가 없으면 null */
   durations?: {
     /** 검수 시작 → 모집 전환 */
@@ -126,6 +134,41 @@ export interface ProjectFull extends Project {
   meeting?: CallRecord;
   qna: QnaItem[];
   timeline: TimelineEvent[];
+}
+
+/**
+ * 리포트 집계. 전부 SQL에서 계산해 내려온다 —
+ * Project의 budget·contractAmount는 화면용 문자열("4,500만원")이라 클라이언트에서 못 센다.
+ *
+ * ⚠️ 계약률의 분모는 **결판난 건**이다 (계약 도달 + 취소).
+ *    아직 모집 중인 건은 결과가 안 나왔으므로 분모에서 뺀다 — 넣으면 계약률이 낮게 왜곡된다.
+ */
+export interface ReportStats {
+  total: number;
+  /** 계약 이상 도달 (계약·진행·완료) */
+  contracted: number;
+  cancelled: number;
+  /** 아직 모집 중 — 계약률 계산에서 제외 */
+  pending: number;
+  contractRate: number;
+  /** 취소가 터진 단계 분포 */
+  cancelByStage: Breakdown[];
+  byBudget: Breakdown[];
+  byScope: Breakdown[];
+  byProposals: Breakdown[];
+  /** 단계별 소요일 중앙값 */
+  medianDays: { inspection: number; recruiting: number; progress: number };
+  /** 모집 예산 대비 실제 계약금액 */
+  budgetDelta: { increased: number; same: number; decreased: number };
+}
+
+/** 리포트의 한 줄 — "1억+ : 결판 186건 중 계약률 14.5%" */
+export interface Breakdown {
+  label: string;
+  /** 결판난 건수 (계약률의 분모) */
+  decided: number;
+  /** % */
+  rate: number;
 }
 
 export interface AppNotification {

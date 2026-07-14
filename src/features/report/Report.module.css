@@ -34,9 +34,10 @@
   max-width: 720px;
 }
 
+/* 라벨 · 막대 · 비율 · 표본수 */
 .bar-row {
   display: grid;
-  grid-template-columns: 160px 1fr 40px;
+  grid-template-columns: 160px 1fr 52px 64px;
   align-items: center;
   gap: 16px;
 }
@@ -61,15 +62,35 @@
 }
 
 .bar-count {
-  font-size: 13px;
-  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--page-text);
   text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 표본 크기 — 비율만 보면 3건짜리 구간을 신뢰하게 된다 */
+.bar-sub {
+  font-size: 12px;
+  color: var(--text-faint);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 섹션 제목 아래 해설 — 숫자가 무슨 뜻인지 말해준다 */
+.note {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 720px;
+  margin: 0 0 20px;
 }
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 14px;
+  margin-bottom: 56px;
   max-width: 720px;
 }
 

@@ -31,18 +31,22 @@ const PAGE_BLOCK = 10;
 /** 칸반 컬럼당 렌더링할 카드 수 — 전부 그리면 카드 수천 개가 DOM에 쌓인다 */
 const KANBAN_PAGE = 30;
 
-/** 기준은 검수 시작일(date_submitted)이다 — 본진 최종 수정일이 아니다 */
+/**
+ * 기준은 **검수 완료일**(매니저가 모집으로 넘긴 날, date_start_recruitment)이다.
+ * 첫 화면의 목적이 "오늘 뭐 검수했지?"라서 정렬·표시·필터를 전부 이 날짜로 통일했다.
+ *
+ * 최근 수정일이 아니다 — 그건 예산 수정·시스템 갱신까지 "오늘"로 찍혀서
+ * "내가 검수한 것"을 못 짚는다. 검수 요청일(date_submitted)도 아니다 —
+ * 어제 들어온 걸 오늘 승인하면 어제 날짜로 보인다.
+ */
 const PERIOD_OPTIONS = [
-  { value: "전체", label: "검수 기간 전체" },
-  { value: "오늘", label: "오늘 접수된 건" },
-  { value: "1주일", label: "검수 최근 1주일" },
-  { value: "1개월", label: "검수 최근 1개월" },
-  { value: "3개월", label: "검수 최근 3개월" },
-  { value: "6개월", label: "검수 최근 6개월" },
-  { value: "1년", label: "검수 최근 1년" },
-  { value: "2년", label: "검수 최근 2년" },
-  { value: "3년", label: "검수 최근 3년" },
-  { value: "5년", label: "검수 최근 5년" },
+  { value: "오늘", label: "오늘 검수" },
+  { value: "1주일", label: "최근 1주일" },
+  { value: "1개월", label: "최근 1개월" },
+  { value: "3개월", label: "최근 3개월" },
+  { value: "6개월", label: "최근 6개월" },
+  { value: "1년", label: "최근 1년" },
+  { value: "전체", label: "기간 전체" },
 ];
 import st from "./status.module.css";
 import { KANBAN_STATUSES, STATUS_KEY, statusLabel } from "./status";
@@ -50,15 +54,12 @@ import styles from "./ProjectList.module.css";
 
 const PERIOD_MAX: Record<string, number> = {
   전체: Infinity,
-  "오늘": 0,
+  오늘: 0,
   "1주일": 7,
   "1개월": 30,
   "3개월": 90,
   "6개월": 180,
   "1년": 365,
-  "2년": 730,
-  "3년": 1095,
-  "5년": 1825,
 };
 
 export default function ProjectList({ projects }: { projects: Project[] }) {
@@ -108,8 +109,8 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
     if (q && !(p.name + p.client + p.tech + p.cat + p.id).includes(q)) return false;
     if (withStatus && statusFilter !== "전체" && p.status !== statusFilter) return false;
     if (!matchesManager(p.manager, managerFilter)) return false;
-    // 검수 시작 기준. 검수 기록이 없는 건은 기간을 좁히면 빠진다 (판단 근거가 없으므로)
-    if (periodMax !== Infinity && (p.submittedDaysAgo == null || p.submittedDaysAgo > periodMax)) {
+    // 검수 완료 기준 ("오늘 뭐 검수했지?")
+    if (periodMax !== Infinity && (p.reviewedDaysAgo == null || p.reviewedDaysAgo > periodMax)) {
       return false;
     }
     if (starredOnly && !app.starred[p.id]) return false;
@@ -235,7 +236,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
               <div className={styles.th}>고객사</div>
               <div className={styles.th}>상태</div>
               <div className={styles.th}>검수담당</div>
-              <div className={`${styles.th} ${styles.right}`}>검수시작</div>
+              <div className={`${styles.th} ${styles.right}`}>검수완료</div>
             </div>
             {pageRows.map((p) => (
               <div
@@ -261,7 +262,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
                   </span>
                 </div>
                 <div className={styles.manager}>{p.manager}</div>
-                <div className={styles.updated}>{p.submittedAt}</div>
+                <div className={styles.updated}>{p.reviewedAt}</div>
               </div>
             ))}
 
@@ -397,7 +398,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
                     <b>{p.name}</b>
                     <span className={styles["ai-meta"]}>
                       {" "}
-                      — {statusLabel(p.status)} · {p.submittedAt}
+                      — {statusLabel(p.status)} · {p.reviewedAt}
                     </span>
                   </div>
                   <span className={`${styles.sim} ${sim === "high" ? styles.high : styles.mid}`}>
