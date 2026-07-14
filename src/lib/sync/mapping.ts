@@ -81,6 +81,10 @@ export interface MappedProject {
   deadline_at: string | null;
   submitted_at: string | null;
   recruit_started_at: string | null;
+  progress_started_at: string | null;
+  completed_at: string | null;
+  cancelled_at: string | null;
+  rejected_at: string | null;
   cancel_stage: string | null;
   cancel_reason: string | null;
   posting_raw: string | null;
@@ -214,6 +218,11 @@ export function mapProject(r: RawProject): MappedProject | null {
     deadline_at: r.date_deadline,
     submitted_at: r.date_submitted,
     recruit_started_at: r.date_start_recruitment,
+    // 아래 넷은 원래 mapStatus 판정에만 쓰고 버리던 값이다 — 기간 계산을 위해 저장한다
+    progress_started_at: r.agreement_date_start_progress ?? null,
+    completed_at: r.agreement_date_completed ?? null,
+    cancelled_at: r.date_cancelled,
+    rejected_at: r.date_rejected,
     cancel_stage: cancelled ? cancelStage(r) : null,
     cancel_reason: cancelled ? scrubPii(r.cancel_reason ?? null) : null,
     posting_raw: description,
