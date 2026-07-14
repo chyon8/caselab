@@ -179,6 +179,7 @@ function toProject(row: ProjectRow): Project {
     stage: row.stage as 1 | 2 | 3 | 4 | 5,
     manager: managerName(row.inspection_manager),
     updated: formatMonthDay(row.source_modified_at),
+    submittedAt: row.submitted_at ? formatMonthDay(row.submitted_at) : "-",
     daysAgo: daysSince(row.source_modified_at),
     submittedDaysAgo: row.submitted_at ? daysSince(row.submitted_at) : null,
     contractAmount: formatWon(row.contract_amount),
@@ -214,7 +215,7 @@ export class PostgresDataSource implements DataSource {
          FROM projects p
          LEFT JOIN ai_insights ai ON ai.project_id = p.id
         WHERE p.deleted_at IS NULL AND p.hidden = false
-        ORDER BY p.source_modified_at DESC`,
+        ORDER BY p.submitted_at DESC NULLS LAST, p.source_modified_at DESC`,
     );
     return rows.map(toProject);
   }

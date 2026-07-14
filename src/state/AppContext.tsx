@@ -3,6 +3,17 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { AppNotification, CaseReview } from "@/data/types";
 
+interface ListState {
+  query: string;
+  statusFilter: string;
+  managerFilter: string;
+  periodFilter: string;
+  starredOnly: boolean;
+  viewMode: "list" | "grid";
+  page: number;
+  kanbanShown: Record<string, number>;
+}
+
 interface AppContextValue {
   darkMode: boolean;
   toggleDarkMode: () => void;
@@ -22,6 +33,8 @@ interface AppContextValue {
   setSlackChannel: (channel: string) => void;
   toggles: Record<string, boolean>;
   toggle: (key: string) => void;
+  listState: ListState;
+  setListState: (state: Partial<ListState>) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -49,6 +62,16 @@ export function AppProvider({
     slackStatus: true,
     slackQna: true,
   });
+  const [listState, setListStateFull] = useState<ListState>({
+    query: "",
+    statusFilter: "전체",
+    managerFilter: "전체",
+    periodFilter: "전체",
+    starredOnly: false,
+    viewMode: "list",
+    page: 1,
+    kanbanShown: {},
+  });
 
   useEffect(() => {
     document.documentElement.dataset.theme = darkMode ? "dark" : "light";
@@ -75,6 +98,8 @@ export function AppProvider({
     setSlackChannel,
     toggles,
     toggle: (key) => setToggles((t) => ({ ...t, [key]: !t[key] })),
+    listState,
+    setListState: (state) => setListStateFull((s) => ({ ...s, ...state })),
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -34,11 +34,15 @@ const KANBAN_PAGE = 30;
 /** 기준은 검수 시작일(date_submitted)이다 — 본진 최종 수정일이 아니다 */
 const PERIOD_OPTIONS = [
   { value: "전체", label: "검수 기간 전체" },
+  { value: "오늘", label: "오늘 접수된 건" },
   { value: "1주일", label: "검수 최근 1주일" },
   { value: "1개월", label: "검수 최근 1개월" },
   { value: "3개월", label: "검수 최근 3개월" },
   { value: "6개월", label: "검수 최근 6개월" },
   { value: "1년", label: "검수 최근 1년" },
+  { value: "2년", label: "검수 최근 2년" },
+  { value: "3년", label: "검수 최근 3년" },
+  { value: "5년", label: "검수 최근 5년" },
 ];
 import st from "./status.module.css";
 import { KANBAN_STATUSES, STATUS_KEY, statusLabel } from "./status";
@@ -46,26 +50,50 @@ import styles from "./ProjectList.module.css";
 
 const PERIOD_MAX: Record<string, number> = {
   전체: Infinity,
+  "오늘": 0,
   "1주일": 7,
   "1개월": 30,
   "3개월": 90,
   "6개월": 180,
   "1년": 365,
+  "2년": 730,
+  "3년": 1095,
+  "5년": 1825,
 };
 
 export default function ProjectList({ projects }: { projects: Project[] }) {
   const app = useApp();
   const router = useRouter();
 
-  const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("전체");
-  const [managerFilter, setManagerFilter] = useState("전체");
-  const [periodFilter, setPeriodFilter] = useState("전체");
-  const [starredOnly, setStarredOnly] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-  const [page, setPage] = useState(1);
-  /** 칸반 컬럼별로 몇 장까지 그렸는지 (status → 개수) */
-  const [kanbanShown, setKanbanShown] = useState<Record<string, number>>({});
+  const {
+    query,
+    statusFilter,
+    managerFilter,
+    periodFilter,
+    starredOnly,
+    viewMode,
+    page,
+    kanbanShown,
+  } = app.listState;
+
+  const setQuery = (v: string) => app.setListState({ query: v });
+  const setStatusFilter = (v: string) => app.setListState({ statusFilter: v });
+  const setManagerFilter = (v: string) => app.setListState({ managerFilter: v });
+  const setPeriodFilter = (v: string) => app.setListState({ periodFilter: v });
+  const setStarredOnly = (v: boolean | ((prev: boolean) => boolean)) =>
+    app.setListState({
+      starredOnly: typeof v === "function" ? v(starredOnly) : v,
+    });
+  const setViewMode = (v: "list" | "grid") => app.setListState({ viewMode: v });
+  const setPage = (v: number) => app.setListState({ page: v });
+  const setKanbanShown = (
+    v:
+      | Record<string, number>
+      | ((prev: Record<string, number>) => Record<string, number>)
+  ) =>
+    app.setListState({
+      kanbanShown: typeof v === "function" ? v(kanbanShown) : v,
+    });
 
   const q = query.trim();
   const periodMax = PERIOD_MAX[periodFilter] ?? Infinity;
@@ -207,7 +235,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
               <div className={styles.th}>고객사</div>
               <div className={styles.th}>상태</div>
               <div className={styles.th}>검수담당</div>
-              <div className={`${styles.th} ${styles.right}`}>업데이트</div>
+              <div className={`${styles.th} ${styles.right}`}>검수시작</div>
             </div>
             {pageRows.map((p) => (
               <div
@@ -233,7 +261,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
                   </span>
                 </div>
                 <div className={styles.manager}>{p.manager}</div>
-                <div className={styles.updated}>{p.updated}</div>
+                <div className={styles.updated}>{p.submittedAt}</div>
               </div>
             ))}
 
@@ -369,7 +397,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
                     <b>{p.name}</b>
                     <span className={styles["ai-meta"]}>
                       {" "}
-                      — {statusLabel(p.status)} · {p.updated}
+                      — {statusLabel(p.status)} · {p.submittedAt}
                     </span>
                   </div>
                   <span className={`${styles.sim} ${sim === "high" ? styles.high : styles.mid}`}>

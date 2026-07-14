@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Fragment, useState } from "react";
 import { CHECK_ITEMS } from "@/data/mock-data";
 import type { IssueType, Project, ProjectFull } from "@/data/types";
@@ -39,6 +39,7 @@ function specChips(p: Project): string[] {
 }
 
 export default function ProjectDetail({ project: p }: { project: ProjectFull }) {
+  const router = useRouter();
   const app = useApp();
   const saved = app.reviews[p.id];
 
@@ -78,9 +79,9 @@ export default function ProjectDetail({ project: p }: { project: ProjectFull }) 
 
   return (
     <div className={styles.container}>
-      <Link href="/" className={styles["back-btn"]}>
+      <button onClick={() => router.back()} className={styles["back-btn"]} style={{ background: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>
         <span className={styles["back-arrow"]}>←</span> 전체 프로젝트
-      </Link>
+      </button>
 
       <div className={styles["admin-links"]}>
         <a
