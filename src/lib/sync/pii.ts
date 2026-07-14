@@ -10,6 +10,11 @@
  * 실익이 없다고 판단하여 **하지 않기로 확정**(2026-07-13). 연락처만 제거한다.
  */
 
+// Postgres 는 text/jsonb 에 NUL(0x00) 을 절대 저장하지 못한다 (22021 invalid byte sequence).
+// 개발사 댓글처럼 수년간 쌓인 자유 텍스트에는 깨진 인코딩이 섞여 들어온다 — 한 건만 있어도
+// 배치 전체가 500 으로 터지고 커서가 멈춘다. 저장 직전에 제거한다.
+const NUL = /\u0000/g;
+
 // 주민등록번호를 전화번호보다 먼저 — 뒷자리가 전화 패턴에 부분 매칭되는 것 방지
 const RRN = /\d{6}[-\s]?[1-4]\d{6}\b/g;
 const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
@@ -23,6 +28,7 @@ export function scrubPii(text: string | number | null): string | null;
 export function scrubPii(text: string | number | null): string | null {
   if (text === null || text === undefined) return null;
   return String(text)
+    .replace(NUL, "")
     .replace(RRN, "[주민번호 제거]")
     .replace(EMAIL, "[이메일 제거]")
     .replace(PHONE, "[전화번호 제거]");
