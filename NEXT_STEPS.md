@@ -156,6 +156,47 @@ SELECT count(*) FROM projects WHERE proposal_count > 0; -- 0이 아닌가
 
 ## 다음
 
+### ⓪ 🔴 Q&A 댓글 유실 — 이것부터 (2026-07-14 저녁 발견)
+
+**증상:** 백필 후 여러 프로젝트의 Q&A가 통째로 비어 있다 (예: project 156821, 그 외 다수).
+프로젝트 자체는 목록에 정상적으로 뜬다.
+
+**실측:**
+
+| | 값 |
+|---|---|
+| `SELECT cursor_value FROM sync_state WHERE source='qna'` | `2026-07-14T07:50:18Z\|97447` — 사실상 "현재"까지 완주 |
+| `SELECT count(*) FROM timeline_events WHERE source='qna'` | **16,717** (예상 21,324 — 4,607건 부족) |
+
+**이 두 값은 코드상 서로 모순이다.** [`timeline/route.ts`](./src/app/api/sync/timeline/route.ts)는
+`skipped > 0`이면 커서를 세우지 않는다. 커서가 끝까지 갔다는 건 모든 배치의 skipped가 0이었다는 뜻이고,
+그러면 pull된 행은 전부 insert됐어야 한다. [`cursor.ts`](./src/lib/sync/cursor.ts)도 정상이다
+(id를 숫자로 비교, ts 재포맷 없음). 즉 **커서가 앞질러 간 게 아니라, SQL이 애초에 4,607건을 안 가져왔다**는
+쪽이 유일하게 성립하는 설명이다.
+
+**1순위 용의자 — n8n ② 커서 노드의 fallback 날짜.**
+위 STEP 2-2는 fallback을 `2000-01-01T00:00:00Z`로 두라고 했는데, [`n8n/README.md`](./n8n/README.md)에는
+projects용 예시로 `2025-07-13T00:00:00Z`가 적혀 있다. **qna 워크플로가 이 값을 물려받았다면 그 이전 댓글이
+통째로 유실된다** — 커서는 정상 완주하고, skip도 0이고, 조용히 안 가져온다. 한 프로젝트의 댓글은 모집 시점에
+몰려 있으므로 "프로젝트 단위로 통째로 빈다"는 증상과도 일치한다.
+
+**판별 순서 (1번이 결정적):**
+
+1. **Neon에서 월별 분포부터 본다.**
+   ```sql
+   SELECT date_trunc('month', event_at) AS m, count(*)
+   FROM timeline_events WHERE source='qna' GROUP BY 1 ORDER BY 1;
+   ```
+   가장 이른 달이 2024-11이 아니라 2025-07쯤에서 뚝 시작하면 → **fallback 날짜 확정.**
+   고치는 건 n8n 노드 값 하나 + 커서 리셋 후 재실행. 독립 워크플로라 projects 재백필은 필요 없다.
+2. 분포가 2024-11부터 고르면 fallback은 무죄. 본진에서
+   [`qna_incremental.sql`](./n8n/qna_incremental.sql)의 JOIN 조건 그대로 `count(*)`를 세본다.
+   16,717이면 유실 없음(빈 프로젝트는 진짜 댓글 0건), 21,324면 pull 후 유실 → 라우트/노드를 다시 판다.
+3. 빈 프로젝트 3~4개를 본진에서 직접 조회해 댓글 유무·`date_created` 확인.
+
+> ⚠️ 어드민 카드에서 보던 "댓글"이 **매니저 코멘트**(`management_managenote`)라면 안 뜨는 게 정상이다
+> (아직 동기화 안 함). 이 버그와 무관.
+
 ### ① meeting_meeting 동기화 → 타임라인 채우기
 
 **상세 페이지 타임라인이 지금 완전히 비어 있다.** `timeline_events`가 0건이다.
@@ -197,10 +238,86 @@ SELECT count(*) FROM projects WHERE proposal_count > 0; -- 0이 아닌가
 
 **AI가 필요 없다. SQL만으로 된다.** 오늘 넣은 라이프사이클 날짜가 그 재료다.
 
-### ④ 특약(subcontracts) 미러링
+### ④ 특약(subcontracts) 미러링 — 계약 "내용"은 현재 한 글자도 없다
+
+지금 화면의 계약 정보는 `contractAmount` 칩(= `agreement_price` 총액) 하나뿐이다.
+`work_scope`/`work_detail`은 **가져오지도, 저장하지도, 렌더링하지도 않는다** — 코드 전체에서
+`sub_contract_subcontract`가 나오는 곳은 `projects_incremental.sql`의 `has_valid_agreement`
+EXISTS 서브쿼리 하나뿐이고, 거긴 "존재하냐"만 볼 뿐 컬럼을 SELECT하지 않는다.
+
+**가져올 것 (전부 순수 텍스트 컬럼 — 파서도 OCR도 필요 없다):**
+
+| 컬럼 | 내용 |
+|---|---|
+| `sub_contract_subcontract.work_scope` | 업무 범위 |
+| `sub_contract_subcontract.work_detail` | 업무 상세 |
+| `sub_contract_subcontract.total_price` / `date_contracted` | 특약별 금액·체결일 |
+| `milestone_milestone.title` / `price` / `tally_condition` | 차수별 과업·금액·검수조건 |
 
 계약 후 과업 팽창률. `agreement_price`는 총액이라 "5,300만 원계약 + 채팅 특약 500만"인지
 "5,800만 한 방"인지 구분이 안 된다. **이걸 아는 유일한 원천이 특약 행이다.**
+
+> **계약 첨부파일은 파싱하지 않는다 (2026-07-14 확정).** 위 컬럼이 계약 내용의 90%다.
+> `project_projectfile`은 S3 FileField라 signed URL 생성이 앱 레벨에 있어 n8n에서 못 뽑고,
+> PDF/HWP 파서까지 붙이면 5,993건 × 여러 파일로 비용이 급증한다. 상세 화면엔 어드민 링크만 건다.
+
+**같이 고칠 것 — `agreement_price` 서브쿼리 조건 불일치 (버그).**
+[`projects_incremental.sql`](./n8n/projects_incremental.sql)에서 금액은 `hide=0, date_deleted IS NULL`만
+걸고 `ORDER BY a.id DESC LIMIT 1`로 뽑는데, 바로 위 `has_valid_agreement`는 유효 특약
+(`is_incomplete_addon=0 AND is_cancel_addon=0`)까지 확인한다. **조건이 달라서, 한 프로젝트에 agreement가
+여러 개면 0원짜리 껍데기를 고를 수 있다.**
+→ 금액을 `agreement_price` 대신 **유효 특약의 `SUM(sc.total_price)`로 유도**하면 특약 증액이 자동 반영되어
+과업 팽창률이 덤으로 나온다.
+→ 집계 시 0/NULL은 분모에서 제외하고, **평균이 아니라 중앙값 + 사분위수**를 쓴다 (계약금액은 롱테일이라
+평균이 큰 건 몇 개에 끌려간다).
+
+### ⑤ 선정 파트너 (싸다 — 새 워크플로 불필요)
+
+`agreement_agreement.partner_id` → `partners_partners`에서 `grade`(prime/pro/boost), `rating`,
+`team_size`, `project_accepted`(누적 수주), `job_slug`. 이미 agreement를 스칼라 서브쿼리로 뽑고 있으니
+`projects_incremental.sql`에 몇 줄 추가하면 끝이다.
+
+**왜:** 지금 CaseLab은 "왜 깨졌나"를 프로젝트 속성으로만 본다. 원인의 절반은 파트너 쪽에 있다 —
+"팀 규모 1명 파트너가 붙은 고액 건의 완료율", "신규 파트너 vs prime 등급의 취소율"은 **AI 없이 SQL만으로**
+나온다.
+
+> **결과물(산출물)은 안 가져온다 (2026-07-14 확정).** 본진에 산출물 테이블 자체가 없다.
+> `project_projectfile`은 클라이언트가 올린 기획서/RFP지 파트너 납품물이 아니다. 원천이 없고 효용도 낮다.
+
+---
+
+### ⑥ 매니저 코멘트 — 비용은 병목이 아니다 (계산 완료 2026-07-14)
+
+"AI를 너무 많이 쓰는 것 아닌가"의 답: **계산해보면 안 많이 쓴다.**
+
+노트 129,000건 / 프로젝트 5,993개 = **프로젝트당 21건.** 핵심은 **노트당 1콜이 아니라 프로젝트당 1콜**이라는
+것 — 한 프로젝트의 노트 21개를 묶어 넣으면 콜은 129,000번이 아니라 5,993번이다.
+노트 평균 200토큰 가정 시 입력 ~29M / 출력 ~3.6M 토큰.
+
+| 모델 | 단가 (per MTok) | Batch API 50% 적용 |
+|---|---|---|
+| Haiku 4.5 | $1 / $5 | **~$25** (1회성 전량) |
+| Sonnet 5 | $3 / $15 (인트로 $2/$10, ~2026-08-31) | ~$50 |
+
+증분은 하루 수백 건이라 반올림하면 0. **진짜 병목은 품질과 스키마다.**
+
+**설계 원칙 — 요약이 아니라 추출로.** `{이슈유형, 발생단계, 원인태그, 심각도, 근거문장}` 고정 스키마로
+뽑아야 SQL 집계가 되고 "이 유형은 취소율 40%, 원인 1위는 예산 미확정" 같은 게 나온다. 자유 텍스트 요약은
+검색도 집계도 안 되는, 한 번 읽고 버리는 정보다.
+
+**그 전에 AI 0원 필터 (첫 액션은 SQL 한 줄):**
+```sql
+SELECT note_type, flag, count(*) FROM management_managenote GROUP BY 1,2 ORDER BY 3 DESC;
+```
+정산·행정(`flag` = `bill`/`deposit`/`remittance`)과 자동생성 추정(`note_type` = `history`/`checklist`)을
+빼면 129,000이 얼마로 줄어드는지부터 본다. 그다음 본문 앞 30자 `GROUP BY`로 빈발 정형문("확인했습니다" 등)
+상위 100개를 룰로 제거.
+
+**우선순위: ③(유사사례 집계 뷰)이 먼저다.** ③은 AI가 한 톨도 안 들어가고 SQL만으로 제품 핵심 가치를 낸다.
+매니저 노트는 그다음.
+
+> **관통 원칙:** 날짜·금액·상태·퍼널·계약률은 SQL이 더 정확하고 공짜 — AI를 쓰지 않는다.
+> AI는 SQL이 손도 못 대는 자연어(노트·Q&A·통화요약·공고문)에만, 그것도 고정 스키마 추출로.
 
 ---
 
@@ -212,6 +329,7 @@ SELECT count(*) FROM projects WHERE proposal_count > 0; -- 0이 아닌가
 | 2 | AI 프롬프트 검토 | 이슈 추출·리스크 태그·공고문 구조화·요약 |
 | 3 | **임베딩 제공자 선택** | 임베딩 (Anthropic은 임베딩 API가 없다 — 외부 제공자 필요) |
 | 4 | **공고문의 제3자 API 전송 승인** | 임베딩 |
+| 5 | **계약금액 0원 건의 정체 — 운영팀 확인 중** (예: project 154633) | 계약금액 집계·평균 (0은 분모에서 제외 예정) |
 
 > **3·4는 사용자가 집에서 생각해보고 답하기로 함 (2026-07-14).**
 > 4번 부연: 공고 원문 5,997건이 외부 임베딩 API로 나간다. 연락처는 `scrubPii`로 이미 제거됐지만
