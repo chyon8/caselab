@@ -21,19 +21,32 @@ SELECT
   -- 답글이 있으면 본문에 이어붙인다 (별도 이벤트로 쪼개지 않는다)
   (SELECT GROUP_CONCAT(r.body SEPARATOR '\n---\n')
      FROM comment_commentreply r
-    WHERE r.comment_id = c.id AND r.status = 1)    AS body,
+    WHERE r.comment_id = c.id)                     AS body,
 
   JSON_OBJECT(
     'by', (SELECT u.username FROM auth_user u WHERE u.id = c.user_id),
+    -- 비공개 여부를 화면에서 구분할 수 있게 넘긴다 (status: 0 비공개, 1 공개)
+    'is_private', IF(c.status = 0, TRUE, FALSE),
     'reply_count', (SELECT COUNT(*) FROM comment_commentreply r
-                     WHERE r.comment_id = c.id AND r.status = 1)
+                     WHERE r.comment_id = c.id)
   )                                                AS meta
 
 FROM comment_projectcomment c
 
+-- ⚠️ 백필 범위와 똑같이 좁힌다. 이 JOIN 이 없으면 CaseLab 에 없는 프로젝트의 댓글이 섞여 들어오고,
+--    수신 라우트는 skip 이 하나라도 있으면 커서를 세우지 않으므로(timeline/route.ts) 같은 배치를
+--    무한 재시도하며 한 건도 못 넣는다.
+JOIN project_project pp
+  ON pp.id = c.project_id
+ AND pp.date_start_recruitment >= '2024-11-11 00:00:00'
+ AND pp.status IN ('recruiting', 'close_recruiting', 'contracted', 'completed')
+ AND pp.project_type = 'task_based'
+
 WHERE
-  c.status = 1               -- 공개 댓글만 (0은 비공개)
-  AND c.project_id IS NOT NULL
+  -- ⚠️ status 로 거르지 않는다 (2026-07-14 결정). 개발사 댓글의 88%가 비공개(status=0)라
+  --    공개만 긁으면 "개발사가 뭘 묻는가"의 본체를 통째로 버린다. 비공개 여부는 meta.is_private
+  --    로 넘겨서 화면에서 구분한다.
+  c.project_id IS NOT NULL
   AND (
     c.date_created >  STR_TO_DATE('{{TS}}', '%Y-%m-%dT%H:%i:%sZ')
     OR (c.date_created = STR_TO_DATE('{{TS}}', '%Y-%m-%dT%H:%i:%sZ') AND c.id > {{ID}})

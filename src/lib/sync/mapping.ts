@@ -29,6 +29,11 @@ export interface RawProject {
   skills_slug: string | null;
   initial_budget: number | string | null;
   initial_term: number | null;
+  /** 개발/기획/디자인 등 — job_jobcategory.title_kor 를 콤마로 이어붙인 값 */
+  categories: string | null;
+  is_turnkey: number | boolean | null;
+  planning_status: string | null;
+  proposal_count: number | null;
 
   /** 아래는 조인으로 채워지는 값 (n8n 워크플로 상세 명세 — §5) */
   client_name?: string | null;
@@ -52,6 +57,11 @@ export interface MappedProject {
   title: string;
   client_name: string | null;
   category: string | null;
+  /** 개발 범위 — "개발,디자인,기획" 형태 */
+  dev_scope: string | null;
+  is_turnkey: boolean | null;
+  planning_status: string | null;
+  proposal_count: number | null;
   tech: string | null;
   budget: number | null;
   /** true면 budget은 총액이 아니라 월 단가 (기간제) */
@@ -180,6 +190,10 @@ export function mapProject(r: RawProject): MappedProject | null {
     title,
     client_name: r.client_name ?? null,
     category: r.category ?? null,
+    dev_scope: r.categories ?? null,
+    is_turnkey: r.is_turnkey == null ? null : truthy(r.is_turnkey),
+    planning_status: r.planning_status ?? null,
+    proposal_count: r.proposal_count ?? null,
     tech: r.skills_slug,
     budget: num(r.budget),
     budget_monthly: isMonthlyBudget(r.term_type),

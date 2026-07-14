@@ -9,8 +9,13 @@
 --   → 전송 구간은 전부 UTC. KST 변환은 CaseLab 화면에서만 한다.
 --
 -- 커서 주입 (n8n 표현식):
---   {{TS}} = $('cursor').item.json.ts || '2025-07-13T00:00:00Z'   ← 최초 실행 = 1년 전
+--   {{TS}} = $('cursor').item.json.ts || '2000-01-01T00:00:00Z'
 --   {{ID}} = $('cursor').item.json.id || 0
+--
+--   ⚠️ 커서는 date_modified 기준인데 대상 범위는 date_start_recruitment 기준이다.
+--      서로 다른 컬럼이므로 커서 초기값을 2024-11-11 로 맞추면 안 된다. 모집 전환은
+--      2024-11-11 이후인데 date_modified 가 그보다 앞선 행이 조용히 스킵된다.
+--      범위는 아래 WHERE 절이 잡으므로 커서 초기값은 충분히 과거로 둔다.
 
 SELECT
   pp.id,
@@ -25,6 +30,15 @@ SELECT
   pp.is_rejected,
   pp.management_hide,
   pp.skills_slug,
+  pp.is_turnkey,
+  pp.planning_status,
+  pp.proposal_count,        -- 퍼널 1단. ⚠️ 지원자가 늘어도 date_modified 가 안 바뀌면 낡는다
+
+  -- 개발 범위 (개발/기획/디자인 등 복수) — M:N 이라 스칼라 서브쿼리로 이어붙인다
+  (SELECT GROUP_CONCAT(jc.title_kor ORDER BY jc.seq_num SEPARATOR ',')
+     FROM project_project_categories ppc
+     JOIN job_jobcategory jc ON jc.id = ppc.jobcategory_id
+    WHERE ppc.project_id = pp.id) AS categories,
 
   -- 커서 및 상태 판정용 날짜 — 전부 UTC ISO, CONVERT_TZ 금지
   DATE_FORMAT(pp.date_modified,          '%Y-%m-%dT%H:%i:%sZ') AS date_modified,
@@ -92,8 +106,14 @@ WHERE
     pp.date_modified >  STR_TO_DATE('{{TS}}', '%Y-%m-%dT%H:%i:%sZ')
     OR (pp.date_modified = STR_TO_DATE('{{TS}}', '%Y-%m-%dT%H:%i:%sZ') AND pp.id > {{ID}})
   )
-  -- 등록 전 단계는 동기화 대상이 아니다 (§2-7)
-  AND pp.status NOT IN ('open', 'saved', 'frozen')
+  -- 대상 범위 (2026-07-14 확정): 2024-11-11 이후 모집 전환된 외주 프로젝트
+  --   · date_start_recruitment — 모집중으로 넘어간 시점. 등록일(date_created)이 아니다.
+  --   · status — 검수중(submitted)은 아직 모집 전환에 실패한 건이므로 제외.
+  --              등록 전 단계(open/saved/frozen)도 자연히 빠진다.
+  --   · project_type — 기간제(term_based) 제외, 외주(task_based)만.
+  AND pp.date_start_recruitment >= '2024-11-11 00:00:00'
+  AND pp.status IN ('recruiting', 'close_recruiting', 'contracted', 'completed')
+  AND pp.project_type = 'task_based'
   -- 핫엣지 가드: 지금 이 순간 커밋 중인 행과 같은 초의 date_modified 를 커서가
   -- 지나쳐 버리면 그 행은 영원히 누락된다. 최신 2분은 읽지 않는다 (다음 주기에 잡힘)
   AND pp.date_modified < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 2 MINUTE)
@@ -101,4 +121,7 @@ WHERE
   --    삭제된 행도 가져와야 CaseLab 에 deleted_at 을 마킹할 수 있다 (§5)
 
 ORDER BY pp.date_modified ASC, pp.id ASC
-LIMIT 500;
+-- ⚠️ 500 으로 올리지 않는다. description 은 최대 5,000자이고 한글은 UTF-8 에서 3바이트라
+--    긴 공고가 몰린 배치는 500 × 15KB = 7.5MB 로 Vercel 한도(4.5MB)를 넘긴다. 그러면
+--    커서가 전진하지 못해 같은 배치를 무한 재시도하며 백필이 그 자리에 멈춘다.
+LIMIT 200;
