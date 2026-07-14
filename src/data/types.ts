@@ -53,8 +53,13 @@ export interface IssueLogEntry {
 
 export interface QnaItem {
   q: string;
+  /** 답글. 여러 개면 이어붙여서 온다. 아직 답이 없으면 null */
+  a?: string | null;
   by: string;
+  /** 작성일 (M-D) */
   at: string;
+  /** 클라이언트에게만 보이던 비공개 문의 — 개발사 댓글의 88%가 여기 해당한다 */
+  isPrivate?: boolean;
 }
 
 export interface TimelineEvent {

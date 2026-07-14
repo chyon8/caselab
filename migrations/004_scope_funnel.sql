@@ -5,9 +5,9 @@
 -- planning_status: 보유 기획 자료 수준 (idea/detail/document)
 -- proposal_count : 지원자 수 — 퍼널의 첫 단계
 --
--- ⚠️ proposal_count 는 낡을 수 있다. 지원자가 새로 들어와도 본진 project_project.date_modified 가
---    바뀌지 않으면 증분 동기화가 그 행을 다시 가져오지 않는다. 정확한 퍼널이 필요해지면
---    proposal_proposal 을 별도 동기화해서 CaseLab 에서 직접 세야 한다.
+-- proposal_count 는 증분 동기화로 따라온다. 2026-07-14 본진 실측 결과, 지원이 들어오면
+-- project_project.date_modified 도 갱신된다 (5,853/5,920 = 98.9%). 나머지 1.1%는 방금 지원이
+-- 들어온 모집중 건으로, 다음 수정 때 따라잡힌다. proposal_proposal 별도 동기화는 필요 없다.
 
 ALTER TABLE projects
   ADD COLUMN IF NOT EXISTS dev_scope       TEXT,

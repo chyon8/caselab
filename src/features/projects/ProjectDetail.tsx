@@ -394,8 +394,10 @@ export default function ProjectDetail({ project: p }: { project: ProjectFull }) 
                 <span className={styles["q-mark"]}>Q</span>
                 <div className={styles["issue-body"]}>
                   <div className={styles["qna-q"]}>{q.q}</div>
+                  {q.a && <div className={styles["qna-a"]}>{q.a}</div>}
                   <div className={styles["qna-by"]}>
-                    {q.by} · {q.at} 단계
+                    {q.by} · {q.at}
+                    {q.isPrivate && <span className={styles["qna-private"]}>비공개</span>}
                   </div>
                 </div>
               </div>

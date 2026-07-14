@@ -215,8 +215,8 @@ export const MOCK_PROJECTS: ProjectFull[] = [
       ],
     },
     qna: [
-      { q: "서버는 어떻게 증설 예정이신가요?", by: "개발사 A", at: "모집" },
-      { q: "기존 사내 시스템과의 연동 범위가 어디까지인가요?", by: "개발사 B", at: "모집" },
+      { q: "서버는 어떻게 증설 예정이신가요?", a: "AWS 오토스케일링 적용 예정입니다.", by: "개발사 A", at: "05-26" },
+      { q: "기존 사내 시스템과의 연동 범위가 어디까지인가요?", by: "개발사 B", at: "05-27", isPrivate: true },
     ],
     timeline: [
       { stage: "검수", date: "05-02", title: "검수 완료", desc: "유사 사례 3건 검토 후 상담 진행" },
@@ -309,7 +309,7 @@ export const MOCK_PROJECTS: ProjectFull[] = [
       { type: "법무·보안", date: "06-26", src: "사전 미팅 1차 — 개발사 E", text: "의료법상 병원 상담·예약 정보의 개인정보 처리 위탁 범위 — 법무 검토가 계약 전에 선행되어야 한다는 의견" },
     ],
     riskTags: ["개인정보"],
-    qna: [{ q: "기존 EMR과의 연동이 필요한가요?", by: "개발사 E", at: "모집" }],
+    qna: [{ q: "기존 EMR과의 연동이 필요한가요?", by: "개발사 E", at: "06-24" }],
     timeline: [
       { stage: "검수", date: "06-10", title: "검수 완료", desc: "유사 병원 플랫폼 사례 1건 참고" },
       { stage: "모집", date: "06-24", title: "공고 게시", desc: "개발사 Q&A 1건 수집" },

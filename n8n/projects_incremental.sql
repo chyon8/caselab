@@ -33,7 +33,7 @@ SELECT
   pp.skills_slug,
   pp.is_turnkey,
   pp.planning_status,
-  pp.proposal_count,        -- 퍼널 1단. ⚠️ 지원자가 늘어도 date_modified 가 안 바뀌면 낡는다
+  pp.proposal_count,        -- 퍼널 1단. 지원이 들어오면 date_modified 도 갱신된다 (2026-07-14 실측: 98.9%)
 
   -- 개발 범위 (개발/기획/디자인 등 복수) — M:N 이라 스칼라 서브쿼리로 이어붙인다
   (SELECT GROUP_CONCAT(jc.title_kor ORDER BY jc.seq_num SEPARATOR ',')

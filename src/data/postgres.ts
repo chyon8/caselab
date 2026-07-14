@@ -61,7 +61,15 @@ interface TimelineRow {
   stage: string | null;
   title: string | null;
   body: string | null;
-  meta: { field?: string; before?: unknown; after?: unknown; by?: string; at_stage?: string } | null;
+  meta: {
+    field?: string;
+    before?: unknown;
+    after?: unknown;
+    by?: string;
+    at_stage?: string;
+    /** qna 전용 — 클라이언트에게만 보이던 비공개 문의 */
+    is_private?: boolean;
+  } | null;
 }
 
 interface CallRow {
@@ -154,9 +162,11 @@ function toTimelineEvent(r: TimelineRow): TimelineEvent {
 
 function toQna(r: TimelineRow): QnaItem {
   return {
-    q: r.title ?? r.body ?? "",
+    q: r.title ?? "",
+    a: r.body ?? null, // 답글 — 없으면 아직 아무도 답하지 않은 문의다
     by: r.meta?.by ?? "",
-    at: r.meta?.at_stage ?? r.stage ?? "",
+    at: formatMonthDay(r.event_at),
+    isPrivate: r.meta?.is_private === true,
   };
 }
 
