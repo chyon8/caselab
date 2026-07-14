@@ -5,6 +5,93 @@
 
 ---
 
+# 🔴 내일(7/15) 아침 첫 작업 — 계약 업무범위 실물 확인
+
+> **이 세션을 이어받은 Claude에게: 다른 얘기보다 이것부터 꺼낸다. 사용자가 최우선으로 지정했다.**
+> Q&A 유실 버그(아래 ⓪)보다 **앞선다.**
+
+## 왜 이게 1번인가
+
+CaseLab의 핵심 질문은 "공고와 계약이 어떻게 달라졌나 / 계약에서 실제로 무슨 일이 있었나"인데,
+**그 원천을 지금 한 글자도 안 가져오고 있다.** 저장 안 하는 게 아니라 **SELECT조차 안 한다.**
+
+본진에서 가져오는 계약 컬럼은 [`projects_incremental.sql`](./n8n/projects_incremental.sql) 기준 딱 4개:
+`agreement.id` · `agreement_price` · `date_start_progress` · `date_completed`.
+`sub_contract_subcontract`는 `EXISTS(...)`로 존재 여부만 보고 컬럼을 안 읽는다.
+`milestone_milestone`은 SQL에 **한 번도 안 나온다.** Postgres `projects` 테이블에도 해당 컬럼이 없다.
+
+그래서 현재 "공고 vs 계약" 비교는 **숫자뿐**이다 — `initial_budget` vs `budget`,
+`initial_term_days` vs `term_days`, [`postgres.ts:334`](./src/data/postgres.ts#L334)의
+`contract_amount` vs `budget`. **"무엇을 하기로 했는지"는 비교 대상 자체가 없다.**
+공고 원문(`posting_raw`)은 저장돼 있는데 짝이 되는 계약서 업무범위가 없어 비교가 성립하지 않는다.
+
+[DATA_INTEGRATION.md §5](./DATA_INTEGRATION.md)는 이미 특약을 *"scope 팽창 인사이트의 **1차 데이터**"* 로
+못박아 뒀다. **설계엔 있었고 구현만 빠졌다.**
+
+## 모르는 것 (지어내지 말 것)
+
+`work_scope`에 대해 확보된 정보는 [DATA_SCHEMA.md](./DATA_SCHEMA.md)의 한 줄뿐이다 — `work_scope | text | 업무 범위`.
+**길이·형식(자유서술/불릿/템플릿)·실제 채움 비율 전부 모른다.** 한 줄짜리 "웹사이트 개발"이면 공고 대비 분석이
+불가능하고, 계약서 본문 수준이면 AI 없이 diff만으로도 된다. **이걸 모르면 설계를 시작할 수 없다.**
+
+## 아침에 본진(사내망)에서 이것부터 돌린다
+
+**① 채워져 있기는 한가 — 전체 분포**
+
+```sql
+SELECT count(*) AS total,
+       count(sc.work_scope)  AS scope_notnull,
+       count(sc.work_detail) AS detail_notnull,
+       round(avg(CHAR_LENGTH(sc.work_scope)))  AS avg_scope_len,
+       round(avg(CHAR_LENGTH(sc.work_detail))) AS avg_detail_len,
+       max(CHAR_LENGTH(sc.work_detail))        AS max_detail_len
+FROM sub_contract_subcontract sc
+JOIN agreement_agreement a  ON a.id = sc.agreement_id
+JOIN project_project      pp ON pp.id = a.project_id
+WHERE pp.date_start_recruitment >= '2024-11-11' AND pp.project_type = 'task_based';
+```
+
+**② 실물 샘플 — 뭐가 들어 있나**
+
+```sql
+SELECT sc.id, sc.agreement_id, a.project_id,
+       sc.is_incomplete_addon, sc.is_cancel_addon,
+       sc.total_price, sc.date_contracted,
+       CHAR_LENGTH(sc.work_scope)  AS scope_len,
+       CHAR_LENGTH(sc.work_detail) AS detail_len,
+       LEFT(sc.work_scope, 300)    AS scope_sample,
+       LEFT(sc.work_detail, 300)   AS detail_sample
+FROM sub_contract_subcontract sc
+JOIN agreement_agreement a ON a.id = sc.agreement_id
+WHERE a.project_id IN (154633, 156821)
+ORDER BY a.project_id, sc.id;
+```
+
+**③ 마일스톤 — "계약대로 갔나, 며칠 밀렸나"의 원천**
+
+스키마상 **계약상 예정일과 실제일이 둘 다** 있다. 뺄셈만으로 나오고 AI가 필요 없다.
+`contract_date_*`(계약서상 예정) / `manage_date_*`(매니저 조정) / `date_client_payment`·`date_start`·`date_tally`·`date_end`(**실제**).
+
+```sql
+SELECT m.contract_id, m.title, m.price, m.work_period, m.tally_period,
+       m.contract_date_start, m.contract_date_end,
+       m.date_start, m.date_tally, m.date_end,
+       LEFT(m.tally_condition, 200) AS tally_sample
+FROM milestone_milestone m
+JOIN sub_contract_subcontract sc ON sc.id = m.contract_id
+JOIN agreement_agreement a       ON a.id = sc.agreement_id
+WHERE a.project_id IN (154633, 156821)
+ORDER BY a.project_id, m.id;
+```
+
+## 결과가 나오면
+
+샘플을 보고 **그때** 가져올 컬럼·저장 스키마(`subcontracts` 테이블 신설 여부)·화면 표시를 짠다.
+아래 [④ 특약 미러링](#④-특약subcontracts-미러링--계약-내용은-현재-한-글자도-없다) 섹션에 사전 조사 내용이 있다.
+**샘플 없이 스키마부터 만들지 않는다.**
+
+---
+
 ## 가져올 것 (2026-07-14 확정)
 
 | 대상 | 건수 | 워크플로 SQL | 수신 |
@@ -156,7 +243,7 @@ SELECT count(*) FROM projects WHERE proposal_count > 0; -- 0이 아닌가
 
 ## 다음
 
-### ⓪ 🔴 Q&A 댓글 유실 — 이것부터 (2026-07-14 저녁 발견)
+### ⓪ Q&A 댓글 유실 (2026-07-14 저녁 발견) — 맨 위 "계약 업무범위 실물 확인" **다음**
 
 **증상:** 백필 후 여러 프로젝트의 Q&A가 통째로 비어 있다 (예: project 156821, 그 외 다수).
 프로젝트 자체는 목록에 정상적으로 뜬다.
