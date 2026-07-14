@@ -29,7 +29,11 @@ const PLANNING_LABEL: Record<string, string> = {
 
 /**
  * 스테퍼 아래 한 줄 — 단계별 소요일.
- * 아직 도달하지 않은 단계는 아예 빼버린다. "0일"로 표시하면 "빨리 끝났다"로 읽힌다.
+ *
+ * 아직 도달하지 않은 단계(null)와 **0일 구간은 표시하지 않는다.**
+ * 실데이터에서 검수의 74%가 0일(당일 통과)이라, 0을 찍으면 4,465건에 정보 없는 줄이 붙는다.
+ * 0일은 소요 시간이 아니라 "즉시 통과"라는 뜻이므로 빼는 게 맞다 —
+ * 그래야 "검수 21일"처럼 실제로 지연된 건만 눈에 띈다.
  */
 function durationSpans(p: Project): { label: string; days: number }[] {
   const d = p.durations;
@@ -42,7 +46,7 @@ function durationSpans(p: Project): { label: string; days: number }[] {
     [canceled ? "취소까지" : "총 기간", d.total],
   ];
   return rows
-    .filter((r): r is [string, number] => r[1] !== null)
+    .filter((r): r is [string, number] => r[1] !== null && r[1] > 0)
     .map(([label, days]) => ({ label, days }));
 }
 
