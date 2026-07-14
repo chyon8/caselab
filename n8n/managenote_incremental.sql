@@ -8,9 +8,8 @@
 -- ⚠️ PII: 매니저 노트 본문에는 고객 연락처가 자주 박혀 있다. 수신 라우트가 저장 전에 스크럽한다
 --    (scrubPii — 전화·이메일·주민번호). 작성자는 사내 직원이므로 실명을 가져온다.
 --
--- 커서 주입 (n8n 표현식) — source 는 'managenote':
---   {{TS}} = $('cursor').item.json.ts || '2000-01-01T00:00:00Z'
---   {{ID}} = $('cursor').item.json.id || 0
+-- 커서는 아래 WHERE 절에 n8n 표현식으로 박아뒀다. 그대로 복사해 ③ 조회 노드에 붙여넣으면 된다.
+--   전제: 앞 노드 이름이 'cursor' 이고 GET /api/sync/cursor?source=managenote 를 호출한다
 --
 --   커서는 date_created 기준이다. managenote 에는 date_modified 가 없어서, 이미 가져온 노트를
 --   나중에 수정해도 다시 받지 않는다 (qna 와 같은 한계).
@@ -50,8 +49,9 @@ WHERE
   AND n.note_type = 'memo'
   AND n.flag IN ('normal', 'notice')
   AND (
-    n.date_created >  STR_TO_DATE('{{TS}}', '%Y-%m-%dT%H:%i:%sZ')
-    OR (n.date_created = STR_TO_DATE('{{TS}}', '%Y-%m-%dT%H:%i:%sZ') AND n.id > {{ID}})
+    n.date_created >  STR_TO_DATE('{{ $("cursor").first().json.ts || "2000-01-01T00:00:00Z" }}', '%Y-%m-%dT%H:%i:%sZ')
+    OR (n.date_created = STR_TO_DATE('{{ $("cursor").first().json.ts || "2000-01-01T00:00:00Z" }}', '%Y-%m-%dT%H:%i:%sZ')
+        AND n.id > {{ $("cursor").first().json.id || 0 }})
   )
   AND n.date_created < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 2 MINUTE)   -- 핫엣지 가드
 

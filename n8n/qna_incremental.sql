@@ -7,9 +7,8 @@
 --
 -- ⚠️ PII: 작성자는 실명이 아니라 계정명만 가져온다. 이메일·전화번호는 SELECT하지 않는다.
 --
--- 커서 주입 (n8n 표현식) — source는 'qna':
---   {{TS}} = $('cursor').item.json.ts || '2025-07-13T00:00:00Z'
---   {{ID}} = $('cursor').item.json.id || 0
+-- 커서는 아래 WHERE 절에 n8n 표현식으로 박아뒀다. 그대로 복사해 ③ 조회 노드에 붙여넣으면 된다.
+--   전제: 앞 노드 이름이 'cursor' 이고 GET /api/sync/cursor?source=qna 를 호출한다 (source 가 projects 아님)
 
 SELECT
   c.project_id,
@@ -48,8 +47,9 @@ WHERE
   --    로 넘겨서 화면에서 구분한다.
   c.project_id IS NOT NULL
   AND (
-    c.date_created >  STR_TO_DATE('{{TS}}', '%Y-%m-%dT%H:%i:%sZ')
-    OR (c.date_created = STR_TO_DATE('{{TS}}', '%Y-%m-%dT%H:%i:%sZ') AND c.id > {{ID}})
+    c.date_created >  STR_TO_DATE('{{ $("cursor").first().json.ts || "2000-01-01T00:00:00Z" }}', '%Y-%m-%dT%H:%i:%sZ')
+    OR (c.date_created = STR_TO_DATE('{{ $("cursor").first().json.ts || "2000-01-01T00:00:00Z" }}', '%Y-%m-%dT%H:%i:%sZ')
+        AND c.id > {{ $("cursor").first().json.id || 0 }})
   )
   AND c.date_created < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 2 MINUTE)   -- 핫엣지 가드
 

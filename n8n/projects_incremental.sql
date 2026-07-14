@@ -8,14 +8,15 @@
 --   MySQL이 다시 읽을 때는 STR_TO_DATE 로 명시적으로 파싱한다.
 --   → 전송 구간은 전부 UTC. KST 변환은 CaseLab 화면에서만 한다.
 --
--- 커서 주입 (n8n 표현식):
---   {{TS}} = $('cursor').item.json.ts || '2000-01-01T00:00:00Z'
---   {{ID}} = $('cursor').item.json.id || 0
+-- 커서는 아래 WHERE 절에 n8n 표현식으로 박아뒀다. 이 파일을 그대로 복사해서
+-- ③ 조회 노드의 body(표현식 모드)에 붙여넣으면 된다. 손댈 곳 없다.
+--   전제: 커서를 물어오는 앞 노드의 이름이 'cursor' 여야 한다 (GET /api/sync/cursor?source=projects).
+--         노드 이름이 다르면 $("cursor") 안의 이름을 바꾼다.
 --
---   ⚠️ 커서는 date_modified 기준인데 대상 범위는 date_start_recruitment 기준이다.
---      서로 다른 컬럼이므로 커서 초기값을 2024-11-11 로 맞추면 안 된다. 모집 전환은
---      2024-11-11 이후인데 date_modified 가 그보다 앞선 행이 조용히 스킵된다.
---      범위는 아래 WHERE 절이 잡으므로 커서 초기값은 충분히 과거로 둔다.
+--   ⚠️ 커서 초기값이 2000-01-01 인 이유: 커서는 date_modified 기준인데 대상 범위는
+--      date_start_recruitment 기준이다. 서로 다른 컬럼이므로 커서 초기값을 2024-11-11 로
+--      맞추면, 모집 전환은 2024-11-11 이후인데 date_modified 가 그보다 앞선 행이 조용히
+--      스킵된다. 범위는 아래 WHERE 절이 잡으므로 커서는 충분히 과거로 둔다.
 
 SELECT
   pp.id,
@@ -103,8 +104,9 @@ LEFT JOIN project_projectinitialvalue iv ON iv.project_id = pp.id
 WHERE
   -- 복합 커서: 같은 date_modified 가 배치 경계에 걸려도 행을 놓치지 않는다
   (
-    pp.date_modified >  STR_TO_DATE('{{TS}}', '%Y-%m-%dT%H:%i:%sZ')
-    OR (pp.date_modified = STR_TO_DATE('{{TS}}', '%Y-%m-%dT%H:%i:%sZ') AND pp.id > {{ID}})
+    pp.date_modified >  STR_TO_DATE('{{ $("cursor").first().json.ts || "2000-01-01T00:00:00Z" }}', '%Y-%m-%dT%H:%i:%sZ')
+    OR (pp.date_modified = STR_TO_DATE('{{ $("cursor").first().json.ts || "2000-01-01T00:00:00Z" }}', '%Y-%m-%dT%H:%i:%sZ')
+        AND pp.id > {{ $("cursor").first().json.id || 0 }})
   )
   -- 대상 범위 (2026-07-14 확정): 2024-11-11 이후 모집 전환된 외주 프로젝트
   --   · date_start_recruitment — 모집중으로 넘어간 시점. 등록일(date_created)이 아니다.
