@@ -317,6 +317,32 @@
   background: var(--color-rule);
 }
 
+/* 스테퍼 아래 단계별 소요일 */
+.span-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  margin: -8px 8px 24px;
+}
+
+.span {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.span-label {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.span-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ===== 예산 카드 · 취소 ===== */
 .budget-grid {
   display: grid;

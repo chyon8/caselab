@@ -27,6 +27,25 @@ const PLANNING_LABEL: Record<string, string> = {
   document: "기획서 보유",
 };
 
+/**
+ * 스테퍼 아래 한 줄 — 단계별 소요일.
+ * 아직 도달하지 않은 단계는 아예 빼버린다. "0일"로 표시하면 "빨리 끝났다"로 읽힌다.
+ */
+function durationSpans(p: Project): { label: string; days: number }[] {
+  const d = p.durations;
+  if (!d) return [];
+  const canceled = p.status === "완료(취소)";
+  const rows: [string, number | null][] = [
+    ["검수", d.inspection],
+    ["모집·계약", d.recruiting],
+    ["진행", d.progress],
+    [canceled ? "취소까지" : "총 기간", d.total],
+  ];
+  return rows
+    .filter((r): r is [string, number] => r[1] !== null)
+    .map(([label, days]) => ({ label, days }));
+}
+
 /** 제목 아래 한 줄 — 개발 범위·턴키·기획자료·지원자 수 */
 function specChips(p: Project): string[] {
   const chips = [...(p.devScope ?? [])];
@@ -55,6 +74,7 @@ export default function ProjectDetail({ project: p }: { project: ProjectFull }) 
   const isDone = p.status.startsWith("완료");
   const posting = p.intake.posting;
   const specs = specChips(p);
+  const spans = durationSpans(p);
 
   const toggleCheck = (i: number) => {
     setDraftChecks((c) => c.map((v, idx) => (idx === i ? !v : v)));
@@ -169,6 +189,17 @@ export default function ProjectDetail({ project: p }: { project: ProjectFull }) 
           );
         })}
       </div>
+
+      {spans.length > 0 && (
+        <div className={styles["span-row"]}>
+          {spans.map((s) => (
+            <div key={s.label} className={styles.span}>
+              <span className={styles["span-label"]}>{s.label}</span>
+              <span className={styles["span-value"]}>{s.days}일</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className={styles["posting-accordion"]}>
         <button

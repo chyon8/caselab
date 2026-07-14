@@ -1,6 +1,7 @@
 import { query } from "@/lib/db";
 import { managerName } from "@/lib/managers";
 import {
+  daysBetween,
   daysSince,
   formatDays,
   formatMonthDay,
@@ -46,6 +47,10 @@ interface ProjectRow {
   cancel_stage: string | null;
   cancel_reason: string | null;
   submitted_at: Date | null;
+  recruit_started_at: Date | null;
+  progress_started_at: Date | null;
+  completed_at: Date | null;
+  cancelled_at: Date | null;
   source_modified_at: Date | null;
   /** 아래는 상세(DETAIL_COLUMNS)에서만 조회된다 — 목록에서는 undefined */
   posting_raw?: string | null;
@@ -88,7 +93,9 @@ const LIST_COLUMNS = `
   p.id, p.title, p.client_name, p.category, p.tech, p.budget, p.budget_monthly, p.term_days,
   p.dev_scope, p.is_turnkey, p.planning_status, p.proposal_count,
   p.status, p.stage, p.inspection_manager, p.agreement_id, p.contract_amount, p.contract_term_days,
-  p.cancel_stage, p.cancel_reason, p.submitted_at, p.source_modified_at,
+  p.cancel_stage, p.cancel_reason,
+  p.submitted_at, p.recruit_started_at, p.progress_started_at, p.completed_at, p.cancelled_at,
+  p.source_modified_at,
   ai.risk_tags
 `;
 
@@ -192,6 +199,13 @@ function toProject(row: ProjectRow): Project {
     submittedAt: row.submitted_at ? formatMonthDay(row.submitted_at) : "-",
     daysAgo: daysSince(row.source_modified_at),
     submittedDaysAgo: row.submitted_at ? daysSince(row.submitted_at) : null,
+    durations: {
+      inspection: daysBetween(row.submitted_at, row.recruit_started_at),
+      recruiting: daysBetween(row.recruit_started_at, row.progress_started_at),
+      progress: daysBetween(row.progress_started_at, row.completed_at),
+      // 취소된 프로젝트는 완료일이 없다 — 취소 시점까지를 총 기간으로 본다
+      total: daysBetween(row.submitted_at, row.completed_at ?? row.cancelled_at),
+    },
     contractAmount: formatWon(row.contract_amount),
     contractPeriod: formatDays(row.contract_term_days),
     agreementId: row.agreement_id,

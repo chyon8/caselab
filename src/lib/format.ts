@@ -75,3 +75,15 @@ export function daysSince(v: Date | string | null | undefined): number {
   const ms = Date.now() - d.getTime();
   return Math.max(0, Math.floor(ms / 86_400_000));
 }
+
+/** 두 시점 사이의 일수. 한쪽이라도 없으면 null — "0일"과 "모름"은 다르다 */
+export function daysBetween(
+  from: Date | string | null | undefined,
+  to: Date | string | null | undefined,
+): number | null {
+  const a = toDate(from);
+  const b = toDate(to);
+  if (!a || !b) return null;
+  const days = Math.floor((b.getTime() - a.getTime()) / 86_400_000);
+  return days < 0 ? null : days; // 순서가 뒤집힌 데이터는 신뢰하지 않는다
+}

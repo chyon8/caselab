@@ -88,6 +88,17 @@ export interface Project {
   daysAgo: number;
   /** 검수 시작(date_submitted) 후 경과일 — 기간 필터의 기준. 검수 기록이 없으면 null */
   submittedDaysAgo?: number | null;
+  /** 단계별 소요일. 아직 그 단계에 도달하지 않았거나 원본 날짜가 없으면 null */
+  durations?: {
+    /** 검수 시작 → 모집 전환 */
+    inspection: number | null;
+    /** 모집 전환 → 진행 착수 (계약 협상 포함) */
+    recruiting: number | null;
+    /** 진행 착수 → 완료 */
+    progress: number | null;
+    /** 검수 시작 → 완료 또는 취소 */
+    total: number | null;
+  };
   contractAmount: string | null;
   contractPeriod: string | null;
   /** 계약 어드민 링크용 — 프로젝트 id와 다른 PK. 계약 전이면 null */
