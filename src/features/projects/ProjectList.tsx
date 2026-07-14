@@ -105,7 +105,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
   };
 
   const matches = (p: Project, withStatus: boolean) => {
-    if (q && !(p.name + p.client + p.tech + p.cat).includes(q)) return false;
+    if (q && !(p.name + p.client + p.tech + p.cat + p.id).includes(q)) return false;
     if (withStatus && statusFilter !== "전체" && p.status !== statusFilter) return false;
     if (!matchesManager(p.manager, managerFilter)) return false;
     // 검수 시작 기준. 검수 기록이 없는 건은 기간을 좁히면 빠진다 (판단 근거가 없으므로)
