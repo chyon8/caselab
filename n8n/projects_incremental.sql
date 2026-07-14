@@ -43,6 +43,7 @@ SELECT
 
   -- 커서 및 상태 판정용 날짜 — 전부 UTC ISO, CONVERT_TZ 금지
   DATE_FORMAT(pp.date_modified,          '%Y-%m-%dT%H:%i:%sZ') AS date_modified,
+  DATE_FORMAT(pp.date_submitted,         '%Y-%m-%dT%H:%i:%sZ') AS date_submitted,
   DATE_FORMAT(pp.date_start_recruitment, '%Y-%m-%dT%H:%i:%sZ') AS date_start_recruitment,
   DATE_FORMAT(pp.date_cancelled,         '%Y-%m-%dT%H:%i:%sZ') AS date_cancelled,
   DATE_FORMAT(pp.date_rejected,          '%Y-%m-%dT%H:%i:%sZ') AS date_rejected,
@@ -126,4 +127,4 @@ ORDER BY pp.date_modified ASC, pp.id ASC
 -- ⚠️ 500 으로 올리지 않는다. description 은 최대 5,000자이고 한글은 UTF-8 에서 3바이트라
 --    긴 공고가 몰린 배치는 500 × 15KB = 7.5MB 로 Vercel 한도(4.5MB)를 넘긴다. 그러면
 --    커서가 전진하지 못해 같은 배치를 무한 재시도하며 백필이 그 자리에 멈춘다.
-LIMIT 200;
+LIMIT 400;

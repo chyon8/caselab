@@ -31,11 +31,14 @@ const PAGE_BLOCK = 10;
 /** 칸반 컬럼당 렌더링할 카드 수 — 전부 그리면 카드 수천 개가 DOM에 쌓인다 */
 const KANBAN_PAGE = 30;
 
+/** 기준은 검수 시작일(date_submitted)이다 — 본진 최종 수정일이 아니다 */
 const PERIOD_OPTIONS = [
-  { value: "전체", label: "기간 전체" },
-  { value: "오늘", label: "오늘" },
-  { value: "1주일", label: "최근 1주일" },
-  { value: "1개월", label: "최근 1개월" },
+  { value: "전체", label: "검수 기간 전체" },
+  { value: "1주일", label: "검수 최근 1주일" },
+  { value: "1개월", label: "검수 최근 1개월" },
+  { value: "3개월", label: "검수 최근 3개월" },
+  { value: "6개월", label: "검수 최근 6개월" },
+  { value: "1년", label: "검수 최근 1년" },
 ];
 import st from "./status.module.css";
 import { KANBAN_STATUSES, STATUS_KEY, statusLabel } from "./status";
@@ -43,9 +46,11 @@ import styles from "./ProjectList.module.css";
 
 const PERIOD_MAX: Record<string, number> = {
   전체: Infinity,
-  오늘: 0,
   "1주일": 7,
   "1개월": 30,
+  "3개월": 90,
+  "6개월": 180,
+  "1년": 365,
 };
 
 export default function ProjectList({ projects }: { projects: Project[] }) {
@@ -75,7 +80,10 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
     if (q && !(p.name + p.client + p.tech + p.cat).includes(q)) return false;
     if (withStatus && statusFilter !== "전체" && p.status !== statusFilter) return false;
     if (!matchesManager(p.manager, managerFilter)) return false;
-    if (p.daysAgo > periodMax) return false;
+    // 검수 시작 기준. 검수 기록이 없는 건은 기간을 좁히면 빠진다 (판단 근거가 없으므로)
+    if (periodMax !== Infinity && (p.submittedDaysAgo == null || p.submittedDaysAgo > periodMax)) {
+      return false;
+    }
     if (starredOnly && !app.starred[p.id]) return false;
     return true;
   };

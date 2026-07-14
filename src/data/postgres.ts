@@ -45,6 +45,7 @@ interface ProjectRow {
   contract_term_days: number | null;
   cancel_stage: string | null;
   cancel_reason: string | null;
+  submitted_at: Date | null;
   source_modified_at: Date | null;
   /** 아래는 상세(DETAIL_COLUMNS)에서만 조회된다 — 목록에서는 undefined */
   posting_raw?: string | null;
@@ -79,7 +80,7 @@ const LIST_COLUMNS = `
   p.id, p.title, p.client_name, p.category, p.tech, p.budget, p.budget_monthly, p.term_days,
   p.dev_scope, p.is_turnkey, p.planning_status, p.proposal_count,
   p.status, p.stage, p.inspection_manager, p.agreement_id, p.contract_amount, p.contract_term_days,
-  p.cancel_stage, p.cancel_reason, p.source_modified_at,
+  p.cancel_stage, p.cancel_reason, p.submitted_at, p.source_modified_at,
   ai.risk_tags
 `;
 
@@ -179,6 +180,7 @@ function toProject(row: ProjectRow): Project {
     manager: managerName(row.inspection_manager),
     updated: formatMonthDay(row.source_modified_at),
     daysAgo: daysSince(row.source_modified_at),
+    submittedDaysAgo: row.submitted_at ? daysSince(row.submitted_at) : null,
     contractAmount: formatWon(row.contract_amount),
     contractPeriod: formatDays(row.contract_term_days),
     agreementId: row.agreement_id,

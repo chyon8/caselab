@@ -29,6 +29,8 @@ const COLS = [
   "contract_amount",
   "contract_term_days",
   "deadline_at",
+  "submitted_at",
+  "recruit_started_at",
   "cancel_stage",
   "cancel_reason",
   "posting_raw",

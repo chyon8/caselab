@@ -20,6 +20,8 @@ export interface RawProject {
   is_cancelled: number | boolean | null;
   is_rejected: number | boolean | null;
   date_modified: string;
+  /** 검수 시작 — 기간 필터의 기준 */
+  date_submitted: string | null;
   date_start_recruitment: string | null;
   date_cancelled: string | null;
   date_rejected: string | null;
@@ -77,6 +79,8 @@ export interface MappedProject {
   contract_amount: number | null;
   contract_term_days: number | null;
   deadline_at: string | null;
+  submitted_at: string | null;
+  recruit_started_at: string | null;
   cancel_stage: string | null;
   cancel_reason: string | null;
   posting_raw: string | null;
@@ -208,6 +212,8 @@ export function mapProject(r: RawProject): MappedProject | null {
     contract_amount: num(r.agreement_price),
     contract_term_days: r.contract_term_days ?? null,
     deadline_at: r.date_deadline,
+    submitted_at: r.date_submitted,
+    recruit_started_at: r.date_start_recruitment,
     cancel_stage: cancelled ? cancelStage(r) : null,
     cancel_reason: cancelled ? scrubPii(r.cancel_reason ?? null) : null,
     posting_raw: description,

@@ -78,7 +78,10 @@ export interface Project {
   stage: 1 | 2 | 3 | 4 | 5;
   manager: string;
   updated: string;
+  /** 본진 최종 수정일 기준 경과일 — "언제 들어온 건"이 아니다 */
   daysAgo: number;
+  /** 검수 시작(date_submitted) 후 경과일 — 기간 필터의 기준. 검수 기록이 없으면 null */
+  submittedDaysAgo?: number | null;
   contractAmount: string | null;
   contractPeriod: string | null;
   /** 계약 어드민 링크용 — 프로젝트 id와 다른 PK. 계약 전이면 null */
