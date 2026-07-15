@@ -137,8 +137,9 @@ export interface Project {
 export interface ProjectFull extends Project {
   intake: { posting: Posting; call: CallRecord };
   issueLog: IssueLogEntry[];
-  meeting?: CallRecord;
-  /** 통화 녹취 목록 — 본진 통화 API. 한 프로젝트에 여러 건일 수 있다 (클라이언트·파트너 통화). */
+  /** 사전 미팅 녹취록 — 통화 API /api/meetings/. 개발사별로 한 프로젝트에 여러 건일 수 있다. */
+  meetings?: CallRecord[];
+  /** 통화 녹취 목록 — 본진 통화 API by-phone. 한 프로젝트에 여러 건일 수 있다 (클라이언트·파트너 통화). */
   calls?: CallRecord[];
   qna: QnaItem[];
   timeline: TimelineEvent[];

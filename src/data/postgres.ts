@@ -23,6 +23,7 @@ import type {
   QnaItem,
   ReportStats,
   TimelineEvent,
+  TranscriptLine,
 } from "./types";
 
 /** BIGINT·NUMERIC은 pg 드라이버에서 문자열로 돌아온다 */
@@ -88,6 +89,13 @@ interface CallRow {
   created_at: string | null;
 }
 
+interface MeetingRow {
+  partner_slug: string | null;
+  summary: string | null;
+  transcript: string | null;
+  created_at: string | null;
+}
+
 /**
  * 목록용 — 상세 전용 컬럼은 절대 넣지 않는다.
  * posting_raw(공고 원문)는 5,300건 합계가 12MB다. 목록은 쓰지도 않는데 가져오면
@@ -141,6 +149,30 @@ function toCallRecord(c: CallRow): CallRecord {
     transcript: c.transcript ?? null,
     userType: c.user_type ?? null,
     confidence: c.confidence ?? null,
+  };
+}
+
+/** "[MM:SS] 역할: 발화" 형식의 전문을 구조화 lines로 파싱. "## 요약"·빈 줄 등 매칭 안 되는 줄은 버린다. */
+function parseTranscriptLines(transcript: string | null): TranscriptLine[] {
+  if (!transcript) return [];
+  const lines: TranscriptLine[] = [];
+  for (const raw of transcript.split("\n")) {
+    const m = raw.match(/^\[(\d{1,2}:\d{2})\]\s*([^:]+):\s*(.*)$/);
+    if (m) lines.push({ t: m[1], who: m[2].trim(), text: m[3].trim() });
+  }
+  return lines;
+}
+
+/** 사전 미팅 녹취 — 전문을 [MM:SS] 역할: 발화 로 파싱해 구조화 lines로 낸다 (mock과 같은 3열 뷰). */
+function toMeetingRecord(m: MeetingRow): CallRecord {
+  return {
+    title: m.partner_slug ?? "개발사 미팅",
+    date: formatMonthDay(m.created_at),
+    summary: (m.summary ?? "")
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean),
+    lines: parseTranscriptLines(m.transcript),
   };
 }
 
@@ -227,7 +259,13 @@ function toProject(row: ProjectRow): Project {
 
 function toProjectFull(
   row: ProjectRow,
-  detail: { call: CallRecord; calls: CallRecord[]; qna: QnaItem[]; timeline: TimelineEvent[] },
+  detail: {
+    call: CallRecord;
+    calls: CallRecord[];
+    meetings: CallRecord[];
+    qna: QnaItem[];
+    timeline: TimelineEvent[];
+  },
 ): ProjectFull {
   return {
     ...toProject(row),
@@ -236,6 +274,7 @@ function toProjectFull(
       call: detail.call,
     },
     calls: detail.calls,
+    meetings: detail.meetings,
     issueLog: row.issue_log ?? [],
     qna: detail.qna,
     timeline: detail.timeline,
@@ -388,14 +427,23 @@ export class PostgresDataSource implements DataSource {
 
     // 한 번의 왕복으로 끝낸다 — Neon이 싱가포르라 쿼리당 왕복 비용이 크다.
     // 쿼리를 3번 나눠 날리면 네트워크 지연만 3배가 된다.
-    const rows = await query<ProjectRow & { events: TimelineRow[] | null; calls: CallRow[] | null }>(
+    const rows = await query<
+      ProjectRow & {
+        events: TimelineRow[] | null;
+        calls: CallRow[] | null;
+        meetings: MeetingRow[] | null;
+      }
+    >(
       `SELECT ${DETAIL_COLUMNS},
          (SELECT json_agg(e ORDER BY e.event_at)
             FROM (SELECT source, event_at, stage, title, body, meta
                     FROM timeline_events WHERE project_id = p.id) e) AS events,
          (SELECT json_agg(c ORDER BY c.created_at)
             FROM (SELECT call_type, summary, transcript, user_type, confidence, created_at
-                    FROM calls WHERE project_id = p.id) c) AS calls
+                    FROM calls WHERE project_id = p.id) c) AS calls,
+         (SELECT json_agg(mt ORDER BY mt.created_at)
+            FROM (SELECT partner_slug, summary, transcript, created_at
+                    FROM meetings WHERE project_id = p.id) mt) AS meetings
          FROM projects p
          LEFT JOIN ai_insights ai ON ai.project_id = p.id
         WHERE p.id = $1 AND p.deleted_at IS NULL AND p.hidden = false`,
@@ -406,10 +454,12 @@ export class PostgresDataSource implements DataSource {
 
     const events = row.events ?? [];
     const calls = row.calls ?? [];
+    const meetings = row.meetings ?? [];
 
     return toProjectFull(row, {
       call: calls[0] ? toCallRecord(calls[0]) : EMPTY_CALL,
       calls: calls.map(toCallRecord),
+      meetings: meetings.map(toMeetingRecord),
       qna: events.filter((e) => e.source === "qna").map(toQna),
       timeline: events.filter((e) => e.source !== "qna").map(toTimelineEvent),
     });

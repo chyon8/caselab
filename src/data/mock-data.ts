@@ -198,7 +198,7 @@ export const MOCK_PROJECTS: ProjectFull[] = [
       { type: "법무·보안", date: "05-22", src: "후보미팅 2차 — 개발사 A", text: "증권 원본 이미지는 24시간 내 파기, 추출 텍스트만 저장" },
     ],
     riskTags: ["경험 부족", "보안 요건"],
-    meeting: {
+    meetings: [{
       title: "후보미팅 2차 — 개발사 A",
       date: "05-22",
       summary: [
@@ -215,7 +215,7 @@ export const MOCK_PROJECTS: ProjectFull[] = [
         { t: "21:30", who: "클라이언트", text: "증권 원본 이미지는 서버에 남기지 않았으면 합니다." },
         { t: "22:14", who: "개발사 A", text: "추출 텍스트만 저장하고 원본은 24시간 내 파기하는 것으로 처리 가능합니다." },
       ],
-    },
+    }],
     qna: [
       { q: "서버는 어떻게 증설 예정이신가요?", a: "AWS 오토스케일링 적용 예정입니다.", by: "개발사 A", at: "05-26" },
       { q: "기존 사내 시스템과의 연동 범위가 어디까지인가요?", by: "개발사 B", at: "05-27", isPrivate: true },
@@ -398,7 +398,7 @@ export const MOCK_PROJECTS: ProjectFull[] = [
       { type: "과업 범위", date: "05-02", src: "후보미팅 3차 — 개발사 C", text: "관리자 이상치 알림 기능 추가 요청" },
     ],
     riskTags: ["비용 증가"],
-    meeting: {
+    meetings: [{
       title: "후보미팅 1차 — 개발사 C",
       date: "04-24",
       summary: [
@@ -412,7 +412,7 @@ export const MOCK_PROJECTS: ProjectFull[] = [
         { t: "11:30", who: "클라이언트", text: "센서 데이터는 저희 회선으로 전송되는데, 안정성 점검이 필요할 것 같습니다." },
         { t: "16:45", who: "개발사 C", text: "알림 기능은 우선순위를 정해서 2차 스프린트에 반영하는 것을 제안드립니다." },
       ],
-    },
+    }],
     qna: [],
     timeline: [
       { stage: "검수", date: "04-08", title: "검수 완료", desc: "" },
@@ -497,7 +497,7 @@ export const MOCK_PROJECTS: ProjectFull[] = [
       { type: "일정", date: "05-20", src: "후보미팅 1차 — 개발사 D", text: "클라이언트 내부 결재 라인 변경으로 요구사항 확정 2주 지연 예고" },
     ],
     riskTags: ["의사결정 지연", "예산 협의"],
-    meeting: {
+    meetings: [{
       title: "후보미팅 1차 — 개발사 D",
       date: "05-20",
       summary: [
@@ -511,7 +511,7 @@ export const MOCK_PROJECTS: ProjectFull[] = [
         { t: "12:20", who: "클라이언트", text: "내부 결재 라인이 바뀌어서 요구사항 확정이 좀 늦어지고 있습니다. 2주만 시간을 주시면 정리하겠습니다." },
         { t: "18:47", who: "개발사 D", text: "확정되는 대로 재견적 드리겠습니다. 다만 착수 일정은 그만큼 밀립니다." },
       ],
-    },
+    }],
     qna: [],
     timeline: [
       { stage: "검수", date: "05-05", title: "검수 완료", desc: "" },
@@ -740,6 +740,19 @@ export const MOCK_PROJECTS: ProjectFull[] = [
       { type: "이슈", date: "2024-07", src: "사전 미팅 — 개발사 G", text: "리포트 양식이 학원 지점별로 상이 — 표준 양식 확정 없이는 견적 범위 초과 우려 제기" },
     ],
     riskTags: ["요구 변경", "일정 압박"],
+    meetings: [{
+      title: "izensoft",
+      date: "2024-07",
+      summary: [
+        "지점별 리포트 양식이 상이 — 표준 양식 확정 전에는 견적 범위를 특정하기 어렵다는 의견",
+        "학원 본사가 양식 통일을 검토 중이나 지점 협의에 시간이 필요 — 확정 시점 미정",
+      ],
+      lines: [
+        { t: "00:05", who: "파트너", text: "지점마다 리포트 양식이 다르면 저희가 자동 생성 로직을 지점 수만큼 따로 짜야 합니다." },
+        { t: "02:40", who: "클라이언트", text: "본사에서 양식을 통일하려고는 하는데, 지점 협의가 아직 안 끝났습니다." },
+        { t: "03:15", who: "파트너", text: "확정 전까지는 정확한 견적을 드리기 어려울 것 같습니다." },
+      ],
+    }],
     qna: [],
     timeline: [
       { stage: "검수", date: "2024-05", title: "검수 완료", desc: "" },

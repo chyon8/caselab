@@ -100,13 +100,55 @@ function CallCard({ call }: { call: CallRecord }) {
   );
 }
 
+/** 사전 미팅 녹취록 카드 — 개발사별로 여러 건이라 카드마다 토글 상태가 독립이어야 한다. */
+function MeetingCard({ meeting }: { meeting: CallRecord }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={styles["meeting-card"]}>
+      <div className={styles["meeting-head"]}>
+        <div className={styles["meeting-title"]}>
+          {meeting.title} <span className={styles["meeting-date"]}>· {meeting.date}</span>
+        </div>
+        <span className={styles["ai-badge"]}>AI 요약</span>
+      </div>
+      {meeting.summary.length > 0 && (
+        <div className={styles["summary-list"]}>
+          {meeting.summary.map((m, i) => (
+            <div key={i} className={styles["summary-row"]}>
+              <div className={styles.bullet} />
+              <div className={styles["summary-text"]}>{m}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {meeting.lines.length > 0 && (
+        <>
+          <button className={styles["transcript-btn"]} onClick={() => setOpen((v) => !v)}>
+            {open ? "전체 녹취록 접기 ↑" : "전체 녹취록 보기 ↓"}
+          </button>
+          {open && (
+            <div className={styles.transcript}>
+              {meeting.lines.map((l, i) => (
+                <div key={i} className={styles["t-row"]}>
+                  <div className={styles["t-time"]}>{l.t}</div>
+                  <div className={styles["t-who"]}>{l.who}</div>
+                  <div className={styles["t-text"]}>{l.text}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function ProjectDetail({ project: p }: { project: ProjectFull }) {
   const router = useRouter();
   const app = useApp();
   const saved = app.reviews[p.id];
 
   const [showIntake, setShowIntake] = useState(false);
-  const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [draftChecks, setDraftChecks] = useState<boolean[]>(
     saved ? [...saved.checks] : [false, false, false, false]
   );
@@ -411,49 +453,18 @@ export default function ProjectDetail({ project: p }: { project: ProjectFull }) 
         </div>
       )}
 
-      {p.meeting && (
+      {p.meetings && p.meetings.length > 0 && (
         <>
           <div className={`${styles["section-head"]} ${styles.wide}`}>
             <span className={styles["section-title"]}>사전 미팅 녹취록</span>
             <span className={styles["section-sub"]}>
               {" "}
-              — 모집 단계 개발사 미팅 · AI 자동 요약
+              — 모집 단계 개발사 미팅 · AI 자동 요약 · {p.meetings.length}건
             </span>
           </div>
-          <div className={styles["meeting-card"]}>
-            <div className={styles["meeting-head"]}>
-              <div className={styles["meeting-title"]}>
-                {p.meeting.title}{" "}
-                <span className={styles["meeting-date"]}>· {p.meeting.date}</span>
-              </div>
-              <span className={styles["ai-badge"]}>AI 요약</span>
-            </div>
-            <div className={styles["summary-list"]}>
-              {p.meeting.summary.map((m) => (
-                <div key={m} className={styles["summary-row"]}>
-                  <div className={styles.bullet} />
-                  <div className={styles["summary-text"]}>{m}</div>
-                </div>
-              ))}
-            </div>
-            <button
-              className={styles["transcript-btn"]}
-              onClick={() => setTranscriptOpen((v) => !v)}
-            >
-              {transcriptOpen ? "전체 녹취록 접기 ↑" : "전체 녹취록 보기 ↓"}
-            </button>
-            {transcriptOpen && (
-              <div className={styles.transcript}>
-                {p.meeting.lines.map((l, i) => (
-                  <div key={i} className={styles["t-row"]}>
-                    <div className={styles["t-time"]}>{l.t}</div>
-                    <div className={styles["t-who"]}>{l.who}</div>
-                    <div className={styles["t-text"]}>{l.text}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {p.meetings.map((m, i) => (
+            <MeetingCard key={i} meeting={m} />
+          ))}
         </>
       )}
 
