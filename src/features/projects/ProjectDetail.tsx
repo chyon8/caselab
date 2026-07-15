@@ -61,45 +61,6 @@ function specChips(p: Project): string[] {
   return chips;
 }
 
-/** 통화 녹취 카드 — 통화 API STT 요약 + 원문 토글. 카드마다 토글 상태가 독립이라 별 컴포넌트로 뺀다. */
-function CallCard({ call }: { call: CallRecord }) {
-  const [open, setOpen] = useState(false);
-  const who =
-    call.userType === "partner"
-      ? "파트너 통화"
-      : call.userType === "client"
-        ? "클라이언트 통화"
-        : "통화";
-  return (
-    <div className={styles["call-card"]}>
-      <div className={styles["meeting-head"]}>
-        <div className={styles["meeting-title"]}>
-          {who} <span className={styles["meeting-date"]}>· {call.date}</span>
-        </div>
-        <span className={styles["ai-badge"]}>STT</span>
-      </div>
-      {call.summary.length > 0 && (
-        <div className={styles["summary-list"]}>
-          {call.summary.map((m, i) => (
-            <div key={i} className={styles["summary-row"]}>
-              <div className={styles.bullet} />
-              <div className={styles["summary-text"]}>{m}</div>
-            </div>
-          ))}
-        </div>
-      )}
-      {call.transcript && (
-        <>
-          <button className={styles["transcript-btn"]} onClick={() => setOpen((v) => !v)}>
-            {open ? "녹취 원문 접기 ↑" : "녹취 원문 보기 ↓"}
-          </button>
-          {open && <div className={styles["call-transcript"]}>{call.transcript}</div>}
-        </>
-      )}
-    </div>
-  );
-}
-
 /** 사전 미팅 녹취록 카드 — 개발사별로 여러 건이라 카드마다 토글 상태가 독립이어야 한다. */
 function MeetingCard({ meeting }: { meeting: CallRecord }) {
   const [open, setOpen] = useState(false);
@@ -468,17 +429,8 @@ export default function ProjectDetail({ project: p }: { project: ProjectFull }) 
         </>
       )}
 
-      {p.calls && p.calls.length > 0 && (
-        <>
-          <div className={`${styles["section-head"]} ${styles.wide}`}>
-            <span className={styles["section-title"]}>통화 녹취</span>
-            <span className={styles["section-sub"]}> — 통화 API STT · {p.calls.length}건</span>
-          </div>
-          {p.calls.map((c, i) => (
-            <CallCard key={i} call={c} />
-          ))}
-        </>
-      )}
+      {/* 통화 녹취 UI는 보류 (2026-07-15). 매핑 신뢰도 문제로 화면에서 숨김 — 데이터는 calls 테이블에 보존.
+          되살리려면 이 자리에 CallCard 렌더를 복원하면 된다 (git history: cd98580 이전). */}
 
       {p.qna.length > 0 && (
         <>
