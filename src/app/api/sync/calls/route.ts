@@ -6,8 +6,9 @@ import { scrubPii } from "@/lib/sync/pii";
 import { valuesClause } from "@/lib/sync/sql";
 
 /**
- * 통화 요약 (§3).
- * 전화번호·녹취 원문(transcript)은 n8n 밖으로 나오지 않는다 — 여기서 받지도, 저장하지도 않는다.
+ * 통화 녹취 (2026-07-15 결정 변경 — 원문까지 받는다).
+ * 전화번호는 여전히 n8n 밖으로 안 나온다. 요약·원문은 저장하되 scrubPii(전화/이메일/주민번호) 통과.
+ * ⚠️ 원문 속 이름은 정규식이 못 잡는다 (알려진 한계).
  */
 interface RawCall {
   id: number | string;
@@ -15,6 +16,9 @@ interface RawCall {
   call_type?: string | null;
   call_time_secs?: number | null;
   summary?: string | null;
+  transcript?: string | null;
+  user_type?: string | null;
+  confidence?: string | null;
   drive_url?: string | null;
   created_at: string;
 }
@@ -52,9 +56,13 @@ export async function POST(req: Request): Promise<Response> {
   );
   const knownIds = new Set(known.map((k) => String(k.id)));
 
-  // 같은 id가 배치에 두 번 오면 ON CONFLICT DO UPDATE가 터진다 → 마지막 것만 남긴다
+  // 처리(필터·중복제거)는 CaseLab이 한다 — n8n은 원본을 그대로 넘긴다.
+  //  - confidence='low': 통화 API가 자신 없이 추측한 프로젝트 매핑 → 이슈로그 오염 방지로 버린다
+  //  - 미적재 프로젝트(knownIds 밖): 전화번호로 조회하면 남의 프로젝트 통화가 섞여 온다 → 버린다
+  //  - 같은 id가 배치에 두 번 오면 ON CONFLICT DO UPDATE가 터진다 → 마지막 것만 남긴다
   const byId = new Map<string, RawCall>();
   for (const r of rows) {
+    if (r.confidence === "low") continue;
     if (knownIds.has(String(r.project_id))) byId.set(String(r.id), r);
   }
   const insertable = [...byId.values()];
@@ -66,20 +74,26 @@ export async function POST(req: Request): Promise<Response> {
       String(r.project_id),
       r.call_type ?? null,
       r.call_time_secs ?? null,
-      // 통화 요약에 "010-…로 연락 요청" 류가 섞일 수 있다 — 저장 전 스크럽
+      // 요약·원문에 "010-…로 연락 요청" 류가 섞일 수 있다 — 저장 전 스크럽 (이름은 못 잡음)
       scrubPii(r.summary ?? null),
+      scrubPii(r.transcript ?? null),
+      r.user_type ?? null,
+      r.confidence ?? null,
       r.drive_url ?? null,
       r.created_at,
     ]);
 
     await query(
-      `INSERT INTO calls (id, project_id, call_type, call_time_secs, summary, drive_url, created_at)
-       VALUES ${valuesClause(insertable.length, 7)}
+      `INSERT INTO calls (id, project_id, call_type, call_time_secs, summary, transcript, user_type, confidence, drive_url, created_at)
+       VALUES ${valuesClause(insertable.length, 10)}
        ON CONFLICT (id) DO UPDATE SET
          project_id     = EXCLUDED.project_id,
          call_type      = EXCLUDED.call_type,
          call_time_secs = EXCLUDED.call_time_secs,
          summary        = EXCLUDED.summary,
+         transcript     = EXCLUDED.transcript,
+         user_type      = EXCLUDED.user_type,
+         confidence     = EXCLUDED.confidence,
          drive_url      = EXCLUDED.drive_url,
          created_at     = EXCLUDED.created_at`,
       params,

@@ -520,6 +520,28 @@
   margin-bottom: 56px;
 }
 
+/* 통화 녹취 카드 — meeting-card와 같은 모양이되 여러 건이 나열되므로 간격만 좁힌다 */
+.call-card {
+  border: 1px solid var(--card-border);
+  border-radius: var(--rounded-lg);
+  padding: 24px 26px;
+  background: var(--card-bg);
+  margin-bottom: 14px;
+}
+
+/* 통화 STT 원문 (통짜 텍스트, 줄바꿈 보존) */
+.call-transcript {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--row-border);
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text-body-soft);
+  white-space: pre-wrap;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
 .meeting-head {
   display: flex;
   align-items: center;

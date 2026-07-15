@@ -42,6 +42,12 @@ export interface CallRecord {
   date: string;
   summary: string[];
   lines: TranscriptLine[];
+  /** 통화 API STT 원문 (통짜 텍스트). 구조화된 lines 와는 별개. mock 은 lines, 실데이터는 transcript. */
+  transcript?: string | null;
+  /** 'client' | 'partner' — 누구와의 통화인지 */
+  userType?: string | null;
+  /** 'high' | 'medium' — 통화↔프로젝트 매칭 신뢰도 (low 는 적재 단계에서 걸러짐) */
+  confidence?: string | null;
 }
 
 export interface IssueLogEntry {
@@ -132,6 +138,8 @@ export interface ProjectFull extends Project {
   intake: { posting: Posting; call: CallRecord };
   issueLog: IssueLogEntry[];
   meeting?: CallRecord;
+  /** 통화 녹취 목록 — 본진 통화 API. 한 프로젝트에 여러 건일 수 있다 (클라이언트·파트너 통화). */
+  calls?: CallRecord[];
   qna: QnaItem[];
   timeline: TimelineEvent[];
 }

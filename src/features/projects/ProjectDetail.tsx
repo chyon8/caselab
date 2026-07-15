@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Fragment, useState } from "react";
 import { CHECK_ITEMS } from "@/data/mock-data";
-import type { IssueType, Project, ProjectFull } from "@/data/types";
+import type { CallRecord, IssueType, Project, ProjectFull } from "@/data/types";
 import { useApp } from "@/state/AppContext";
 import st from "./status.module.css";
 import { STATUS_KEY, statusLabel } from "./status";
@@ -59,6 +59,45 @@ function specChips(p: Project): string[] {
   }
   if (p.proposalCount != null) chips.push(`지원 ${p.proposalCount}건`);
   return chips;
+}
+
+/** 통화 녹취 카드 — 통화 API STT 요약 + 원문 토글. 카드마다 토글 상태가 독립이라 별 컴포넌트로 뺀다. */
+function CallCard({ call }: { call: CallRecord }) {
+  const [open, setOpen] = useState(false);
+  const who =
+    call.userType === "partner"
+      ? "파트너 통화"
+      : call.userType === "client"
+        ? "클라이언트 통화"
+        : "통화";
+  return (
+    <div className={styles["call-card"]}>
+      <div className={styles["meeting-head"]}>
+        <div className={styles["meeting-title"]}>
+          {who} <span className={styles["meeting-date"]}>· {call.date}</span>
+        </div>
+        <span className={styles["ai-badge"]}>STT</span>
+      </div>
+      {call.summary.length > 0 && (
+        <div className={styles["summary-list"]}>
+          {call.summary.map((m, i) => (
+            <div key={i} className={styles["summary-row"]}>
+              <div className={styles.bullet} />
+              <div className={styles["summary-text"]}>{m}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {call.transcript && (
+        <>
+          <button className={styles["transcript-btn"]} onClick={() => setOpen((v) => !v)}>
+            {open ? "녹취 원문 접기 ↑" : "녹취 원문 보기 ↓"}
+          </button>
+          {open && <div className={styles["call-transcript"]}>{call.transcript}</div>}
+        </>
+      )}
+    </div>
+  );
 }
 
 export default function ProjectDetail({ project: p }: { project: ProjectFull }) {
@@ -415,6 +454,18 @@ export default function ProjectDetail({ project: p }: { project: ProjectFull }) 
               </div>
             )}
           </div>
+        </>
+      )}
+
+      {p.calls && p.calls.length > 0 && (
+        <>
+          <div className={`${styles["section-head"]} ${styles.wide}`}>
+            <span className={styles["section-title"]}>통화 녹취</span>
+            <span className={styles["section-sub"]}> — 통화 API STT · {p.calls.length}건</span>
+          </div>
+          {p.calls.map((c, i) => (
+            <CallCard key={i} call={c} />
+          ))}
         </>
       )}
 

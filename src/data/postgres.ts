@@ -82,6 +82,9 @@ interface TimelineRow {
 interface CallRow {
   call_type: string | null;
   summary: string | null;
+  transcript: string | null;
+  user_type: string | null;
+  confidence: string | null;
   created_at: string | null;
 }
 
@@ -125,16 +128,19 @@ function fallbackPosting(title: string, raw: string | null): Posting {
 
 const EMPTY_CALL: CallRecord = { title: "", date: "", summary: [], lines: [] };
 
-/** 녹취 원문·전화번호는 CaseLab에 저장되지 않는다 → lines는 항상 비어 있다 (§3) */
+/** 통화 API STT. 원문은 통짜 텍스트(transcript)로 오므로 구조화 lines는 비운다 (2026-07-15). */
 function toCallRecord(c: CallRow): CallRecord {
   return {
-    title: c.call_type ?? "통화 요약",
+    title: c.call_type ?? "통화",
     date: formatMonthDay(c.created_at),
     summary: (c.summary ?? "")
       .split("\n")
       .map((s) => s.trim())
       .filter(Boolean),
     lines: [],
+    transcript: c.transcript ?? null,
+    userType: c.user_type ?? null,
+    confidence: c.confidence ?? null,
   };
 }
 
@@ -221,7 +227,7 @@ function toProject(row: ProjectRow): Project {
 
 function toProjectFull(
   row: ProjectRow,
-  detail: { call: CallRecord; qna: QnaItem[]; timeline: TimelineEvent[] },
+  detail: { call: CallRecord; calls: CallRecord[]; qna: QnaItem[]; timeline: TimelineEvent[] },
 ): ProjectFull {
   return {
     ...toProject(row),
@@ -229,6 +235,7 @@ function toProjectFull(
       posting: row.posting_structured ?? fallbackPosting(row.title, row.posting_raw ?? null),
       call: detail.call,
     },
+    calls: detail.calls,
     issueLog: row.issue_log ?? [],
     qna: detail.qna,
     timeline: detail.timeline,
@@ -387,7 +394,7 @@ export class PostgresDataSource implements DataSource {
             FROM (SELECT source, event_at, stage, title, body, meta
                     FROM timeline_events WHERE project_id = p.id) e) AS events,
          (SELECT json_agg(c ORDER BY c.created_at)
-            FROM (SELECT call_type, summary, created_at
+            FROM (SELECT call_type, summary, transcript, user_type, confidence, created_at
                     FROM calls WHERE project_id = p.id) c) AS calls
          FROM projects p
          LEFT JOIN ai_insights ai ON ai.project_id = p.id
@@ -402,6 +409,7 @@ export class PostgresDataSource implements DataSource {
 
     return toProjectFull(row, {
       call: calls[0] ? toCallRecord(calls[0]) : EMPTY_CALL,
+      calls: calls.map(toCallRecord),
       qna: events.filter((e) => e.source === "qna").map(toQna),
       timeline: events.filter((e) => e.source !== "qna").map(toTimelineEvent),
     });
