@@ -95,7 +95,7 @@
 
 ## 내일 할 일 (통화 트랙)
 
-1. **UI 실물 확인** — ProjectDetail 화면에서 통화 여러 건이 안 깨지고 뜨는지. 아직 눈으로 확인 못 함. transcript 있는 프로젝트(예: project_id 156665, 통화 3건) 열어볼 것.
+1. ~~**UI 실물 확인**~~ ✅ 완료 (2026-07-15) — ProjectDetail 화면에서 통화 여러 건 렌더 확인됨.
 2. **껍데기 226건 처리 결정** — transcript·summary 둘 다 null인 통화를 적재 단계에서 버릴지(route.ts에 필터 한 줄), 아니면 "통화는 있었으나 미녹음" 증거로 남길지.
 3. **전체 백필 실행** — ① 노드를 `calls_phones_test.sql`(50개) → **`calls_phones.sql`**(운영용, 60일 롤링)로 교체. 전화번호 훨씬 많음(이전 1,415개), 배칭 1초면 ~24분. 완주 후 Neon 재검증.
 4. **Schedule Trigger 전환** — 검증되면 매일 새벽 1회 자동 실행으로. 백필 워크플로 그대로 재사용.
@@ -112,11 +112,7 @@
 - `n8n/meeting_project_ids.sql` — ① 노드용 project_id 조회 SQL
 
 **남은 것:**
-1. **Neon 테스트 데이터 정리** — curl 테스트로 삽입된 id=99001 행 삭제 + 커서 초기화:
-   ```sql
-   DELETE FROM meetings WHERE id = 99001;
-   DELETE FROM sync_state WHERE source = 'meeting_transcripts';
-   ```
+1. ~~**Neon 테스트 데이터 정리**~~ ✅ 완료 (2026-07-15) — id=99001 삭제 + meeting_transcripts 커서 초기화됨.
 2. **n8n 미팅 워크플로 실행** — 내부망에서 6노드 워크플로 만들고 Execute 한 번. 문서: [`meetings_pipeline.md`](./n8n/meetings_pipeline.md)
 3. **UI 실물 확인** — meetings 데이터 들어온 후 ProjectDetail 화면에서 "사전 미팅 녹취록" 섹션 표시 확인.
 4. **이슈로그 LLM 추출** — 다음 단계 (대기 결정 #2 이후).
