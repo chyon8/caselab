@@ -49,7 +49,7 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ upserted: 0, skipped: 0, cursor: await readCursor("calls") });
   }
 
-  const ids = [...new Set(rows.map((r) => String(r.project_id)))];
+  const ids = [...new Set(rows.map((r) => r.project_id).filter((id) => id != null).map(String))];
   const known = await query<{ id: string }>(
     "SELECT id FROM projects WHERE id = ANY($1::bigint[])",
     [ids],
