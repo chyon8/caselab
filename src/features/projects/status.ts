@@ -12,7 +12,6 @@ export const STATUS_KEY: Record<KanbanStatus, string> = {
 };
 
 export const KANBAN_STATUSES: KanbanStatus[] = [
-  "검수",
   "모집",
   "미팅중",
   "계약",

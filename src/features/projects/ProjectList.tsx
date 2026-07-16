@@ -78,7 +78,10 @@ export default function ProjectList({
   const setStarredOnly = (v: boolean | ((prev: boolean) => boolean)) =>
     app.setListState({ starredOnly: typeof v === "function" ? v(starredOnly) : v });
   const setViewMode = (v: "list" | "grid") => app.setListState({ viewMode: v });
-  const setPage = (v: number) => app.setListState({ page: v });
+  const setPage = (v: number) => {
+    app.setListState({ page: v });
+    window.scrollTo({ top: 0 });
+  };
 
   const q = query.trim();
 

@@ -36,7 +36,6 @@ export const KANBAN_PAGE_SIZE = 30;
 
 /** 칸반 컬럼 순서. '미팅중'은 모집(사전 미팅 진행분)을 쪼갠 파생 컬럼 */
 const KANBAN_ORDER: KanbanStatus[] = [
-  "검수",
   "모집",
   "미팅중",
   "계약",
