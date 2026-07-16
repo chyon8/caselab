@@ -89,6 +89,8 @@ export interface Project {
   status: ProjectStatus;
   /** 1 검수 · 2 모집 · 3 계약 · 4 진행 · 5 완료 */
   stage: 1 | 2 | 3 | 4 | 5;
+  /** 모집 단계에서 사전 미팅이 시작됨 — 목록·칸반에서 '미팅중'으로 분리 표시 (status는 여전히 '모집') */
+  meetingActive?: boolean;
   manager: string;
   updated: string;
   /** 클라이언트가 검수를 요청한 날 (date_submitted) */
@@ -154,9 +156,12 @@ export interface ProjectPage {
   total: number;
 }
 
+/** 칸반/필터에서 모집을 사전 미팅 진행 여부로 쪼갠 파생 상태 ('미팅중'은 status='모집'의 부분집합) */
+export type KanbanStatus = ProjectStatus | "미팅중";
+
 /** 칸반 컬럼 — 상위 items + 그 상태의 전체 건수 */
 export interface KanbanColumn {
-  status: ProjectStatus;
+  status: KanbanStatus;
   total: number;
   items: Project[];
 }

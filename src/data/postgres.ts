@@ -17,6 +17,7 @@ import type {
   CaseReview,
   IssueLogEntry,
   KanbanColumn,
+  KanbanStatus,
   Posting,
   Project,
   ProjectFull,
@@ -33,15 +34,19 @@ import type {
 export const DEFAULT_PAGE_SIZE = 50;
 export const KANBAN_PAGE_SIZE = 30;
 
-/** 칸반 컬럼 순서 */
-const KANBAN_ORDER: ProjectStatus[] = [
+/** 칸반 컬럼 순서. '미팅중'은 모집(사전 미팅 진행분)을 쪼갠 파생 컬럼 */
+const KANBAN_ORDER: KanbanStatus[] = [
   "검수",
   "모집",
+  "미팅중",
   "계약",
   "진행",
   "완료(성공)",
   "완료(취소)",
 ];
+
+/** 모집 프로젝트가 사전 미팅을 시작했는지 — 타임라인에 source='meeting' 이벤트가 하나라도 있으면 참 */
+const MEETING_STARTED = `EXISTS (SELECT 1 FROM timeline_events te WHERE te.project_id = p.id AND te.source = 'meeting')`;
 
 /** BIGINT·NUMERIC은 pg 드라이버에서 문자열로 돌아온다 */
 interface ProjectRow {
@@ -72,6 +77,8 @@ interface ProjectRow {
   completed_at: Date | null;
   cancelled_at: Date | null;
   source_modified_at: Date | null;
+  /** 목록·칸반에서만 계산 — 모집 단계에서 사전 미팅이 시작됐는지 */
+  is_meeting?: boolean;
   /** 아래는 상세(DETAIL_COLUMNS)에서만 조회된다 — 목록에서는 undefined */
   posting_raw?: string | null;
   risk_tags?: string[] | null;
@@ -236,6 +243,30 @@ function toTimelineEvent(r: TimelineRow): TimelineEvent {
   };
 }
 
+/**
+ * 생애주기 마일스톤을 프로젝트의 날짜 컬럼에서 직접 합성한다.
+ * 타임라인의 상태 전이(source='status')는 백필 이후 값이 바뀐 소수 프로젝트에만 생겨서
+ * (진행 240건 중 7건뿐) 대부분이 '진행 착수' 같은 단계 마커를 잃었다. 날짜 컬럼은 전량 있으므로
+ * 여기서 조회 시 합성해 채운다 — DB 백필·마이그레이션 없음. status 전이 이벤트와 겹치므로
+ * getProject에서 source='status'는 표시에서 뺀다(source='change' 값 변경 이벤트는 유지).
+ * ('선정·계약 체결'만의 별도 날짜 컬럼은 없어 '진행 착수'가 선정 이후를 나타내는 마커다.)
+ */
+function lifecycleEvents(row: ProjectRow): { at: number; ev: TimelineEvent }[] {
+  const out: { at: number; ev: TimelineEvent }[] = [];
+  const push = (d: Date | null, stage: string, title: string, cancel = false): void => {
+    if (!d) return;
+    out.push({
+      at: d.getTime(),
+      ev: { stage, date: formatMonthDay(d), title, desc: "", ...(cancel ? { cancel: true } : {}) },
+    });
+  };
+  push(row.recruit_started_at, "모집", "모집 시작");
+  push(row.progress_started_at, "진행", "진행 착수");
+  push(row.completed_at, "완료", "완료");
+  push(row.cancelled_at, "완료(취소)", "취소", true);
+  return out;
+}
+
 function toQna(r: TimelineRow): QnaItem {
   return {
     q: r.title ?? "",
@@ -263,6 +294,7 @@ function toProject(row: ProjectRow): Project {
     period: formatDays(row.term_days) ?? "",
     status: row.status as ProjectStatus,
     stage: row.stage as 1 | 2 | 3 | 4 | 5,
+    ...(row.is_meeting ? { meetingActive: true } : {}),
     manager: managerName(row.inspection_manager),
     updated: formatMonthDay(row.source_modified_at),
     submittedAt: row.submitted_at ? formatMonthDay(row.submitted_at) : "-",
@@ -342,7 +374,10 @@ function buildWhere(q: ProjectQuery, includeStatus: boolean): { sql: string; par
   };
 
   if (includeStatus && q.status && q.status !== "전체") {
-    conds.push(`p.status = ${add(q.status)}`);
+    // '미팅중'/'모집'은 같은 status='모집'을 사전 미팅 진행 여부로 쪼갠 파생 필터다
+    if (q.status === "미팅중") conds.push(`p.status = '모집' AND ${MEETING_STARTED}`);
+    else if (q.status === "모집") conds.push(`p.status = '모집' AND NOT ${MEETING_STARTED}`);
+    else conds.push(`p.status = ${add(q.status)}`);
   }
 
   const mf = managerFilterSql(q.manager ?? "전체");
@@ -504,7 +539,9 @@ export class PostgresDataSource implements DataSource {
     // count(*) OVER() 로 필터 적용 후 전체 건수를 페이지 행과 함께 한 번에 받는다.
     // 정렬은 화면에 표시하는 날짜(검수완료일)와 같아야 "정렬 안 된 것처럼" 안 보인다.
     const rows = await query<ProjectRow & { total: string }>(
-      `SELECT ${LIST_COLUMNS}, count(*) OVER() AS total
+      `SELECT ${LIST_COLUMNS},
+              (p.status = '모집' AND ${MEETING_STARTED}) AS is_meeting,
+              count(*) OVER() AS total
          FROM projects p
          LEFT JOIN ai_insights ai ON ai.project_id = p.id
         WHERE ${sql}
@@ -520,16 +557,22 @@ export class PostgresDataSource implements DataSource {
 
   async getKanban(params: ProjectQuery): Promise<KanbanColumn[]> {
     // 칸반은 상태 드롭다운을 무시한다(컬럼 자체가 상태). 상태별 상위 N + 총계를 한 쿼리로.
+    // 모집은 사전 미팅 진행분을 '미팅중' 가상 컬럼(kstatus)으로 쪼갠다 — 총계·row_number도 그 기준.
     const { sql, params: whereParams } = buildWhere(params, false);
-    const rows = await query<ProjectRow & { status_total: string; rn: string }>(
+    const rows = await query<ProjectRow & { kstatus: string; status_total: string; rn: string }>(
       `SELECT * FROM (
-         SELECT ${LIST_COLUMNS},
-                count(*) OVER (PARTITION BY p.status) AS status_total,
-                row_number() OVER (PARTITION BY p.status
-                  ORDER BY p.recruit_started_at DESC NULLS LAST, p.id DESC) AS rn
-           FROM projects p
-           LEFT JOIN ai_insights ai ON ai.project_id = p.id
-          WHERE ${sql}
+         SELECT *,
+                count(*) OVER (PARTITION BY kstatus) AS status_total,
+                row_number() OVER (PARTITION BY kstatus
+                  ORDER BY recruit_started_at DESC NULLS LAST, id DESC) AS rn
+           FROM (
+             SELECT ${LIST_COLUMNS},
+                    (p.status = '모집' AND ${MEETING_STARTED}) AS is_meeting,
+                    CASE WHEN p.status = '모집' AND ${MEETING_STARTED} THEN '미팅중' ELSE p.status END AS kstatus
+               FROM projects p
+               LEFT JOIN ai_insights ai ON ai.project_id = p.id
+              WHERE ${sql}
+           ) base
        ) t
        WHERE rn <= ${KANBAN_PAGE_SIZE}`,
       whereParams,
@@ -537,9 +580,9 @@ export class PostgresDataSource implements DataSource {
 
     const byStatus = new Map<string, { total: number; items: Project[] }>();
     for (const r of rows) {
-      const col = byStatus.get(r.status) ?? { total: Number(r.status_total), items: [] };
+      const col = byStatus.get(r.kstatus) ?? { total: Number(r.status_total), items: [] };
       col.items.push(toProject(r));
-      byStatus.set(r.status, col);
+      byStatus.set(r.kstatus, col);
     }
     // 빈 컬럼도 순서대로 채운다
     return KANBAN_ORDER.map((status) => {
@@ -588,7 +631,16 @@ export class PostgresDataSource implements DataSource {
       calls: calls.map(toCallRecord),
       meetings: meetings.map(toMeetingRecord),
       qna: events.filter((e) => e.source === "qna").map(toQna),
-      timeline: events.filter((e) => e.source !== "qna").map(toTimelineEvent),
+      // 생애주기 마일스톤(날짜 컬럼 합성) + 실제 이벤트를 시간순 병합.
+      // source='status'는 합성 마일스톤과 중복이라 뺀다('change' 값 변경은 유지).
+      timeline: [
+        ...lifecycleEvents(row),
+        ...events
+          .filter((e) => e.source !== "qna" && e.source !== "status")
+          .map((e) => ({ at: new Date(e.event_at).getTime(), ev: toTimelineEvent(e) })),
+      ]
+        .sort((a, b) => a.at - b.at)
+        .map((x) => x.ev),
     });
   }
 

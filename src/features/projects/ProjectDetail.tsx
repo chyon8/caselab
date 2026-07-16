@@ -9,7 +9,7 @@ import st from "./status.module.css";
 import { STATUS_KEY, statusLabel } from "./status";
 import styles from "./ProjectDetail.module.css";
 
-const STAGES = ["검수", "모집", "계약", "프로젝트 진행", "완료"];
+const STAGES = ["검수", "모집", "계약체결중", "프로젝트 진행", "완료"];
 
 const ISSUE_TAG_KEY: Record<IssueType, string> = {
   이슈: "issue",

@@ -7,6 +7,7 @@
 
 ## ✅ 오늘 완료 (2026-07-16)
 
+### 오전 — 데이터 파이프라인
 - **사전 미팅 녹취록 파이프라인(전문·요약, `meetings` 테이블) 완성.**
   8노드 설계(커서=`meeting_meeting.date_created`, 녹취 없는 프로젝트는 목록 API가 자동 스킵,
   IF 루프 없이 수동 반복 실행). `match_reason`(매칭 근거) 컬럼 추가(`migrations/010`).
@@ -18,19 +19,46 @@
 - 리스트뷰에 가격 컬럼 추가(검수예산 + 계약금액 보조표기).
 - 특약(subcontracts) 작업은 **보류로 확정** — 다음에 재론.
 
-## 🔜 내일(2026-07-17 이후) 새 세션 시작점
+### 오후 — 검색 L1 + 서버 페이지네이션 (커밋 `d8b8b31`)
+- **목록이 6천 건 전량 로드 → 서버 페이지네이션으로 전환.** `getProjects`가 `{rows,total}`
+  (LIMIT/OFFSET + `count(*) OVER()`), 칸반은 window func로 상태별 상위 N. 필터·검색·정렬 전부 SQL.
+- **정밀 검색(L1) — 제목·공고본문·고객사·기술·카테고리 trigram 검색.** 토큰 간 AND, 필드 간 OR.
+  본문(posting_raw 12MB)은 서버에서만 검색 가능 → 서버 이전이 전제였음.
+- `migrations/011_search.sql`(pg_trgm + GIN 인덱스) — **Neon에서 실행했는지 확인 필요**(없어도 동작, 성능만).
 
-1. **타임라인 미팅 이벤트 재백필 확인** — 사용자가 직접 다음 3단계를 했는지 확인:
-   `sync_state`에서 `source='meeting'` 커서 삭제 → n8n 워크플로 재실행 → 상세 화면 타임라인에
-   `파트너 #12345` 대신 실제 slug(예: `fourdpocket`)로 뜨는지. 안 했으면 이어서 진행.
-2. **사전 미팅 녹취록 파이프라인 실행 확인** — 8노드 워크플로를 실제로 몇 배치 돌렸는지,
-   `meetings` 테이블에 몇 건 쌓였는지, ProjectDetail에서 전문·매칭근거가 잘 뜨는지.
-3. **선정 파트너(⑤)** — 사내망 필요, 가벼움. `projects_incremental.sql`에 `partners_partners`
-   (grade·rating·team_size·project_accepted·job_slug) 컬럼 몇 개만 추가하면 끝. 오늘 못 함.
-4. **Q&A 유실 346건 진단** — 그대로 대기 중(Neon-only, 아래 "⓪" 섹션).
-5. **특약(subcontracts)** — 오늘 보류 결정. 재론 시 아래 "④ 특약" 섹션 설계 참고
-   (milestone은 프로젝트당 여러 행이라 meetings처럼 별도 커서 워크플로 필요, projects_incremental.sql
-   스칼라 서브쿼리로는 안 됨).
+### 저녁 — 타임라인/모집미팅/라벨 (⚠️ 아직 **커밋 안 됨** — 컨펌 대기)
+변경 파일: `postgres.ts`, `types.ts`, `status.ts`, `ProjectList.tsx`, `ProjectDetail.tsx`. tsc·실DB 검증 완료.
+- **① 선정/단계 마커 타임라인 시딩.** 진행 240건 중 단계 마커가 7건에만 있던 문제(status diff 이벤트로만
+  생겨서). `lifecycleEvents(row)`가 **조회 시** 날짜 컬럼(recruit/progress/completed/cancelled)에서
+  '모집 시작·진행 착수·완료·취소' 합성 → 타임라인 병합. DB 백필·마이그레이션 0. `source='status'`는
+  중복이라 표시 제외('change'는 유지). ⚠️ **계약 체결(선정)만의 날짜 컬럼이 없어** '진행 착수'가 선정
+  이후 마커 — 진짜 계약체결일·파트너는 아래 선정 파트너 트랙이 풀려야 나옴.
+- **② "계약" 표시 라벨 → "계약체결중".** `statusLabel()`만 수정, DB enum·값은 '계약' 유지.
+- **③ 모집/미팅 분리.** 모집(status='모집')을 사전 미팅 이벤트 유무로 **'모집'(105)/'미팅중'(180)** 분할.
+  칸반 컬럼 분리 + 리스트 상태 필터 옵션 + 배지. status는 계속 '모집', 표시만 분리(`Project.meetingActive`
+  플래그, `KanbanStatus` 타입, `MEETING_STARTED` EXISTS). 색은 모집과 공유(부분집합이라).
+
+## 🔜 내일(2026-07-17) 새 세션 시작점
+
+**0. 저녁 작업 커밋** — 위 ①②③이 컨펌 대기 중. 컨펌되면:
+   `git add -A && git commit -m "feat: 타임라인 생애주기 마일스톤 시딩 + 모집/미팅 분리 + 계약체결중 라벨" && git push origin main`
+
+**1순위 — L2 유사사례 (사용자 실제 관심사, 단 대기결정 2개가 병목).**
+   `projects.embedding` 컬럼은 이미 있음. 라우트 하나(`embedding IS NULL` 배치 + `ORDER BY embedding <=> :vec`)면
+   되지만 **대기결정 #3(임베딩 제공자 선택)·#4(공고문 제3자 API 전송 승인)** 를 먼저 풀어야 함 —
+   사용자가 "집에서 생각해보고 답하기로" 한 것. 내일 이 답이 있으면 바로 착수, 없으면 결정부터.
+   (아래 "② 임베딩" 섹션 = 상세 설계. 제공자별 장단점·전송 리스크 정리는 요청 시 제공.)
+
+**2순위 — 선정 파트너 트랙 (싸고, ①의 '진짜 계약체결일/파트너'를 열어줌).**
+   사내망 필요. `projects_incremental.sql`에 `partners_partners`(grade·rating·team_size·project_accepted·job_slug)
+   + agreement 체결일 몇 줄 추가. 이게 되면 오늘 ①의 "진행 착수=선정 마커" 한계가 풀림. (아래 "⑤ 선정 파트너".)
+
+**대기/확인 (사내망 세션에서):**
+- 타임라인 미팅 이벤트 **재백필 확인** — `sync_state`에서 `source='meeting'` 커서 삭제 → n8n 재실행 →
+  상세 타임라인에 `파트너 #12345` 대신 실제 slug로 뜨는지.
+- 사전 미팅 녹취록 파이프라인 실행 확인 — `meetings` 테이블 적재 건수, ProjectDetail 전문·매칭근거.
+- Q&A 유실 346건 진단(Neon-only, 아래 "⓪").
+- 특약(subcontracts) 보류분(아래 "④").
 
 ---
 
@@ -364,6 +392,12 @@ SELECT count(*) FROM projects WHERE proposal_count > 0; -- 0이 아닌가
 
 라이프사이클 날짜로 타임라인을 합성하는 건 **답이 아니다** — 그건 상단 스테퍼와 같은 정보다.
 진짜 사건이 필요하고, 그건 `meeting_meeting`(미팅)과 `management_managenote`(매니저 노트)에 있다.
+
+> ⚠️ **2026-07-16 저녁 정정:** 위 "합성은 답이 아니다"는 **부분적으로 뒤집혔다.** 사용자가 "진행중인데
+> 선정 마커가 안 뜬다"를 문제 삼아, 날짜 컬럼 합성('모집 시작·진행 착수·완료·취소')을 **채택**했다
+> (`lifecycleEvents()`). 스테퍼는 "지금 어느 단계"만 보여주지만 타임라인 합성은 **날짜를 미팅·Q&A·변경
+> 이벤트와 시간순으로 엮어** 보여줘 정보가 겹치지 않는다. 단 여전히 유효한 부분: '선정'만의 별도 날짜가
+> 없어 '진행 착수'로 대체 중이며, 진짜 계약체결일·매니저 노트 같은 "사건"은 이 트랙(미팅/노트 유입)이 답이다.
 
 > ⚠️ `meeting_meeting`에는 `client_cell_phone_number`·`partner_cell_phone_number`가 있다. **SELECT 하지 않는다.**
 

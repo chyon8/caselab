@@ -12,7 +12,8 @@ const STATUS_OPTIONS = [
   { value: "전체", label: "상태 전체" },
   { value: "검수", label: "검수" },
   { value: "모집", label: "모집" },
-  { value: "계약", label: "계약" },
+  { value: "미팅중", label: "미팅중" },
+  { value: "계약", label: "계약체결중" },
   { value: "진행", label: "프로젝트 진행" },
   { value: "완료(성공)", label: "완료(성공)" },
   { value: "완료(취소)", label: "완료(취소)" },
@@ -296,8 +297,10 @@ export default function ProjectList({
                 <div className={styles.name}>{p.name}</div>
                 <div className={styles.client}>{p.client}</div>
                 <div>
-                  <span className={`${st.chip} ${st[STATUS_KEY[p.status]]}`}>
-                    {statusLabel(p.status)}
+                  <span
+                    className={`${st.chip} ${st[STATUS_KEY[p.meetingActive ? "미팅중" : p.status]]}`}
+                  >
+                    {statusLabel(p.meetingActive ? "미팅중" : p.status)}
                   </span>
                 </div>
                 <div className={styles.manager}>{p.manager}</div>
