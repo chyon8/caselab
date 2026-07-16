@@ -18,6 +18,7 @@ interface RawMeeting {
   partner_slug?: string | null;
   summary?: string | null;
   transcript?: string | null;
+  match_reason?: string | null;
   created_at: string;
 }
 
@@ -77,20 +78,22 @@ export async function POST(req: Request): Promise<Response> {
       String(r.id),
       String(r.project_id),
       r.partner_slug ?? null,
-      // 요약·전문에 "010-…로 연락 요청" 류가 섞일 수 있다 — 저장 전 스크럽 (이름은 못 잡음)
+      // 요약·전문·매칭근거에 "010-…로 연락 요청" 류가 섞일 수 있다 — 저장 전 스크럽 (이름은 못 잡음)
       scrubPii(r.summary ?? null),
       scrubPii(r.transcript ?? null),
+      scrubPii(r.match_reason ?? null),
       r.created_at,
     ]);
 
     await query(
-      `INSERT INTO meetings (id, project_id, partner_slug, summary, transcript, created_at)
-       VALUES ${valuesClause(insertable.length, 6)}
+      `INSERT INTO meetings (id, project_id, partner_slug, summary, transcript, match_reason, created_at)
+       VALUES ${valuesClause(insertable.length, 7)}
        ON CONFLICT (id) DO UPDATE SET
          project_id   = EXCLUDED.project_id,
          partner_slug = EXCLUDED.partner_slug,
          summary      = EXCLUDED.summary,
          transcript   = EXCLUDED.transcript,
+         match_reason = EXCLUDED.match_reason,
          created_at   = EXCLUDED.created_at`,
       params,
     );

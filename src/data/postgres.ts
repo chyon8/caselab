@@ -93,6 +93,7 @@ interface MeetingRow {
   partner_slug: string | null;
   summary: string | null;
   transcript: string | null;
+  match_reason: string | null;
   created_at: string | null;
 }
 
@@ -152,12 +153,20 @@ function toCallRecord(c: CallRow): CallRecord {
   };
 }
 
-/** "[MM:SS] 역할: 발화" 형식의 전문을 구조화 lines로 파싱. "## 요약"·빈 줄 등 매칭 안 되는 줄은 버린다. */
+/**
+ * 녹취 전문을 구조화 lines로 파싱. 녹취 서버(STT) 실제 형식은 대괄호 없는
+ * "MM:SS 역할: 발화" (예: `00:02 차현지: ...`)다. 과거 파서는 `[MM:SS]`(대괄호)만
+ * 매칭해 한 줄도 안 잡혀 전문이 통째로 사라졌다 (2026-07-16 수정).
+ * 대괄호 유무·HH:MM:SS 모두 허용하고, "## 전문" 이후만 파싱해 요약/헤더 줄을 버린다.
+ */
 function parseTranscriptLines(transcript: string | null): TranscriptLine[] {
   if (!transcript) return [];
+  const marker = "## 전문";
+  const i = transcript.indexOf(marker);
+  const body = i >= 0 ? transcript.slice(i + marker.length) : transcript;
   const lines: TranscriptLine[] = [];
-  for (const raw of transcript.split("\n")) {
-    const m = raw.match(/^\[(\d{1,2}:\d{2})\]\s*([^:]+):\s*(.*)$/);
+  for (const raw of body.split("\n")) {
+    const m = raw.match(/^\[?(\d{1,2}:\d{2}(?::\d{2})?)\]?\s*([^:]+):\s*(.*)$/);
     if (m) lines.push({ t: m[1], who: m[2].trim(), text: m[3].trim() });
   }
   return lines;
@@ -173,6 +182,9 @@ function toMeetingRecord(m: MeetingRow): CallRecord {
       .map((s) => s.trim())
       .filter(Boolean),
     lines: parseTranscriptLines(m.transcript),
+    // 미팅 전문은 마크다운 회의록이라 구조화 lines가 0줄이다 — 원문을 그대로 넘겨 렌더한다.
+    transcript: m.transcript ?? null,
+    matchReason: m.match_reason ?? null,
   };
 }
 
@@ -442,7 +454,7 @@ export class PostgresDataSource implements DataSource {
             FROM (SELECT call_type, summary, transcript, user_type, confidence, created_at
                     FROM calls WHERE project_id = p.id) c) AS calls,
          (SELECT json_agg(mt ORDER BY mt.created_at)
-            FROM (SELECT partner_slug, summary, transcript, created_at
+            FROM (SELECT partner_slug, summary, transcript, match_reason, created_at
                     FROM meetings WHERE project_id = p.id) mt) AS meetings
          FROM projects p
          LEFT JOIN ai_insights ai ON ai.project_id = p.id

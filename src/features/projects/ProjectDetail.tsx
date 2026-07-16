@@ -61,6 +61,67 @@ function specChips(p: Project): string[] {
   return chips;
 }
 
+/** 인라인 마크다운(**굵게**, [텍스트](url))만 React 노드로 변환. 나머지는 평문. */
+function renderInline(text: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  const re = /\*\*(.+?)\*\*|\[([^\]]+)\]\(([^)]+)\)/g;
+  let last = 0;
+  let key = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) nodes.push(text.slice(last, m.index));
+    if (m[1] !== undefined) {
+      nodes.push(<strong key={key++}>{m[1]}</strong>);
+    } else {
+      nodes.push(
+        <a key={key++} href={m[3]} target="_blank" rel="noreferrer">
+          {m[2]}
+        </a>,
+      );
+    }
+    last = re.lastIndex;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes;
+}
+
+/**
+ * 미팅 회의록(마크다운) 렌더. 통화 STT와 달리 미팅 전문은 `# 회의록 / ## 요약 / **굵게** /
+ * [링크](url)` 형식 마크다운이라, 날것 텍스트 대신 제목·목록·문단으로 읽기 좋게 그린다.
+ * 외부 의존성 없이 이 문서가 쓰는 최소 문법(제목·불릿·굵게·링크)만 처리한다.
+ */
+function MeetingTranscript({ md }: { md: string }) {
+  const blocks: React.ReactNode[] = [];
+  md.split("\n").forEach((raw, i) => {
+    const line = raw.trim();
+    if (!line) return;
+    const h = line.match(/^(#{1,4})\s+(.*)$/);
+    if (h) {
+      blocks.push(
+        <div key={i} className={styles[`md-h${h[1].length}`]}>
+          {renderInline(h[2])}
+        </div>,
+      );
+      return;
+    }
+    const li = line.match(/^[-*]\s+(.*)$/);
+    if (li) {
+      blocks.push(
+        <div key={i} className={styles["md-li"]}>
+          {renderInline(li[1])}
+        </div>,
+      );
+      return;
+    }
+    blocks.push(
+      <p key={i} className={styles["md-p"]}>
+        {renderInline(line)}
+      </p>,
+    );
+  });
+  return <div className={styles["md-body"]}>{blocks}</div>;
+}
+
 /** 사전 미팅 녹취록 카드 — 개발사별로 여러 건이라 카드마다 토글 상태가 독립이어야 한다. */
 function MeetingCard({ meeting }: { meeting: CallRecord }) {
   const [open, setOpen] = useState(false);
@@ -82,22 +143,31 @@ function MeetingCard({ meeting }: { meeting: CallRecord }) {
           ))}
         </div>
       )}
-      {meeting.lines.length > 0 && (
+      {meeting.matchReason && (
+        <div className={styles["match-reason"]}>
+          <span className={styles["match-reason-label"]}>매칭 근거</span>
+          {meeting.matchReason}
+        </div>
+      )}
+      {(meeting.lines.length > 0 || meeting.transcript) && (
         <>
           <button className={styles["transcript-btn"]} onClick={() => setOpen((v) => !v)}>
             {open ? "전체 녹취록 접기 ↑" : "전체 녹취록 보기 ↓"}
           </button>
-          {open && (
-            <div className={styles.transcript}>
-              {meeting.lines.map((l, i) => (
-                <div key={i} className={styles["t-row"]}>
-                  <div className={styles["t-time"]}>{l.t}</div>
-                  <div className={styles["t-who"]}>{l.who}</div>
-                  <div className={styles["t-text"]}>{l.text}</div>
-                </div>
-              ))}
-            </div>
-          )}
+          {open &&
+            (meeting.lines.length > 0 ? (
+              <div className={styles.transcript}>
+                {meeting.lines.map((l, i) => (
+                  <div key={i} className={styles["t-row"]}>
+                    <div className={styles["t-time"]}>{l.t}</div>
+                    <div className={styles["t-who"]}>{l.who}</div>
+                    <div className={styles["t-text"]}>{l.text}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              meeting.transcript && <MeetingTranscript md={meeting.transcript} />
+            ))}
         </>
       )}
     </div>

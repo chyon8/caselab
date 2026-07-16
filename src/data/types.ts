@@ -48,6 +48,8 @@ export interface CallRecord {
   userType?: string | null;
   /** 'high' | 'medium' — 통화↔프로젝트 매칭 신뢰도 (low 는 적재 단계에서 걸러짐) */
   confidence?: string | null;
+  /** 미팅 전용 — 회의록이 이 프로젝트로 매칭된 AI 근거 (match_reason) */
+  matchReason?: string | null;
 }
 
 export interface IssueLogEntry {

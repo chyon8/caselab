@@ -517,6 +517,11 @@
   border-radius: var(--rounded-lg);
   padding: 24px 26px;
   background: var(--card-bg);
+  margin-bottom: 16px;
+}
+
+/* 미팅 녹취록 섹션의 마지막 카드 아래에만 큰 여백을 준다 (다음 섹션과의 간격) */
+.meeting-card:last-child {
   margin-bottom: 56px;
 }
 
@@ -647,6 +652,91 @@
   font-size: 14px;
   line-height: 1.55;
   color: var(--text-body-soft);
+}
+
+/* 미팅↔프로젝트 매칭 근거 (AI) */
+.match-reason {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border-left: 2px solid var(--color-primary);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-body-soft);
+}
+
+.match-reason-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-primary);
+}
+
+/* 미팅 회의록(마크다운) 렌더 — 통화 STT의 3열 뷰와 달리 문서형 전문을 읽기 좋게 */
+.md-body {
+  margin-top: 18px;
+  border-top: 1px solid var(--row-border);
+  padding-top: 16px;
+  max-height: 460px;
+  overflow-y: auto;
+}
+
+.md-h1 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--page-text);
+  margin: 18px 0 10px;
+}
+
+.md-h2 {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--page-text);
+  margin: 16px 0 8px;
+}
+
+.md-h3 {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--page-text);
+  margin: 14px 0 6px;
+}
+
+.md-h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-body-soft);
+  margin: 12px 0 4px;
+}
+
+.md-p {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-body-soft);
+  margin: 6px 0;
+}
+
+.md-li {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-body-soft);
+  padding-left: 16px;
+  position: relative;
+  margin: 4px 0;
+}
+
+.md-li::before {
+  content: "·";
+  position: absolute;
+  left: 4px;
+  color: var(--color-primary);
+}
+
+.md-body a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  word-break: break-all;
 }
 
 /* ===== 개발사 Q&A ===== */
