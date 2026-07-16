@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
 import { useApp } from "@/state/AppContext";
 import styles from "./AppShell.module.css";
 
@@ -16,34 +15,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const app = useApp();
   const pathname = usePathname();
   const router = useRouter();
-  const [notifOpen, setNotifOpen] = useState(false);
-  const bellRef = useRef<HTMLDivElement>(null);
-
   const sc = app.sidebarCollapsed;
-  const unreadCount = app.notifications.filter((n) => !app.notifRead[n.id]).length;
-
-  // 알림 드롭다운: 바깥 클릭 시 닫기
-  useEffect(() => {
-    if (!notifOpen) return;
-    const onDown = (e: MouseEvent) => {
-      if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
-        setNotifOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [notifOpen]);
 
   const isActive = (href: string) =>
     href === "/"
       ? pathname === "/" || pathname.startsWith("/projects")
       : pathname === href;
-
-  const openNotif = (id: string, projectId: string) => {
-    app.markRead(id);
-    setNotifOpen(false);
-    router.push(`/projects/${projectId}`);
-  };
 
   return (
     <div className={styles.shell}>
@@ -96,76 +73,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className={styles.main}>
-        <div className={styles["bell-wrap"]} ref={bellRef}>
-          <button
-            className={styles["bell-btn"]}
-            onClick={() => setNotifOpen((v) => !v)}
-            aria-label="알림"
-            aria-expanded={notifOpen}
-          >
-            <svg
-              className={styles["bell-icon"]}
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-            {unreadCount > 0 && (
-              <div className={styles.badge}>
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </div>
-            )}
-          </button>
-          {notifOpen && (
-            <div className={styles.dropdown}>
-              <div className={styles["dd-header"]}>
-                <div className={styles["dd-title"]}>알림</div>
-                <div className={styles["dd-actions"]}>
-                  <button className={styles["mark-all"]} onClick={app.markAllRead}>
-                    모두 읽음
-                  </button>
-                  <button
-                    className={styles["dd-close"]}
-                    onClick={() => setNotifOpen(false)}
-                    aria-label="알림 닫기"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-              <div className={styles["dd-list"]}>
-                {app.notifications.map((n) => {
-                  const unread = !app.notifRead[n.id];
-                  return (
-                    <button
-                      key={n.id}
-                      className={`${styles["notif-row"]} ${unread ? styles.unread : ""}`}
-                      onClick={() => openNotif(n.id, n.projectId)}
-                    >
-                      <div
-                        className={`${styles["notif-dot"]} ${n.type === "qna" ? styles.qna : ""}`}
-                      />
-                      <div className={styles["notif-body"]}>
-                        <div
-                          className={`${styles["notif-text"]} ${unread ? styles.unread : ""}`}
-                        >
-                          {n.text}
-                        </div>
-                        <div className={styles["notif-time"]}>{n.time}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
         {children}
       </div>
     </div>
