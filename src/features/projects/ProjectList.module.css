@@ -470,3 +470,122 @@
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* ==========================================================================
+   모바일 반응형 — 테이블 → 카드, 칸반 숨김
+   ========================================================================== */
+@media (max-width: 768px) {
+  .container {
+    padding: 24px 16px 80px 16px;
+  }
+
+  .header-row {
+    margin-bottom: 20px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .count {
+    font-size: 13px;
+  }
+
+  /* 칸반 뷰 전환 버튼 숨김 */
+  .seg-group {
+    display: none;
+  }
+
+  /* 필터 바 */
+  .filters {
+    gap: 8px;
+  }
+
+  .search {
+    min-width: 0;
+    width: 100%;
+    flex: none;
+    height: 40px;
+    font-size: 14px;
+    padding: 0 16px;
+  }
+
+  /* 테이블 헤더 숨김 */
+  .table-head {
+    display: none;
+  }
+
+  /* 테이블 행 → 깔끔한 1줄 카드 */
+  .row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 2px 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--row-border);
+    align-items: center;
+  }
+
+  /* 이름: 1행 좌측, 1줄 말줄임 */
+  .name {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  /* 상태 태그: 1행 우측 */
+  .row > div:nth-child(4) {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  /* 고객사 + 날짜: 2행 서브라인 */
+  .client {
+    grid-column: 1;
+    grid-row: 2;
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+
+  .updated {
+    grid-column: 2;
+    grid-row: 2;
+    text-align: right;
+    font-size: 12px;
+    justify-self: end;
+  }
+
+  /* 불필요한 열 숨김 */
+  .star,
+  .manager,
+  .price {
+    display: none;
+  }
+
+  /* 칸반 뷰 숨김 */
+  .kanban {
+    display: none !important;
+  }
+
+  /* 페이지네이션 */
+  .pagination {
+    gap: 4px;
+    padding: 16px 0 8px;
+  }
+
+  .page-btn {
+    min-width: 32px;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  .page-info {
+    font-size: 12px;
+  }
+}

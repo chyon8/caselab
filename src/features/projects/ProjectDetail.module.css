@@ -997,3 +997,80 @@
   font-family: inherit;
   cursor: pointer;
 }
+
+/* ==========================================================================
+   모바일 반응형
+   ========================================================================== */
+@media (max-width: 768px) {
+  .container {
+    padding: 24px 16px 80px 16px;
+  }
+
+  .head-row {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .meta {
+    font-size: 13px;
+  }
+
+  .admin-links {
+    flex-wrap: wrap;
+  }
+
+  /* 스테퍼 */
+  .stepper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+
+  .step {
+    width: 72px;
+  }
+
+  .circle {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .step-label {
+    font-size: 11px;
+  }
+
+  /* 공고문 */
+  .posting-header {
+    padding: 14px 16px;
+  }
+
+  /* 예산 그리드 → 1열 */
+  .budget-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .budget-card {
+    padding: 16px;
+  }
+
+  /* 녹취록 그리드 */
+  .t-row {
+    grid-template-columns: 40px 1fr;
+    gap: 6px;
+  }
+
+  .t-who {
+    font-size: 12px;
+  }
+
+  /* 섹션 카드 */
+  .section-header {
+    padding: 14px 16px;
+  }
+}

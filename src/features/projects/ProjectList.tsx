@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Select from "@/components/Select";
+import { ListSkeleton, KanbanSkeleton } from "@/components/Skeleton";
 import type { KanbanColumn, ProjectPage } from "@/data/types";
 import { onActivate } from "@/lib/a11y";
 import { OTHER_MANAGERS, PRIMARY_MANAGERS } from "@/lib/managers";
@@ -281,41 +282,45 @@ export default function ProjectList({
               <div className={`${styles.th} ${styles.right}`}>가격</div>
               <div className={`${styles.th} ${styles.right}`}>검수완료</div>
             </div>
-            {rows.map((p) => (
-              <div
-                key={p.id}
-                className={styles.row}
-                onClick={() => open(p.id)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={onActivate(() => open(p.id))}
-              >
-                <button
-                  className={`${styles.star} ${app.starred[p.id] ? styles.on : ""}`}
-                  onClick={(e) => toggleStar(e, p.id)}
-                  aria-label={app.starred[p.id] ? "관심 해제" : "관심 등록"}
+            {listLoading ? (
+              <ListSkeleton />
+            ) : (
+              rows.map((p) => (
+                <div
+                  key={p.id}
+                  className={styles.row}
+                  onClick={() => open(p.id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={onActivate(() => open(p.id))}
                 >
-                  {app.starred[p.id] ? "★" : "☆"}
-                </button>
-                <div className={styles.name}>{p.name}</div>
-                <div className={styles.client}>{p.client}</div>
-                <div>
-                  <span
-                    className={`${st.chip} ${st[STATUS_KEY[p.meetingActive ? "미팅중" : p.status]]}`}
+                  <button
+                    className={`${styles.star} ${app.starred[p.id] ? styles.on : ""}`}
+                    onClick={(e) => toggleStar(e, p.id)}
+                    aria-label={app.starred[p.id] ? "관심 해제" : "관심 등록"}
                   >
-                    {statusLabel(p.meetingActive ? "미팅중" : p.status)}
-                  </span>
+                    {app.starred[p.id] ? "★" : "☆"}
+                  </button>
+                  <div className={styles.name}>{p.name}</div>
+                  <div className={styles.client}>{p.client}</div>
+                  <div>
+                    <span
+                      className={`${st.chip} ${st[STATUS_KEY[p.meetingActive ? "미팅중" : p.status]]}`}
+                    >
+                      {statusLabel(p.meetingActive ? "미팅중" : p.status)}
+                    </span>
+                  </div>
+                  <div className={styles.manager}>{p.manager}</div>
+                  <div className={styles.price}>
+                    <div className={styles["price-budget"]}>{p.budget}</div>
+                    {p.contractAmount && (
+                      <div className={styles["price-contract"]}>계약 {p.contractAmount}</div>
+                    )}
+                  </div>
+                  <div className={styles.updated}>{p.reviewedAt}</div>
                 </div>
-                <div className={styles.manager}>{p.manager}</div>
-                <div className={styles.price}>
-                  <div className={styles["price-budget"]}>{p.budget}</div>
-                  {p.contractAmount && (
-                    <div className={styles["price-contract"]}>계약 {p.contractAmount}</div>
-                  )}
-                </div>
-                <div className={styles.updated}>{p.reviewedAt}</div>
-              </div>
-            ))}
+              ))
+            )}
 
             {totalPages > 1 && (
               <div className={styles.pagination}>
@@ -374,52 +379,56 @@ export default function ProjectList({
 
         {viewMode === "grid" && (
           <div className={styles.kanban}>
-            {kanbanCols.map((col) => (
-              <div key={col.status} className={styles.kcol}>
-                <div className={styles["kcol-head"]}>
-                  <div className={`${st.dot} ${st[STATUS_KEY[col.status]]}`} />
-                  <div className={styles["kcol-title"]}>{statusLabel(col.status)}</div>
-                  <div className={styles["kcol-count"]}>{col.total}</div>
-                </div>
-                <div className={styles["kcol-list"]}>
-                  {col.items.map((p) => (
-                    <div
-                      key={p.id}
-                      className={styles.kcard}
-                      onClick={() => open(p.id)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={onActivate(() => open(p.id))}
-                    >
-                      <div className={styles["kcard-top"]}>
-                        <div className={styles["kcard-name"]}>{p.name}</div>
-                        <button
-                          className={`${styles["kcard-star"]} ${app.starred[p.id] ? styles.on : ""}`}
-                          onClick={(e) => toggleStar(e, p.id)}
-                          aria-label={app.starred[p.id] ? "관심 해제" : "관심 등록"}
-                        >
-                          {app.starred[p.id] ? "★" : "☆"}
-                        </button>
+            {kanbanLoading ? (
+              <KanbanSkeleton />
+            ) : (
+              kanbanCols.map((col) => (
+                <div key={col.status} className={styles.kcol}>
+                  <div className={styles["kcol-head"]}>
+                    <div className={`${st.dot} ${st[STATUS_KEY[col.status]]}`} />
+                    <div className={styles["kcol-title"]}>{statusLabel(col.status)}</div>
+                    <div className={styles["kcol-count"]}>{col.total}</div>
+                  </div>
+                  <div className={styles["kcol-list"]}>
+                    {col.items.map((p) => (
+                      <div
+                        key={p.id}
+                        className={styles.kcard}
+                        onClick={() => open(p.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={onActivate(() => open(p.id))}
+                      >
+                        <div className={styles["kcard-top"]}>
+                          <div className={styles["kcard-name"]}>{p.name}</div>
+                          <button
+                            className={`${styles["kcard-star"]} ${app.starred[p.id] ? styles.on : ""}`}
+                            onClick={(e) => toggleStar(e, p.id)}
+                            aria-label={app.starred[p.id] ? "관심 해제" : "관심 등록"}
+                          >
+                            {app.starred[p.id] ? "★" : "☆"}
+                          </button>
+                        </div>
+                        <div className={styles["kcard-meta"]}>
+                          {p.client} · {p.manager}
+                        </div>
                       </div>
-                      <div className={styles["kcard-meta"]}>
-                        {p.client} · {p.manager}
-                      </div>
-                    </div>
-                  ))}
-                  {col.total > col.items.length && (
-                    <button
-                      className={styles["kcol-more"]}
-                      onClick={() => loadMore(col.status)}
-                    >
-                      {(col.total - col.items.length).toLocaleString()}건 더 보기
-                    </button>
-                  )}
-                  {col.total === 0 && !kanbanLoading && (
-                    <div className={styles["kcol-empty"]}>없음</div>
-                  )}
+                    ))}
+                    {col.total > col.items.length && (
+                      <button
+                        className={styles["kcol-more"]}
+                        onClick={() => loadMore(col.status)}
+                      >
+                        {(col.total - col.items.length).toLocaleString()}건 더 보기
+                      </button>
+                    )}
+                    {col.total === 0 && !kanbanLoading && (
+                      <div className={styles["kcol-empty"]}>없음</div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         )}
 

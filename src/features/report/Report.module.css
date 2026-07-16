@@ -113,3 +113,34 @@
   font-size: 13px;
   color: var(--text-muted);
 }
+
+/* ==========================================================================
+   모바일 반응형
+   ========================================================================== */
+@media (max-width: 768px) {
+  .container {
+    padding: 24px 16px 80px 16px;
+  }
+
+  .title {
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
+
+  .bar-row {
+    grid-template-columns: 100px 1fr 44px 48px;
+    gap: 8px;
+  }
+
+  .bar-label {
+    font-size: 12px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+  }
+
+  .stat-card {
+    padding: 18px;
+  }
+}
