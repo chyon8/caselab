@@ -35,7 +35,7 @@ SELECT
       ELSE '기타'
     END,
     IF(pr.partners_id IS NOT NULL,
-       CONCAT('파트너 #', pr.partners_id,
+       CONCAT(COALESCE(pt.slug, CONCAT('파트너 #', pr.partners_id)),
               IF(pt.grade IS NOT NULL OR pt.job_slug IS NOT NULL,
                  CONCAT(' (', CONCAT_WS('·', pt.grade, pt.job_slug), ')'), '')),
        NULL),
@@ -49,9 +49,11 @@ SELECT
     'is_contracted', IF(m.is_contracted = 1, TRUE, FALSE),
     'is_cancelled',  IF(m.is_cancelled = 1, TRUE, FALSE),
     'proposal_id',   m.proposal_id,
-    -- 파트너 식별 — partners_partners 엔 이름 컬럼이 없다(정체성은 auth_user=개인 실명, PII라 안 가져옴).
-    -- partner_id 는 "어떤 파트너와 미팅 → 그 녹취" 매핑 + 파트너 성과 집계의 키. grade·job_slug 는 라벨·세그먼트용 비-PII.
+    -- 파트너 식별 — partner_id 는 "어떤 파트너와 미팅 → 그 녹취" 매핑 + 파트너 성과 집계의 키.
+    -- slug·grade·job_slug 는 라벨·세그먼트용 비-PII (2026-07-16: pt.slug 확인 — 회사 식별용,
+    -- auth_user 개인 실명과는 별개). body 표시용 이름도 이 slug 로 통일한다.
     'partner_id',    pr.partners_id,
+    'partner_slug',  pt.slug,
     'partner_grade', pt.grade,
     'partner_job',   pt.job_slug,
     'date_meeting',  DATE_FORMAT(m.date_meeting, '%Y-%m-%dT%H:%i:%sZ')
@@ -80,4 +82,4 @@ WHERE
   AND m.date_created < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 2 MINUTE)   -- 핫엣지 가드
 
 ORDER BY m.date_created ASC, m.id ASC
-LIMIT 200;
+LIMIT 500;
