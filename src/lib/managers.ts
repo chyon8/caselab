@@ -14,6 +14,8 @@ export const MANAGER_NAMES: Record<string, string> = {
   manager_jinsol: "서진솔",
   manager_eunsik: "김은식",
   manager_dongmin: "우동민",
+  manager_nayeon: "김나연",
+  manager_jongyeon: "배종연",
 };
 
 /** 필터 드롭다운에 개별 항목으로 노출할 매니저. 나머지는 "그 외"로 묶는다. */
