@@ -236,6 +236,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
               <div className={styles.th}>고객사</div>
               <div className={styles.th}>상태</div>
               <div className={styles.th}>검수담당</div>
+              <div className={`${styles.th} ${styles.right}`}>가격</div>
               <div className={`${styles.th} ${styles.right}`}>검수완료</div>
             </div>
             {pageRows.map((p) => (
@@ -262,6 +263,12 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
                   </span>
                 </div>
                 <div className={styles.manager}>{p.manager}</div>
+                <div className={styles.price}>
+                  <div className={styles["price-budget"]}>{p.budget}</div>
+                  {p.contractAmount && (
+                    <div className={styles["price-contract"]}>계약 {p.contractAmount}</div>
+                  )}
+                </div>
                 <div className={styles.updated}>{p.reviewedAt}</div>
               </div>
             ))}

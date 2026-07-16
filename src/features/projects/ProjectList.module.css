@@ -118,7 +118,7 @@
 /* ===== 리스트 뷰 ===== */
 .table-head {
   display: grid;
-  grid-template-columns: 24px 2.4fr 1fr 1.1fr 1fr 0.7fr;
+  grid-template-columns: 24px 2.2fr 1fr 1.1fr 1fr 0.7fr 0.7fr;
   gap: 16px;
   padding: 0 16px 12px 16px;
   border-bottom: 1px solid var(--header-rule);
@@ -135,7 +135,7 @@
 
 .row {
   display: grid;
-  grid-template-columns: 24px 2.4fr 1fr 1.1fr 1fr 0.7fr;
+  grid-template-columns: 24px 2.2fr 1fr 1.1fr 1fr 0.7fr 0.7fr;
   gap: 16px;
   align-items: center;
   padding: 18px 16px;
@@ -177,6 +177,21 @@
 .manager {
   font-size: 14px;
   color: var(--page-text);
+}
+
+.price {
+  text-align: right;
+}
+
+.price-budget {
+  font-size: 14px;
+  color: var(--page-text);
+}
+
+.price-contract {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-faint);
 }
 
 .updated {
