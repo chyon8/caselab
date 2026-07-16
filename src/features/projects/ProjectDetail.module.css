@@ -216,6 +216,12 @@
   color: var(--page-text);
 }
 
+.posting-header-count {
+  font-size: 13px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
 .posting-header-right {
   display: flex;
   align-items: center;
@@ -743,7 +749,6 @@
 .qna-list {
   display: flex;
   flex-direction: column;
-  margin-bottom: 56px;
 }
 
 .qna-row {

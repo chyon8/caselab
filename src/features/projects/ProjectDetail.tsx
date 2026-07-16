@@ -185,6 +185,7 @@ export default function ProjectDetail({ project: p }: { project: ProjectFull }) 
   );
   const [draftComment, setDraftComment] = useState(saved ? saved.comment : "");
   const [justSaved, setJustSaved] = useState(false);
+  const [showQna, setShowQna] = useState(false);
 
   const canceled = p.status === "완료(취소)";
   const isDone = p.status.startsWith("완료");
@@ -503,26 +504,46 @@ export default function ProjectDetail({ project: p }: { project: ProjectFull }) 
           되살리려면 이 자리에 CallCard 렌더를 복원하면 된다 (git history: cd98580 이전). */}
 
       {p.qna.length > 0 && (
-        <>
-          <div className={styles["section-head"]}>
-            <span className={styles["section-title"]}>개발사 Q&A</span>
-          </div>
-          <div className={styles["qna-list"]}>
-            {p.qna.map((q, i) => (
-              <div key={i} className={styles["qna-row"]}>
-                <span className={styles["q-mark"]}>Q</span>
-                <div className={styles["issue-body"]}>
-                  <div className={styles["qna-q"]}>{q.q}</div>
-                  {q.a && <div className={styles["qna-a"]}>{q.a}</div>}
-                  <div className={styles["qna-by"]}>
-                    {q.by} · {q.at}
-                    {q.isPrivate && <span className={styles["qna-private"]}>비공개</span>}
+        <div className={styles["posting-accordion"]}>
+          <button
+            className={styles["posting-header"]}
+            onClick={() => setShowQna((v) => !v)}
+            aria-expanded={showQna}
+          >
+            <div className={styles["posting-header-left"]}>
+              <span className={styles["posting-header-title"]}>개발사 Q&A</span>
+              {!showQna && (
+                <span className={styles["posting-header-count"]}>{p.qna.length}건</span>
+              )}
+            </div>
+            <div className={styles["posting-header-right"]}>
+              {showQna ? "접기" : "보기"}
+              <span className={`${styles.chevron} ${showQna ? styles.open : ""}`}>
+                ▼
+              </span>
+            </div>
+          </button>
+          
+          {showQna && (
+            <div className={styles["posting-content"]}>
+              <div className={styles["qna-list"]}>
+                {p.qna.map((q, i) => (
+                  <div key={i} className={styles["qna-row"]}>
+                    <span className={styles["q-mark"]}>Q</span>
+                    <div className={styles["issue-body"]}>
+                      <div className={styles["qna-q"]}>{q.q}</div>
+                      {q.a && <div className={styles["qna-a"]}>{q.a}</div>}
+                      <div className={styles["qna-by"]}>
+                        {q.by} · {q.at}
+                        {q.isPrivate && <span className={styles["qna-private"]}>비공개</span>}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </>
+            </div>
+          )}
+        </div>
       )}
 
       <div className={`${styles["section-head"]} ${styles.timeline}`}>
