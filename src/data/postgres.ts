@@ -405,7 +405,7 @@ function buildWhere(q: ProjectQuery, includeStatus: boolean): { sql: string; par
   for (const t of tokens) {
     const like = add(`%${escapeLike(t)}%`);
     conds.push(
-      `(p.title ILIKE ${like} OR p.client_name ILIKE ${like} OR p.tech ILIKE ${like} OR p.category ILIKE ${like} OR p.posting_raw ILIKE ${like})`,
+      `(p.id::text ILIKE ${like} OR p.title ILIKE ${like} OR p.client_name ILIKE ${like} OR p.tech ILIKE ${like} OR p.category ILIKE ${like} OR p.posting_raw ILIKE ${like})`,
     );
   }
 
