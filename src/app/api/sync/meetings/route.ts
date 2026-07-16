@@ -28,9 +28,9 @@ export async function POST(req: Request): Promise<Response> {
   const denied = requireSyncKey(req);
   if (denied) return denied;
 
-  let body: { rows?: RawMeeting[] };
+  let body: { rows?: RawMeeting[]; cursor?: string };
   try {
-    body = (await req.json()) as { rows?: RawMeeting[] };
+    body = (await req.json()) as { rows?: RawMeeting[]; cursor?: string };
   } catch {
     return Response.json({ error: "JSON 파싱 실패" }, { status: 400 });
   }
@@ -46,7 +46,14 @@ export async function POST(req: Request): Promise<Response> {
     );
   }
   if (rows.length === 0) {
-    return Response.json({ upserted: 0, skipped: 0, cursor: await readCursor(CURSOR) });
+    // 녹취 없는 미팅(total:0)만 있던 배치 — 적재할 건 없어도 스캔 워터마크는 전진시켜야
+    // 다음 배치로 넘어간다. body.cursor 가 없으면(구 파이프라인) 종전대로 전진하지 않는다.
+    if (body.cursor) await saveCursor(CURSOR, body.cursor);
+    return Response.json({
+      upserted: 0,
+      skipped: 0,
+      cursor: body.cursor ?? (await readCursor(CURSOR)),
+    });
   }
 
   const ids = [...new Set(rows.map((r) => r.project_id).filter((id) => id != null).map(String))];
@@ -92,8 +99,14 @@ export async function POST(req: Request): Promise<Response> {
   // 프로젝트 미적재로 skip된 미팅이 있으면 커서를 세우지 않는다 (다음 주기 재시도)
   let cursor: string | null = await readCursor(CURSOR);
   if (skipped === 0) {
-    const last = maxByCursor(rows, (r) => r.created_at, (r) => r.id);
-    cursor = formatCursor(last.created_at, last.id);
+    // n8n이 본진 meeting_meeting.date_created 워터마크를 body.cursor로 실어 보내면 그걸 쓴다.
+    // (row.created_at 은 미팅일이라 커서 축이 다르다 — meetings_pipeline.md ① 참고)
+    if (body.cursor) {
+      cursor = body.cursor;
+    } else {
+      const last = maxByCursor(rows, (r) => r.created_at, (r) => r.id);
+      cursor = formatCursor(last.created_at, last.id);
+    }
     await saveCursor(CURSOR, cursor);
   }
 
