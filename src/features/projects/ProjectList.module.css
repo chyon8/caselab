@@ -147,6 +147,12 @@
   background: var(--row-hover);
 }
 
+.row > div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .star {
   font-size: 16px;
   cursor: pointer;
