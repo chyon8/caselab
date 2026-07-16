@@ -11,7 +11,6 @@ interface ListState {
   starredOnly: boolean;
   viewMode: "list" | "grid";
   page: number;
-  kanbanShown: Record<string, number>;
 }
 
 interface AppContextValue {
@@ -70,7 +69,6 @@ export function AppProvider({
     starredOnly: false,
     viewMode: "list",
     page: 1,
-    kanbanShown: {},
   });
 
   useEffect(() => {

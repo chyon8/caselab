@@ -32,3 +32,26 @@ export function matchesManager(manager: string, filter: string): boolean {
   if (filter === OTHER_MANAGERS) return !PRIMARY_MANAGERS.includes(manager);
   return manager === filter;
 }
+
+/** 주요 매니저 3인의 본진 계정명 (DB에는 실명이 아니라 계정명이 저장돼 있다) */
+export const PRIMARY_MANAGER_ACCOUNTS = Object.entries(MANAGER_NAMES)
+  .filter(([, name]) => PRIMARY_MANAGERS.includes(name))
+  .map(([account]) => account);
+
+/** 매니저 필터를 서버 SQL 조건 재료로 변환 (matchesManager의 SQL판) */
+export type ManagerFilterSql =
+  | { kind: "all" }
+  | { kind: "in"; accounts: string[] }
+  | { kind: "other"; primaryAccounts: string[] };
+
+export function managerFilterSql(filter: string): ManagerFilterSql {
+  if (filter === "전체") return { kind: "all" };
+  if (filter === OTHER_MANAGERS) {
+    return { kind: "other", primaryAccounts: PRIMARY_MANAGER_ACCOUNTS };
+  }
+  // 실명 → 계정명. 같은 실명에 매핑되는 계정이 여럿일 수 있어 배열로.
+  const accounts = Object.entries(MANAGER_NAMES)
+    .filter(([, name]) => name === filter)
+    .map(([account]) => account);
+  return { kind: "in", accounts };
+}

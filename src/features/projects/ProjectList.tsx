@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Select from "@/components/Select";
-import type { Project } from "@/data/types";
+import type { KanbanColumn, ProjectPage } from "@/data/types";
 import { onActivate } from "@/lib/a11y";
-import { matchesManager, OTHER_MANAGERS, PRIMARY_MANAGERS } from "@/lib/managers";
+import { OTHER_MANAGERS, PRIMARY_MANAGERS } from "@/lib/managers";
 import { useApp } from "@/state/AppContext";
 
 const STATUS_OPTIONS = [
@@ -24,20 +24,14 @@ const MANAGER_OPTIONS = [
   { value: OTHER_MANAGERS, label: OTHER_MANAGERS },
 ];
 
-/** 한 페이지에 보여줄 건수 */
-const PAGE_SIZE = 50;
 /** 한 번에 보여줄 페이지 번호 개수 */
 const PAGE_BLOCK = 10;
-/** 칸반 컬럼당 렌더링할 카드 수 — 전부 그리면 카드 수천 개가 DOM에 쌓인다 */
+/** 칸반 컬럼당 한 번에 더 불러올 카드 수 (서버 KANBAN_PAGE_SIZE와 같아야 한다) */
 const KANBAN_PAGE = 30;
 
 /**
  * 기준은 **검수 완료일**(매니저가 모집으로 넘긴 날, date_start_recruitment)이다.
  * 첫 화면의 목적이 "오늘 뭐 검수했지?"라서 정렬·표시·필터를 전부 이 날짜로 통일했다.
- *
- * 최근 수정일이 아니다 — 그건 예산 수정·시스템 갱신까지 "오늘"로 찍혀서
- * "내가 검수한 것"을 못 짚는다. 검수 요청일(date_submitted)도 아니다 —
- * 어제 들어온 걸 오늘 승인하면 어제 날짜로 보인다.
  */
 const PERIOD_OPTIONS = [
   { value: "오늘", label: "오늘 검수" },
@@ -52,8 +46,9 @@ import st from "./status.module.css";
 import { KANBAN_STATUSES, STATUS_KEY, statusLabel } from "./status";
 import styles from "./ProjectList.module.css";
 
-const PERIOD_MAX: Record<string, number> = {
-  전체: Infinity,
+/** 기간 라벨 → 최근 N일. 전체는 서버에 "전체"로 보낸다 */
+const PERIOD_DAYS: Record<string, number | "전체"> = {
+  전체: "전체",
   오늘: 0,
   "1주일": 7,
   "1개월": 30,
@@ -62,42 +57,29 @@ const PERIOD_MAX: Record<string, number> = {
   "1년": 365,
 };
 
-export default function ProjectList({ projects }: { projects: Project[] }) {
+export default function ProjectList({
+  initial,
+  pageSize,
+}: {
+  initial: ProjectPage;
+  pageSize: number;
+}) {
   const app = useApp();
   const router = useRouter();
 
-  const {
-    query,
-    statusFilter,
-    managerFilter,
-    periodFilter,
-    starredOnly,
-    viewMode,
-    page,
-    kanbanShown,
-  } = app.listState;
+  const { query, statusFilter, managerFilter, periodFilter, starredOnly, viewMode, page } =
+    app.listState;
 
   const setQuery = (v: string) => app.setListState({ query: v });
   const setStatusFilter = (v: string) => app.setListState({ statusFilter: v });
   const setManagerFilter = (v: string) => app.setListState({ managerFilter: v });
   const setPeriodFilter = (v: string) => app.setListState({ periodFilter: v });
   const setStarredOnly = (v: boolean | ((prev: boolean) => boolean)) =>
-    app.setListState({
-      starredOnly: typeof v === "function" ? v(starredOnly) : v,
-    });
+    app.setListState({ starredOnly: typeof v === "function" ? v(starredOnly) : v });
   const setViewMode = (v: "list" | "grid") => app.setListState({ viewMode: v });
   const setPage = (v: number) => app.setListState({ page: v });
-  const setKanbanShown = (
-    v:
-      | Record<string, number>
-      | ((prev: Record<string, number>) => Record<string, number>)
-  ) =>
-    app.setListState({
-      kanbanShown: typeof v === "function" ? v(kanbanShown) : v,
-    });
 
   const q = query.trim();
-  const periodMax = PERIOD_MAX[periodFilter] ?? Infinity;
 
   /** 필터가 바뀌면 1페이지로 — 3페이지 보던 중 필터를 좁히면 빈 화면이 뜬다 */
   const withReset = <T,>(set: (v: T) => void) => (v: T) => {
@@ -105,59 +87,107 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
     setPage(1);
   };
 
-  const matches = (p: Project, withStatus: boolean) => {
-    if (q && !(p.name + p.client + p.tech + p.cat + p.id).includes(q)) return false;
-    if (withStatus && statusFilter !== "전체" && p.status !== statusFilter) return false;
-    if (!matchesManager(p.manager, managerFilter)) return false;
-    // 검수 완료 기준 ("오늘 뭐 검수했지?")
-    if (periodMax !== Infinity && (p.reviewedDaysAgo == null || p.reviewedDaysAgo > periodMax)) {
-      return false;
-    }
-    if (starredOnly && !app.starred[p.id]) return false;
-    return true;
+  // ★관심 필터가 켜졌을 때만 관심 id 목록을 서버로 보낸다. off면 파라미터 자체를 안 보낸다.
+  const starredIds = starredOnly
+    ? Object.keys(app.starred).filter((id) => app.starred[id])
+    : null;
+  const starredKey = starredIds ? starredIds.join(",") : "off";
+
+  /** 목록·칸반이 공유하는 필터 파라미터(상태·페이지 제외) */
+  const commonParams = () => {
+    const sp = new URLSearchParams();
+    if (q) sp.set("q", q);
+    if (managerFilter !== "전체") sp.set("manager", managerFilter);
+    sp.set("period", String(PERIOD_DAYS[periodFilter] ?? "전체"));
+    if (starredIds) sp.set("starred", starredIds.join(","));
+    return sp;
   };
 
-  const rows = projects.filter((p) => matches(p, true));
+  // ── 리스트 데이터 (서버 페이지네이션) ──────────────────────────────
+  const [listData, setListData] = useState<ProjectPage>(initial);
+  const [listLoading, setListLoading] = useState(false);
 
-  // 페이지가 범위를 벗어나면(필터로 건수가 줄면) 마지막 페이지로 당긴다
-  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  useEffect(() => {
+    if (viewMode !== "list") return;
+    const ctrl = new AbortController();
+    setListLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const sp = commonParams();
+        if (statusFilter !== "전체") sp.set("status", statusFilter);
+        sp.set("page", String(page));
+        sp.set("pageSize", String(pageSize));
+        const res = await fetch(`/api/projects?${sp}`, { signal: ctrl.signal });
+        setListData((await res.json()) as ProjectPage);
+        setListLoading(false);
+      } catch {
+        if (!ctrl.signal.aborted) setListLoading(false);
+      }
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, statusFilter, managerFilter, periodFilter, starredKey, page, viewMode, pageSize]);
+
+  // ── 칸반 데이터 (상태 드롭다운·페이지 무시) ─────────────────────────
+  const [kanban, setKanban] = useState<KanbanColumn[] | null>(null);
+  const [kanbanLoading, setKanbanLoading] = useState(false);
+
+  useEffect(() => {
+    if (viewMode !== "grid") return;
+    const ctrl = new AbortController();
+    setKanbanLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const sp = commonParams();
+        sp.set("mode", "kanban");
+        const res = await fetch(`/api/projects?${sp}`, { signal: ctrl.signal });
+        const data = (await res.json()) as { columns: KanbanColumn[] };
+        setKanban(data.columns);
+        setKanbanLoading(false);
+      } catch {
+        if (!ctrl.signal.aborted) setKanbanLoading(false);
+      }
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, managerFilter, periodFilter, starredKey, viewMode]);
+
+  /** 칸반 "더 보기" — 그 컬럼의 다음 페이지를 받아 이어붙인다 */
+  const loadMore = async (status: string) => {
+    const col = kanban?.find((c) => c.status === status);
+    if (!col) return;
+    const nextPage = Math.floor(col.items.length / KANBAN_PAGE) + 1;
+    const sp = commonParams();
+    sp.set("status", status);
+    sp.set("page", String(nextPage));
+    sp.set("pageSize", String(KANBAN_PAGE));
+    const res = await fetch(`/api/projects?${sp}`);
+    const data = (await res.json()) as ProjectPage;
+    setKanban(
+      (cols) =>
+        cols?.map((c) =>
+          c.status === status ? { ...c, items: [...c.items, ...data.rows] } : c,
+        ) ?? null,
+    );
+  };
+
+  // 페이지네이션 (서버 total 기준)
+  const rows = listData.rows;
+  const total = listData.total;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(page, totalPages);
-  const pageRows = rows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-
-  // 페이지 번호는 10개씩 묶어서 보여준다 (1~10, 11~20 …)
   const blockStart = Math.floor((currentPage - 1) / PAGE_BLOCK) * PAGE_BLOCK + 1;
   const blockEnd = Math.min(blockStart + PAGE_BLOCK - 1, totalPages);
   const pageNumbers = Array.from(
     { length: blockEnd - blockStart + 1 },
     (_, i) => blockStart + i,
   );
-
-  const kanbanCols = KANBAN_STATUSES.map((stg) => ({
-    status: stg,
-    items: projects.filter((p) => matches(p, false) && p.status === stg),
-  }));
-
-  const shownOf = (status: string) => kanbanShown[status] ?? KANBAN_PAGE;
-  const showMore = (status: string) =>
-    setKanbanShown((m) => ({ ...m, [status]: shownOf(status) + KANBAN_PAGE }));
-
-  // AI 유사사례 제안: 검색어가 있을 때 같은 카테고리의 완료 사례를 추천
-  let aiRows: { project: Project; sim: "high" | "mid" }[] = [];
-  if (q) {
-    const catHit = projects.find(
-      (p) => p.cat.includes(q) || p.tech.includes(q) || p.name.includes(q)
-    );
-    if (catHit) {
-      let similar = projects.filter(
-        (p) => p.cat === catHit.cat && p.status.startsWith("완료") && p.id !== catHit.id
-      );
-      if (!similar.length)
-        similar = projects.filter((p) => p.status === "완료(성공)").slice(0, 2);
-      aiRows = similar
-        .slice(0, 3)
-        .map((p, i) => ({ project: p, sim: i === 0 ? "high" : "mid" }));
-    }
-  }
 
   const open = (id: string) => router.push(`/projects/${id}`);
 
@@ -166,18 +196,26 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
     app.toggleStar(id);
   };
 
+  const kanbanCols = kanban ?? KANBAN_STATUSES.map((s) => ({ status: s, total: 0, items: [] }));
+
   return (
     <div className={styles.page}>
       <div className={styles.container}>
         <div className={styles["header-row"]}>
           <div className={styles["title-group"]}>
             <h1 className={styles.title}>전체 프로젝트</h1>
-            <div className={styles.count}>{rows.length}건</div>
+            <div className={styles.count}>
+              {viewMode === "list" ? `${total.toLocaleString()}건` : ""}
+              {listLoading && viewMode === "list" ? " · 검색 중…" : ""}
+            </div>
           </div>
           <div className={styles.controls}>
             <div
               className={`${styles["star-filter"]} ${starredOnly ? styles.active : ""}`}
-              onClick={() => setStarredOnly((v) => !v)}
+              onClick={() => {
+                setStarredOnly((v) => !v);
+                setPage(1);
+              }}
             >
               ★ 관심
             </div>
@@ -206,7 +244,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
               setQuery(e.target.value);
               setPage(1);
             }}
-            placeholder="프로젝트명 · 고객사 · 키워드 검색 (예: LLM, 크롤링, 쇼핑몰)"
+            placeholder="프로젝트명 · 고객사 · 공고 본문 · 키워드 검색 (예: LLM, 크롤링, 쇼핑몰)"
           />
           <Select
             value={statusFilter}
@@ -239,7 +277,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
               <div className={`${styles.th} ${styles.right}`}>가격</div>
               <div className={`${styles.th} ${styles.right}`}>검수완료</div>
             </div>
-            {pageRows.map((p) => (
+            {rows.map((p) => (
               <div
                 key={p.id}
                 className={styles.row}
@@ -321,7 +359,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
                 </button>
 
                 <span className={styles["page-info"]}>
-                  {rows.length.toLocaleString()}건 · {currentPage} / {totalPages}
+                  {total.toLocaleString()}건 · {currentPage} / {totalPages}
                 </span>
               </div>
             )}
@@ -335,10 +373,10 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
                 <div className={styles["kcol-head"]}>
                   <div className={`${st.dot} ${st[STATUS_KEY[col.status]]}`} />
                   <div className={styles["kcol-title"]}>{statusLabel(col.status)}</div>
-                  <div className={styles["kcol-count"]}>{col.items.length}</div>
+                  <div className={styles["kcol-count"]}>{col.total}</div>
                 </div>
                 <div className={styles["kcol-list"]}>
-                  {col.items.slice(0, shownOf(col.status)).map((p) => (
+                  {col.items.map((p) => (
                     <div
                       key={p.id}
                       className={styles.kcard}
@@ -362,15 +400,15 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
                       </div>
                     </div>
                   ))}
-                  {col.items.length > shownOf(col.status) && (
+                  {col.total > col.items.length && (
                     <button
                       className={styles["kcol-more"]}
-                      onClick={() => showMore(col.status)}
+                      onClick={() => loadMore(col.status)}
                     >
-                      {(col.items.length - shownOf(col.status)).toLocaleString()}건 더 보기
+                      {(col.total - col.items.length).toLocaleString()}건 더 보기
                     </button>
                   )}
-                  {col.items.length === 0 && (
+                  {col.total === 0 && !kanbanLoading && (
                     <div className={styles["kcol-empty"]}>없음</div>
                   )}
                 </div>
@@ -379,42 +417,8 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
           </div>
         )}
 
-        {viewMode === "list" && rows.length === 0 && (
+        {viewMode === "list" && !listLoading && rows.length === 0 && (
           <div className={styles.empty}>조건에 맞는 프로젝트가 없습니다.</div>
-        )}
-
-        {aiRows.length > 0 && (
-          <div className={styles["ai-panel"]}>
-            <div className={styles["ai-head"]}>
-              <span className={styles["ai-chip"]}>AI 유사사례 제안</span>
-              <span className={styles["ai-sub"]}>
-                키워드 검색과 별도로 AI가 추가 제안합니다
-              </span>
-            </div>
-            <div className={styles["ai-list"]}>
-              {aiRows.map(({ project: p, sim }) => (
-                <div
-                  key={p.id}
-                  className={styles["ai-row"]}
-                  onClick={() => open(p.id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={onActivate(() => open(p.id))}
-                >
-                  <div className={styles["ai-name"]}>
-                    <b>{p.name}</b>
-                    <span className={styles["ai-meta"]}>
-                      {" "}
-                      — {statusLabel(p.status)} · {p.reviewedAt}
-                    </span>
-                  </div>
-                  <span className={`${styles.sim} ${sim === "high" ? styles.high : styles.mid}`}>
-                    {sim === "high" ? "유사도 높음" : "유사도 중간"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
         )}
       </div>
     </div>

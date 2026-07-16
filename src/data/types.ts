@@ -131,6 +131,36 @@ export interface Project {
   riskTags: string[];
 }
 
+/** 목록/칸반 서버 조회 파라미터 — 필터·검색·페이지네이션을 전부 서버에서 처리한다 */
+export interface ProjectQuery {
+  /** 검색어 — 공백 토큰 간 AND, 필드(제목·본문·고객사·기술·카테고리) 간 OR */
+  q?: string;
+  /** "전체" 또는 특정 상태. 칸반에서는 무시된다(컬럼 자체가 상태라서) */
+  status?: string;
+  /** 필터 드롭다운 값 — 실명 / "그 외" / "전체" */
+  manager?: string;
+  /** 검수완료일(모집 전환일) 기준 최근 N일. null/undefined = 기간 전체 */
+  periodDays?: number | null;
+  /** ★관심 필터가 켜졌을 때만 전달. []는 "켜졌으나 관심 없음" = 결과 없음 */
+  starredIds?: string[];
+  /** 1-based */
+  page?: number;
+  pageSize?: number;
+}
+
+/** 목록 한 페이지 — total은 필터 적용 후 전체 건수(페이지네이션용) */
+export interface ProjectPage {
+  rows: Project[];
+  total: number;
+}
+
+/** 칸반 컬럼 — 상위 items + 그 상태의 전체 건수 */
+export interface KanbanColumn {
+  status: ProjectStatus;
+  total: number;
+  items: Project[];
+}
+
 /**
  * 상세 페이지 전용. 공고문·타임라인·Q&A는 **목록에 실으면 안 된다.**
  * 내용이 비어 있어도 빈 껍데기 구조만으로 프로젝트당 ~800바이트라,

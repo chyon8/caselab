@@ -1,5 +1,5 @@
 import { query } from "@/lib/db";
-import { managerName } from "@/lib/managers";
+import { managerFilterSql, managerName } from "@/lib/managers";
 import {
   daysBetween,
   daysSince,
@@ -16,15 +16,32 @@ import type {
   CallRecord,
   CaseReview,
   IssueLogEntry,
+  KanbanColumn,
   Posting,
   Project,
   ProjectFull,
+  ProjectPage,
+  ProjectQuery,
   ProjectStatus,
   QnaItem,
   ReportStats,
   TimelineEvent,
   TranscriptLine,
 } from "./types";
+
+/** 목록/칸반 한 페이지 기본 건수 */
+export const DEFAULT_PAGE_SIZE = 50;
+export const KANBAN_PAGE_SIZE = 30;
+
+/** 칸반 컬럼 순서 */
+const KANBAN_ORDER: ProjectStatus[] = [
+  "검수",
+  "모집",
+  "계약",
+  "진행",
+  "완료(성공)",
+  "완료(취소)",
+];
 
 /** BIGINT·NUMERIC은 pg 드라이버에서 문자열로 돌아온다 */
 interface ProjectRow {
@@ -303,6 +320,63 @@ const WON = `stage >= 3 AND status <> '완료(취소)'`;
 /** 표본이 이보다 적은 구간은 리포트에 싣지 않는다 — 비율이 우연에 흔들린다 */
 const MIN_SAMPLE = 100;
 
+/** 검색 토큰 상한 — 쿼리 길이를 묶는다 */
+const SEARCH_MAX_TOKENS = 6;
+
+/** ILIKE 패턴 특수문자(\ % _)를 리터럴로 이스케이프 (기본 ESCAPE '\') */
+function escapeLike(s: string): string {
+  return s.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
+/**
+ * 목록/칸반 공통 WHERE 절을 파라미터화해서 만든다.
+ * 검색은 토큰 간 AND, 필드(제목·본문·고객사·기술·카테고리) 간 OR.
+ * @param includeStatus 칸반은 상태 드롭다운을 무시하므로 false로 뺀다.
+ */
+function buildWhere(q: ProjectQuery, includeStatus: boolean): { sql: string; params: unknown[] } {
+  const conds: string[] = ["p.deleted_at IS NULL", "p.hidden = false"];
+  const params: unknown[] = [];
+  const add = (v: unknown): string => {
+    params.push(v);
+    return `$${params.length}`;
+  };
+
+  if (includeStatus && q.status && q.status !== "전체") {
+    conds.push(`p.status = ${add(q.status)}`);
+  }
+
+  const mf = managerFilterSql(q.manager ?? "전체");
+  if (mf.kind === "in") {
+    conds.push(`p.inspection_manager = ANY(${add(mf.accounts)}::text[])`);
+  } else if (mf.kind === "other") {
+    conds.push(
+      `(p.inspection_manager IS NULL OR p.inspection_manager <> ALL(${add(mf.primaryAccounts)}::text[]))`,
+    );
+  }
+
+  // 기간: 검수완료일(모집 전환일) 기준 최근 N일. daysSince가 floor(일 차이)라
+  // reviewedDaysAgo <= N ⟺ 경과가 (N+1)일 미만 ⟺ recruit_started_at > now - (N+1)일.
+  if (q.periodDays != null && Number.isFinite(q.periodDays)) {
+    conds.push(`p.recruit_started_at > now() - (INTERVAL '1 day' * ${add(q.periodDays + 1)})`);
+  }
+
+  // ★관심: 켜졌으나 관심 항목이 없으면 결과 없음
+  if (q.starredIds) {
+    if (q.starredIds.length === 0) conds.push("false");
+    else conds.push(`p.id = ANY(${add(q.starredIds)}::bigint[])`);
+  }
+
+  const tokens = (q.q ?? "").trim().split(/\s+/).filter(Boolean).slice(0, SEARCH_MAX_TOKENS);
+  for (const t of tokens) {
+    const like = add(`%${escapeLike(t)}%`);
+    conds.push(
+      `(p.title ILIKE ${like} OR p.client_name ILIKE ${like} OR p.tech ILIKE ${like} OR p.category ILIKE ${like} OR p.posting_raw ILIKE ${like})`,
+    );
+  }
+
+  return { sql: conds.join(" AND "), params };
+}
+
 interface BreakdownRow {
   label: string | null;
   decided: string;
@@ -420,17 +494,58 @@ export class PostgresDataSource implements DataSource {
     };
   }
 
-  async getProjects(): Promise<Project[]> {
-    const rows = await query<ProjectRow>(
-      `SELECT ${LIST_COLUMNS}
+  async getProjects(params: ProjectQuery): Promise<ProjectPage> {
+    const page = Math.max(1, params.page ?? 1);
+    const size = params.pageSize ?? DEFAULT_PAGE_SIZE;
+    const { sql, params: whereParams } = buildWhere(params, true);
+    const limit = `$${whereParams.length + 1}`;
+    const offset = `$${whereParams.length + 2}`;
+
+    // count(*) OVER() 로 필터 적용 후 전체 건수를 페이지 행과 함께 한 번에 받는다.
+    // 정렬은 화면에 표시하는 날짜(검수완료일)와 같아야 "정렬 안 된 것처럼" 안 보인다.
+    const rows = await query<ProjectRow & { total: string }>(
+      `SELECT ${LIST_COLUMNS}, count(*) OVER() AS total
          FROM projects p
          LEFT JOIN ai_insights ai ON ai.project_id = p.id
-        WHERE p.deleted_at IS NULL AND p.hidden = false
-        -- 정렬은 화면에 표시하는 날짜와 같아야 한다. 다른 날짜로 정렬하면
-        -- 날짜 컬럼이 내림차순으로 안 보여서 "정렬이 안 된 것처럼" 읽힌다.
-        ORDER BY p.recruit_started_at DESC NULLS LAST, p.id DESC`,
+        WHERE ${sql}
+        ORDER BY p.recruit_started_at DESC NULLS LAST, p.id DESC
+        LIMIT ${limit} OFFSET ${offset}`,
+      [...whereParams, size, (page - 1) * size],
     );
-    return rows.map(toProject);
+    return {
+      rows: rows.map(toProject),
+      total: rows[0] ? Number(rows[0].total) : 0,
+    };
+  }
+
+  async getKanban(params: ProjectQuery): Promise<KanbanColumn[]> {
+    // 칸반은 상태 드롭다운을 무시한다(컬럼 자체가 상태). 상태별 상위 N + 총계를 한 쿼리로.
+    const { sql, params: whereParams } = buildWhere(params, false);
+    const rows = await query<ProjectRow & { status_total: string; rn: string }>(
+      `SELECT * FROM (
+         SELECT ${LIST_COLUMNS},
+                count(*) OVER (PARTITION BY p.status) AS status_total,
+                row_number() OVER (PARTITION BY p.status
+                  ORDER BY p.recruit_started_at DESC NULLS LAST, p.id DESC) AS rn
+           FROM projects p
+           LEFT JOIN ai_insights ai ON ai.project_id = p.id
+          WHERE ${sql}
+       ) t
+       WHERE rn <= ${KANBAN_PAGE_SIZE}`,
+      whereParams,
+    );
+
+    const byStatus = new Map<string, { total: number; items: Project[] }>();
+    for (const r of rows) {
+      const col = byStatus.get(r.status) ?? { total: Number(r.status_total), items: [] };
+      col.items.push(toProject(r));
+      byStatus.set(r.status, col);
+    }
+    // 빈 컬럼도 순서대로 채운다
+    return KANBAN_ORDER.map((status) => {
+      const col = byStatus.get(status);
+      return { status, total: col?.total ?? 0, items: col?.items ?? [] };
+    });
   }
 
   async getProject(id: string): Promise<ProjectFull | undefined> {
@@ -513,4 +628,5 @@ export class PostgresDataSource implements DataSource {
       [projectId, review.checks, review.comment],
     );
   }
+
 }
