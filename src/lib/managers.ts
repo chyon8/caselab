@@ -10,7 +10,7 @@
 export const MANAGER_NAMES: Record<string, string> = {
   manager_sangmin: "이상민",
   manager_suyong: "장수룡",
-  manager_semin: "김세민", // ⚠️ 계정명 미확인 — 다른 계정의 명명 규칙에서 추정. 실데이터로 확인 필요
+  manager_semin: "김세민",
   manager_jinsol: "서진솔",
   manager_eunsik: "김은식",
   manager_dongmin: "우동민",
