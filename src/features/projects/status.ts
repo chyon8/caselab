@@ -4,7 +4,7 @@ import type { KanbanStatus } from "@/data/types";
 export const STATUS_KEY: Record<KanbanStatus, string> = {
   검수: "review",
   모집: "recruit",
-  미팅중: "recruit",
+  미팅중: "meeting",
   계약: "contract",
   진행: "progress",
   "완료(성공)": "success",

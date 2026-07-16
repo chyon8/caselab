@@ -18,6 +18,11 @@
   color: var(--status-recruit-fg);
 }
 
+.chip.meeting {
+  background: var(--status-meeting-bg);
+  color: var(--status-meeting-fg);
+}
+
 .chip.contract {
   background: var(--status-contract-bg);
   color: var(--status-contract-fg);
@@ -52,6 +57,10 @@
 
 .dot.recruit {
   background: var(--status-recruit-fg);
+}
+
+.dot.meeting {
+  background: var(--status-meeting-fg);
 }
 
 .dot.contract {
