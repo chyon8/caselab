@@ -1,20 +1,36 @@
-# CaseLab 백필 런북 (2026-07-14, 2026-07-15 업데이트)
+# CaseLab 백필 런북 (2026-07-14, 2026-07-15, 2026-07-16 업데이트)
 
 > 순서대로 그대로 따라 하면 된다. 순서를 바꾸면 커서가 멈춘다.
 > 설계 근거는 [DATA_INTEGRATION.md](./DATA_INTEGRATION.md), 원본 스키마는 [DATA_SCHEMA.md](./DATA_SCHEMA.md).
 
 ---
 
-## 🔜 내일(2026-07-16 이후) 새 세션 시작점
+## ✅ 오늘 완료 (2026-07-16)
 
-1. **"미팅 녹취" = 사용자가 새로 주는 API를 가리킴.** 통화(by-phone) 얘기 아님 — 통화는 후순위 확정,
-   재론하지 않는다(아래 "📞 통화 녹취 파이프라인" 섹션의 2026-07-16 정정 참고).
-   기존 미팅 파이프라인(`/api/meetings/`, [`meetings_pipeline.md`](./n8n/meetings_pipeline.md))과
-   새 API가 같은 것의 갱신인지 별개 소스인지는 **세션 시작 시 사용자에게 먼저 확인**할 것.
-2. Q&A 유실 346건 — 근본 원인(n8n ③→④ 배치 트렁케이션 의심) 규명이 우선, 데이터 정합성 전반이 걸림.
-   아래 "⓪ Q&A 댓글 유실" 섹션 참고.
-3. 통화 UI는 [ProjectDetail.tsx](./src/features/projects/ProjectDetail.tsx) 상세 화면에서 제거됨
-   (2026-07-16, `calls` 데이터는 보존). 되살릴 필요 없음.
+- **사전 미팅 녹취록 파이프라인(전문·요약, `meetings` 테이블) 완성.**
+  8노드 설계(커서=`meeting_meeting.date_created`, 녹취 없는 프로젝트는 목록 API가 자동 스킵,
+  IF 루프 없이 수동 반복 실행). `match_reason`(매칭 근거) 컬럼 추가(`migrations/010`).
+  전문 파싱 버그 수정 — STT 실제 형식이 대괄호 없는 `00:02 화자:`인데 파서가 `[MM:SS]`만 매칭해
+  통째로 안 뜨던 문제. 미팅 회의록은 마크다운(`# ## **bold** [link]`) 형식이라 전용 렌더러 추가.
+- **타임라인의 `meeting` 소스 이벤트 — 파트너 표시를 숫자 ID → `partners_partners.slug`로 교체**
+  ([`n8n/meeting_incremental.sql`](./n8n/meeting_incremental.sql)). `body`(화면에 그대로 찍히는 텍스트)에
+  slug를 직접 굽고, `meta`에도 `partner_slug` 추가. **재백필 필요**(아래 체크리스트).
+- 리스트뷰에 가격 컬럼 추가(검수예산 + 계약금액 보조표기).
+- 특약(subcontracts) 작업은 **보류로 확정** — 다음에 재론.
+
+## 🔜 내일(2026-07-17 이후) 새 세션 시작점
+
+1. **타임라인 미팅 이벤트 재백필 확인** — 사용자가 직접 다음 3단계를 했는지 확인:
+   `sync_state`에서 `source='meeting'` 커서 삭제 → n8n 워크플로 재실행 → 상세 화면 타임라인에
+   `파트너 #12345` 대신 실제 slug(예: `fourdpocket`)로 뜨는지. 안 했으면 이어서 진행.
+2. **사전 미팅 녹취록 파이프라인 실행 확인** — 8노드 워크플로를 실제로 몇 배치 돌렸는지,
+   `meetings` 테이블에 몇 건 쌓였는지, ProjectDetail에서 전문·매칭근거가 잘 뜨는지.
+3. **선정 파트너(⑤)** — 사내망 필요, 가벼움. `projects_incremental.sql`에 `partners_partners`
+   (grade·rating·team_size·project_accepted·job_slug) 컬럼 몇 개만 추가하면 끝. 오늘 못 함.
+4. **Q&A 유실 346건 진단** — 그대로 대기 중(Neon-only, 아래 "⓪" 섹션).
+5. **특약(subcontracts)** — 오늘 보류 결정. 재론 시 아래 "④ 특약" 섹션 설계 참고
+   (milestone은 프로젝트당 여러 행이라 meetings처럼 별도 커서 워크플로 필요, projects_incremental.sql
+   스칼라 서브쿼리로는 안 됨).
 
 ---
 
