@@ -41,6 +41,20 @@ export function formatDays(v: number | string | null | undefined): string | null
  */
 const KST = "Asia/Seoul";
 
+/** → "2026-07-02" (연도 포함) */
+export function formatYmd(v: Date | string | null | undefined): string {
+  const d = toDate(v);
+  if (!d) return "";
+  const p = new Intl.DateTimeFormat("en-CA", {
+    timeZone: KST,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(d);
+  const get = (t: string): string => p.find((x) => x.type === t)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
 /** → "07-02" */
 export function formatMonthDay(v: Date | string | null | undefined): string {
   const d = toDate(v);

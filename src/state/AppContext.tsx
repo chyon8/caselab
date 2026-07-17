@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import type { AppNotification, CaseReview } from "@/data/types";
+import type { AppNotification, CaseReview, SimilarProject } from "@/data/types";
 
 interface ListState {
   query: string;
@@ -11,6 +11,12 @@ interface ListState {
   starredOnly: boolean;
   viewMode: "list" | "grid";
   page: number;
+  /** 검색 모드 — 키워드(정밀검색) vs 공고문(붙여넣기 유사사례). 페이지 이동 후에도 유지 */
+  searchMode: "keyword" | "posting";
+  /** 공고문 모드에서 붙여넣은 원본 텍스트 */
+  postingText: string;
+  /** 공고문 유사사례 결과 — 다시 방문했을 때 재검색(비용) 없이 복원하려고 함께 보관 */
+  postingResults: SimilarProject[] | null;
 }
 
 interface AppContextValue {
@@ -69,6 +75,9 @@ export function AppProvider({
     starredOnly: false,
     viewMode: "list",
     page: 1,
+    searchMode: "keyword",
+    postingText: "",
+    postingResults: null,
   });
 
   useEffect(() => {

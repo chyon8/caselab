@@ -111,6 +111,8 @@ export interface Project {
    * 이 값은 항상 존재한다 (검수 중인 프로젝트는 CaseLab에 들어오지 않는다).
    */
   reviewedAt: string;
+  /** 모집 전환일 연도 포함 "2026-07-02" — 상세 화면 표시용(reviewedAt은 연도 없는 MM-DD) */
+  reviewedAtFull?: string;
   /** 본진 최종 수정일 기준 경과일 — "언제 들어온 건"이 아니다 */
   daysAgo: number;
   /** 검수 완료 후 경과일 — 기간 필터의 기준 */

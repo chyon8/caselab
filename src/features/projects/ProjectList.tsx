@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Select from "@/components/Select";
@@ -69,8 +70,18 @@ export default function ProjectList({
   const app = useApp();
   const router = useRouter();
 
-  const { query, statusFilter, managerFilter, periodFilter, starredOnly, viewMode, page } =
-    app.listState;
+  const {
+    query,
+    statusFilter,
+    managerFilter,
+    periodFilter,
+    starredOnly,
+    viewMode,
+    page,
+    searchMode,
+    postingText,
+    postingResults,
+  } = app.listState;
 
   const setQuery = (v: string) => app.setListState({ query: v });
   const setStatusFilter = (v: string) => app.setListState({ statusFilter: v });
@@ -86,12 +97,12 @@ export default function ProjectList({
 
   const q = query.trim();
 
-  // ── 공고문 붙여넣기 검색(L2) — 일회성이라 AppContext 안 쓰고 로컬 상태로 둔다 ──
-  const [searchMode, setSearchMode] = useState<"keyword" | "posting">("keyword");
-  const [postingText, setPostingText] = useState("");
-  const [simResults, setSimResults] = useState<SimilarProject[] | null>(null);
+  // ── 공고문 붙여넣기 검색(L2) — 모드·텍스트·결과는 AppContext로 유지(페이지 이동 후에도 복원) ──
+  // 진행중/에러는 일회성이라 로컬 상태로 둔다.
   const [simLoading, setSimLoading] = useState(false);
   const [simError, setSimError] = useState("");
+  const setSearchMode = (v: "keyword" | "posting") => app.setListState({ searchMode: v });
+  const setPostingText = (v: string) => app.setListState({ postingText: v });
 
   const runPostingSearch = async () => {
     const body = postingText.trim();
@@ -109,10 +120,10 @@ export default function ProjectList({
       });
       const data = (await res.json()) as { results?: SimilarProject[]; error?: string };
       if (!res.ok) throw new Error(data.error ?? "검색 실패");
-      setSimResults(data.results ?? []);
+      app.setListState({ postingResults: data.results ?? [] });
     } catch (e) {
       setSimError(e instanceof Error ? e.message : "검색 중 문제가 발생했습니다.");
-      setSimResults(null);
+      app.setListState({ postingResults: null });
     } finally {
       setSimLoading(false);
     }
@@ -385,7 +396,13 @@ export default function ProjectList({
                   >
                     {app.starred[p.id] ? "★" : "☆"}
                   </button>
-                  <div className={styles.name}>{p.name}</div>
+                  <Link
+                    href={`/projects/${p.id}`}
+                    className={styles.name}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {p.name}
+                  </Link>
                   <div className={styles.client}>{p.client}</div>
                   <div>
                     <span
@@ -484,7 +501,13 @@ export default function ProjectList({
                         onKeyDown={onActivate(() => open(p.id))}
                       >
                         <div className={styles["kcard-top"]}>
-                          <div className={styles["kcard-name"]}>{p.name}</div>
+                          <Link
+                            href={`/projects/${p.id}`}
+                            className={styles["kcard-name"]}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {p.name}
+                          </Link>
                           <button
                             className={`${styles["kcard-star"]} ${app.starred[p.id] ? styles.on : ""}`}
                             onClick={(e) => toggleStar(e, p.id)}
@@ -520,36 +543,32 @@ export default function ProjectList({
           <div className={styles.empty}>조건에 맞는 프로젝트가 없습니다.</div>
         )}
 
-        {searchMode === "posting" && (simLoading || simResults) && (
+        {searchMode === "posting" && (simLoading || postingResults) && (
           <div className={styles["ai-panel"]}>
             <div className={styles["ai-head"]}>
               <span className={styles["ai-chip"]}>공고문 유사사례</span>
               <span className={styles["ai-sub"]}>
                 {simLoading
                   ? "AI가 공고를 정리하고 비슷한 과거 프로젝트를 찾는 중…"
-                  : `상위 ${simResults?.length ?? 0}건 · 공고문 의미 기반`}
+                  : `상위 ${postingResults?.length ?? 0}건 · 공고문 의미 기반`}
               </span>
             </div>
-            {!simLoading && simResults && simResults.length === 0 && (
+            {!simLoading && postingResults && postingResults.length === 0 && (
               <div className={styles.empty}>비슷한 과거 프로젝트를 찾지 못했어요.</div>
             )}
-            {!simLoading && simResults && simResults.length > 0 && (
+            {!simLoading && postingResults && postingResults.length > 0 && (
               <div className={styles["ai-list"]}>
-                {simResults.map((s) => (
-                  <div
-                    key={s.id}
-                    className={styles["ai-row"]}
-                    onClick={() => open(s.id)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={onActivate(() => open(s.id))}
-                  >
+                {postingResults.map((s) => (
+                  <Link key={s.id} href={`/projects/${s.id}`} className={styles["ai-row"]}>
                     <div className={styles["ai-name"]}>
                       <b>{s.name}</b>
                       <span className={styles["ai-meta"]}>
                         {" "}
                         {[s.client, s.cat, s.budget].filter(Boolean).join(" · ")}
                       </span>
+                      {s.contractAmount && (
+                        <div className={styles["posting-contract"]}>계약 {s.contractAmount}</div>
+                      )}
                     </div>
                     <div className={styles["posting-right"]}>
                       <span
@@ -561,7 +580,7 @@ export default function ProjectList({
                         {statusLabel(s.status)}
                       </span>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

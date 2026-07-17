@@ -635,6 +635,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.sim-contract {
+  font-size: 13px;
+  color: var(--status-success-fg);
+  margin-top: 3px;
+}
 
 .sim-right {
   display: flex;

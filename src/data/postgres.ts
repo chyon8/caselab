@@ -6,6 +6,7 @@ import {
   formatDays,
   formatMonthDay,
   formatMonthDayTime,
+  formatYmd,
   formatMonthlyWon,
   formatWon,
 } from "@/lib/format";
@@ -302,6 +303,7 @@ function toProject(row: ProjectRow): Project {
     submittedAt: row.submitted_at ? formatMonthDay(row.submitted_at) : "-",
     daysAgo: daysSince(row.source_modified_at),
     reviewedAt: formatMonthDay(row.recruit_started_at),
+    reviewedAtFull: formatYmd(row.recruit_started_at),
     reviewedDaysAgo: row.recruit_started_at ? daysSince(row.recruit_started_at) : null,
     durations: {
       inspection: daysBetween(row.submitted_at, row.recruit_started_at),

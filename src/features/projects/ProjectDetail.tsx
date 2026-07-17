@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Fragment, useState } from "react";
 import { CHECK_ITEMS } from "@/data/mock-data";
 import type { CallRecord, IssueType, Project, ProjectFull, SimilarProject } from "@/data/types";
@@ -182,7 +181,6 @@ export default function ProjectDetail({
   project: ProjectFull;
   similar?: SimilarProject[];
 }) {
-  const router = useRouter();
   const app = useApp();
   const saved = app.reviews[p.id];
 
@@ -223,9 +221,9 @@ export default function ProjectDetail({
 
   return (
     <div className={styles.container}>
-      <button onClick={() => router.back()} className={styles["back-btn"]} style={{ background: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>
+      <Link href="/" className={styles["back-btn"]}>
         <span className={styles["back-arrow"]}>←</span> 전체 프로젝트
-      </button>
+      </Link>
 
       <div className={styles["admin-links"]}>
         <a
@@ -262,6 +260,7 @@ export default function ProjectDetail({
           <h1 className={styles.title}>{p.name}</h1>
           <div className={styles.meta}>
             {p.client} · 검수담당 {p.manager} · {p.tech}
+            {p.reviewedAtFull && ` · 모집 ${p.reviewedAtFull}`}
           </div>
           {specs.length > 0 && (
             <div className={styles["spec-row"]}>
@@ -478,6 +477,9 @@ export default function ProjectDetail({
                   <div className={styles["sim-meta"]}>
                     {[s.client, s.cat, s.budget].filter(Boolean).join(" · ")}
                   </div>
+                  {s.contractAmount && (
+                    <div className={styles["sim-contract"]}>계약 {s.contractAmount}</div>
+                  )}
                 </div>
                 <div className={styles["sim-right"]}>
                   <span className={styles["sim-score"]}>유사 {Math.round(s.similarity * 100)}%</span>
