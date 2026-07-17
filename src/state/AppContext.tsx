@@ -40,6 +40,8 @@ interface AppContextValue {
   toggle: (key: string) => void;
   listState: ListState;
   setListState: (state: Partial<ListState>) => void;
+  /** 목록 필터·검색을 기본값으로 완전 초기화 (뷰모드는 유지) */
+  resetFilters: () => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -107,6 +109,19 @@ export function AppProvider({
     toggle: (key) => setToggles((t) => ({ ...t, [key]: !t[key] })),
     listState,
     setListState: (state) => setListStateFull((s) => ({ ...s, ...state })),
+    resetFilters: () =>
+      setListStateFull((s) => ({
+        ...s,
+        query: "",
+        statusFilter: "전체",
+        managerFilter: "전체",
+        periodFilter: "전체",
+        starredOnly: false,
+        page: 1,
+        searchMode: "keyword",
+        postingText: "",
+        postingResults: null,
+      })),
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

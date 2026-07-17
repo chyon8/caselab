@@ -26,7 +26,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className={styles.shell}>
       <aside className={`${styles.sidebar} ${sc ? styles.collapsed : ""}`}>
         <div className={styles["logo-row"]}>
-          <Link href="/" className={styles.logo}>
+          <Link href="/" className={styles.logo} onClick={app.resetFilters}>
             {sc ? "C" : "CaseLab"}
           </Link>
           <button
@@ -44,6 +44,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={item.href === "/" ? app.resetFilters : undefined}
               className={`${styles["nav-item"]} ${isActive(item.href) ? styles.active : ""} ${sc ? styles.centered : ""}`}
               aria-label={sc ? item.label : undefined}
             >

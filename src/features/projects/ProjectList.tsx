@@ -97,6 +97,13 @@ export default function ProjectList({
 
   const q = query.trim();
 
+  const filtersActive =
+    q !== "" ||
+    statusFilter !== "전체" ||
+    managerFilter !== "전체" ||
+    periodFilter !== "전체" ||
+    starredOnly;
+
   // ── 공고문 붙여넣기 검색(L2) — 모드·텍스트·결과는 AppContext로 유지(페이지 이동 후에도 복원) ──
   // 진행중/에러는 일회성이라 로컬 상태로 둔다.
   const [simLoading, setSimLoading] = useState(false);
@@ -343,6 +350,11 @@ export default function ProjectList({
               onChange={withReset(setPeriodFilter)}
               ariaLabel="기간 필터"
             />
+            {filtersActive && (
+              <button className={styles["reset-btn"]} onClick={app.resetFilters}>
+                ✕ 필터 초기화
+              </button>
+            )}
           </div>
         ) : (
           <div className={styles["posting-search"]}>

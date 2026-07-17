@@ -616,6 +616,24 @@
   color: var(--text-muted);
 }
 
+.reset-btn {
+  height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--rounded-pill);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text-muted);
+  background: var(--panel-bg);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.reset-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
 .posting-search {
   display: flex;
   flex-direction: column;
