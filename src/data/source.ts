@@ -11,6 +11,7 @@ import type {
   ProjectQuery,
   ProjectStatus,
   ReportStats,
+  SimilarProject,
 } from "./types";
 
 /** Mock은 리포트 집계를 만들지 않는다 — 표본 14건으로는 비율이 무의미하다 */
@@ -39,6 +40,8 @@ export interface DataSource {
   /** 칸반 — 상태별 상위 items + 총계. "더 보기"는 getProjects({status})로 이어 받는다 */
   getKanban(params: ProjectQuery): Promise<KanbanColumn[]>;
   getProject(id: string): Promise<ProjectFull | undefined>;
+  /** 유사사례(L2) — 해당 프로젝트 공고문과 의미적으로 가까운 과거 프로젝트 상위 N건 */
+  getSimilarProjects(id: string, limit?: number): Promise<SimilarProject[]>;
   getReportStats(): Promise<ReportStats>;
   getNotifications(): Promise<AppNotification[]>;
   getReviews(): Promise<Record<string, CaseReview>>;
@@ -96,6 +99,11 @@ class MockDataSource implements DataSource {
 
   async getProject(id: string): Promise<ProjectFull | undefined> {
     return MOCK_PROJECTS.find((p) => p.id === id);
+  }
+
+  /** Mock은 임베딩이 없어 유사사례를 만들지 않는다 */
+  async getSimilarProjects(): Promise<SimilarProject[]> {
+    return [];
   }
 
   async getReportStats(): Promise<ReportStats> {

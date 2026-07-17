@@ -27,6 +27,7 @@ import type {
   QnaItem,
   QnaSummary,
   ReportStats,
+  SimilarProject,
   TimelineEvent,
   TranscriptLine,
 } from "./types";
@@ -644,6 +645,26 @@ export class PostgresDataSource implements DataSource {
         .sort((a, b) => a.at - b.at)
         .map((x) => x.ev),
     });
+  }
+
+  /**
+   * 유사사례(L2) — 공고문 임베딩 코사인 유사도(pgvector <=>)로 가까운 과거 프로젝트.
+   * 기준 프로젝트에 임베딩이 없으면 빈 배열. 저장된 벡터만 쓰므로 OpenAI 호출은 없다.
+   */
+  async getSimilarProjects(id: string, limit = 5): Promise<SimilarProject[]> {
+    if (!/^\d+$/.test(id)) return [];
+    const rows = await query<ProjectRow & { similarity: number }>(
+      `SELECT ${LIST_COLUMNS}, 1 - (p.embedding <=> base.embedding) AS similarity
+         FROM projects p
+         LEFT JOIN ai_insights ai ON ai.project_id = p.id
+         CROSS JOIN (SELECT embedding FROM projects WHERE id = $1) base
+        WHERE p.id <> $1 AND p.embedding IS NOT NULL AND base.embedding IS NOT NULL
+          AND p.deleted_at IS NULL AND p.hidden = false
+        ORDER BY p.embedding <=> base.embedding
+        LIMIT $2`,
+      [id, limit],
+    );
+    return rows.map((r) => ({ ...toProject(r), similarity: Number(r.similarity) }));
   }
 
   /** 알림은 아직 원천이 없다 (본진에 대응 테이블 없음) */

@@ -193,6 +193,12 @@ export interface ProjectFull extends Project {
   timeline: TimelineEvent[];
 }
 
+/** 유사사례(L2) — 공고문 임베딩 코사인 유사도로 찾은 과거 프로젝트 */
+export interface SimilarProject extends Project {
+  /** 코사인 유사도 0~1 (1에 가까울수록 유사) */
+  similarity: number;
+}
+
 /**
  * 리포트 집계. 전부 SQL에서 계산해 내려온다 —
  * Project의 budget·contractAmount는 화면용 문자열("4,500만원")이라 클라이언트에서 못 센다.

@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, useState } from "react";
 import { CHECK_ITEMS } from "@/data/mock-data";
-import type { CallRecord, IssueType, Project, ProjectFull } from "@/data/types";
+import type { CallRecord, IssueType, Project, ProjectFull, SimilarProject } from "@/data/types";
 import { useApp } from "@/state/AppContext";
 import st from "./status.module.css";
 import { STATUS_KEY, statusLabel } from "./status";
@@ -174,7 +175,13 @@ function MeetingCard({ meeting }: { meeting: CallRecord }) {
   );
 }
 
-export default function ProjectDetail({ project: p }: { project: ProjectFull }) {
+export default function ProjectDetail({
+  project: p,
+  similar = [],
+}: {
+  project: ProjectFull;
+  similar?: SimilarProject[];
+}) {
   const router = useRouter();
   const app = useApp();
   const saved = app.reviews[p.id];
@@ -451,6 +458,37 @@ export default function ProjectDetail({ project: p }: { project: ProjectFull }) 
         </div>
       ) : (
         <div className={styles.spacer} />
+      )}
+
+      {similar.length > 0 && (
+        <>
+          <div className={styles["section-head"]}>
+            <span className={styles["section-title"]}>유사 프로젝트</span>
+            <span className={styles["section-sub"]}>
+              {" "}
+              — 공고문 의미 기반 · 상위 {similar.length}건
+            </span>
+          </div>
+          <div className={styles.hint}>비슷한 과거 사례의 리스크·진행 경과를 참고하세요</div>
+          <div className={styles["sim-list"]}>
+            {similar.map((s) => (
+              <Link key={s.id} href={`/projects/${s.id}`} className={styles["sim-card"]}>
+                <div className={styles["sim-info"]}>
+                  <div className={styles["sim-name"]}>{s.name}</div>
+                  <div className={styles["sim-meta"]}>
+                    {[s.client, s.cat, s.budget].filter(Boolean).join(" · ")}
+                  </div>
+                </div>
+                <div className={styles["sim-right"]}>
+                  <span className={styles["sim-score"]}>유사 {Math.round(s.similarity * 100)}%</span>
+                  <span className={`${st.chip} ${st[STATUS_KEY[s.status]]}`}>
+                    {statusLabel(s.status)}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </>
       )}
 
       <div className={styles["section-head"]}>

@@ -584,6 +584,76 @@
   padding: 3px 10px;
 }
 
+/* ===== 유사 프로젝트 (L2) ===== */
+.sim-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 56px;
+}
+
+.sim-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 15px 18px;
+  border: 1px solid var(--card-border);
+  border-radius: var(--rounded-lg);
+  background: var(--card-bg);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.sim-card:hover {
+  border-color: var(--status-recruit-fg);
+  background: var(--row-hover);
+}
+
+.sim-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.sim-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--page-text);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sim-meta {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sim-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.sim-score {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--status-recruit-fg);
+  background: var(--status-recruit-bg);
+  border-radius: var(--rounded-pill);
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
 /* ===== 미팅 녹취록 ===== */
 .meeting-card {
   border: 1px solid var(--card-border);

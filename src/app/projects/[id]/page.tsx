@@ -8,7 +8,10 @@ export default async function ProjectPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const project = await dataSource.getProject(id);
+  const [project, similar] = await Promise.all([
+    dataSource.getProject(id),
+    dataSource.getSimilarProjects(id, 5),
+  ]);
   if (!project) notFound();
-  return <ProjectDetail project={project} />;
+  return <ProjectDetail project={project} similar={similar} />;
 }
