@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
 import { useApp } from "@/state/AppContext";
 import styles from "./AppShell.module.css";
 
@@ -17,7 +16,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const sc = app.sidebarCollapsed;
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   const isActive = (href: string) =>
     href === "/"
@@ -31,45 +29,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <Link href="/" className={styles["mobile-logo"]} onClick={app.resetFilters}>
           CaseLab
         </Link>
-        <button
-          className={styles["hamburger"]}
-          onClick={() => setMobileOpen((v) => !v)}
-          aria-label="메뉴 열기"
-        >
-          {mobileOpen ? "✕" : "☰"}
-        </button>
       </div>
-
-      {/* ── 모바일 오버레이 메뉴 ── */}
-      {mobileOpen && (
-        <div className={styles["mobile-overlay"]} onClick={() => setMobileOpen(false)}>
-          <nav className={styles["mobile-nav"]} onClick={(e) => e.stopPropagation()}>
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => {
-                  if (item.href === "/") app.resetFilters();
-                  setMobileOpen(false);
-                }}
-                className={`${styles["mobile-nav-item"]} ${isActive(item.href) ? styles.active : ""}`}
-              >
-                {item.label}
-              </Link>
-            ))}
-            <button
-              className={styles["mobile-theme-btn"]}
-              onClick={() => {
-                app.toggleDarkMode();
-                setMobileOpen(false);
-              }}
-            >
-              <span className={styles["theme-icon"]}>{app.darkMode ? "☀" : "☾"}</span>
-              {app.darkMode ? "라이트 모드" : "다크 모드"}
-            </button>
-          </nav>
-        </div>
-      )}
 
       {/* ── 데스크톱 사이드바 ── */}
       <aside className={`${styles.sidebar} ${sc ? styles.collapsed : ""}`}>
