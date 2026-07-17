@@ -274,7 +274,7 @@ export default function ProjectList({
               >
                 ★ 관심
               </div>
-              <div className={styles["seg-group"]}>
+              <div className={`${styles["seg-group"]} ${styles["view-toggle"]}`}>
                 <div
                   className={`${styles.seg} ${viewMode === "list" ? styles.active : ""}`}
                   onClick={() => setViewMode("list")}

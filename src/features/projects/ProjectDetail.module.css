@@ -1178,6 +1178,11 @@
     flex-wrap: wrap;
   }
 
+  .admin-link {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+
   /* 스테퍼 */
   .stepper {
     overflow-x: auto;
@@ -1199,9 +1204,23 @@
     font-size: 11px;
   }
 
+  /* 소요일 행 */
+  .span-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
   /* 공고문 */
   .posting-header {
     padding: 14px 16px;
+  }
+
+  .posting-content {
+    padding: 16px;
+  }
+
+  .posting-title {
+    font-size: 16px;
   }
 
   /* 예산 그리드 → 1열 */
@@ -1213,7 +1232,67 @@
     padding: 16px;
   }
 
-  /* 녹취록 그리드 */
+  /* 유사 프로젝트 카드 */
+  .sim-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .sim-right {
+    flex-direction: row;
+    align-self: flex-end;
+    gap: 8px;
+  }
+
+  .sim-name {
+    font-size: 14px;
+    white-space: normal;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* 섹션 헤더 */
+  .section-head {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .section-title {
+    font-size: 16px;
+  }
+
+  .section-sub {
+    font-size: 12px;
+  }
+
+  .hint {
+    font-size: 12px;
+  }
+
+  /* 이슈 로그 */
+  .issue-row {
+    gap: 8px;
+  }
+
+  .issue-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    flex-shrink: 0;
+  }
+
+  .issue-text {
+    font-size: 13px;
+  }
+
+  /* 미팅 녹취 */
+  .meeting-card {
+    padding: 14px;
+  }
+
   .t-row {
     grid-template-columns: 40px 1fr;
     gap: 6px;
@@ -1223,8 +1302,43 @@
     font-size: 12px;
   }
 
+  /* Q&A */
+  .qna-row {
+    gap: 8px;
+  }
+
+  /* Q&A 요약 */
+  .qsum {
+    padding: 16px;
+  }
+
+  /* 타임라인 */
+  .tl-body {
+    padding-bottom: 12px;
+  }
+
+  /* 리뷰 패널 */
+  .review-panel {
+    padding: 16px;
+  }
+
+  .review-head {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .review-textarea {
+    min-height: 80px;
+  }
+
   /* 섹션 카드 */
   .section-header {
     padding: 14px 16px;
   }
+
+  /* 마크다운 바디 (미팅 녹취) */
+  .md-body {
+    padding: 14px;
+  }
 }
+

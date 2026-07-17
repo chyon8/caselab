@@ -504,9 +504,26 @@
     font-size: 13px;
   }
 
-  /* 칸반 뷰 전환 버튼 숨김 */
-  .seg-group {
+  /* 리스트/칸반 뷰 전환만 숨김 (검색 모드 토글은 유지) */
+  .view-toggle {
     display: none;
+  }
+
+  /* 관심 필터 */
+  .star-filter {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  /* 검색 모드 토글 */
+  .search-modes {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .mode-hint {
+    font-size: 12px;
+    line-height: 1.5;
   }
 
   /* 필터 바 */
@@ -521,6 +538,12 @@
     height: 40px;
     font-size: 14px;
     padding: 0 16px;
+  }
+
+  .reset-btn {
+    height: 38px;
+    padding: 0 14px;
+    font-size: 13px;
   }
 
   /* 테이블 헤더 숨김 */
@@ -600,6 +623,43 @@
 
   .page-info {
     font-size: 12px;
+  }
+
+  /* ===== 공고문 붙여넣기 검색 ===== */
+  .posting-box {
+    min-height: 120px;
+    font-size: 14px;
+    padding: 12px 14px;
+  }
+
+  .posting-btn {
+    height: 40px;
+    padding: 0 20px;
+    font-size: 14px;
+  }
+
+  /* ===== AI 유사사례 패널 ===== */
+  .ai-panel {
+    margin-top: 24px;
+    padding: 16px;
+    border-radius: var(--rounded-md);
+  }
+
+  .ai-head {
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .ai-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .posting-right {
+    align-self: flex-end;
   }
 }
 
