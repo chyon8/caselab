@@ -25,6 +25,7 @@ import type {
   ProjectQuery,
   ProjectStatus,
   QnaItem,
+  QnaSummary,
   ReportStats,
   TimelineEvent,
   TranscriptLine,
@@ -83,6 +84,7 @@ interface ProjectRow {
   risk_tags?: string[] | null;
   issue_log?: IssueLogEntry[] | null;
   posting_structured?: Posting | null;
+  qna_summary?: QnaSummary | null;
 }
 
 /** json_agg로 묶여 오므로 날짜는 Date가 아니라 ISO 문자열이다 */
@@ -139,7 +141,7 @@ const LIST_COLUMNS = `
 /** 상세용 — 목록 컬럼 + 공고 원문 + 무거운 AI JSONB */
 const DETAIL_COLUMNS = `
   ${LIST_COLUMNS}, p.posting_raw,
-  ai.issue_log, ai.posting_structured
+  ai.issue_log, ai.posting_structured, ai.qna_summary
 `;
 
 /** AI 공고문 구조화 전(프롬프트 검토 대기)에는 원문을 배경 자리에 그대로 노출한다 (§3) */
@@ -337,6 +339,7 @@ function toProjectFull(
     meetings: detail.meetings,
     issueLog: row.issue_log ?? [],
     qna: detail.qna,
+    qnaSummary: row.qna_summary ?? undefined,
     timeline: detail.timeline,
   };
 }

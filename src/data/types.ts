@@ -70,6 +70,15 @@ export interface QnaItem {
   isPrivate?: boolean;
 }
 
+/** 개발사 Q&A를 AI로 정리한 요약 — 노이즈(세일즈·자기소개) 제거 후 핵심만 */
+export interface QnaSummary {
+  keyQuestions: string[];
+  decisions: string[];
+  riskSignals: string[];
+  keywords: string[];
+  noiseDropped: number;
+}
+
 export interface TimelineEvent {
   stage: string;
   date: string;
@@ -179,6 +188,8 @@ export interface ProjectFull extends Project {
   /** 통화 녹취 목록 — 본진 통화 API by-phone. 한 프로젝트에 여러 건일 수 있다 (클라이언트·파트너 통화). */
   calls?: CallRecord[];
   qna: QnaItem[];
+  /** 개발사 Q&A AI 요약 — 아직 추출 전이면 undefined */
+  qnaSummary?: QnaSummary;
   timeline: TimelineEvent[];
 }
 

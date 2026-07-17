@@ -503,6 +503,70 @@ export default function ProjectDetail({ project: p }: { project: ProjectFull }) 
       {/* 통화 녹취 UI는 보류 (2026-07-15). 매핑 신뢰도 문제로 화면에서 숨김 — 데이터는 calls 테이블에 보존.
           되살리려면 이 자리에 CallCard 렌더를 복원하면 된다 (git history: cd98580 이전). */}
 
+      {p.qnaSummary && (
+        <div className={styles["qsum"]}>
+          <div className={styles["section-head"]}>
+            <span className={styles["section-title"]}>개발사 Q&A 요약</span>
+            <span className={styles["section-sub"]}>
+              {" "}
+              — 노이즈 {p.qnaSummary.noiseDropped}건 제외 · AI 정리
+            </span>
+          </div>
+          {p.qnaSummary.keyQuestions.length === 0 &&
+          p.qnaSummary.decisions.length === 0 &&
+          p.qnaSummary.riskSignals.length === 0 ? (
+            <div className={styles["qsum-empty"]}>
+              <div className={styles["qsum-empty-title"]}>ℹ️ 특이사항 없음</div>
+              <div className={styles["qsum-empty-desc"]}>
+                세일즈성 댓글만 있어 검수에서 짚을 질문·결정·리스크가 없습니다.
+              </div>
+            </div>
+          ) : (
+            <>
+              {p.qnaSummary.keyQuestions.length > 0 && (
+                <div className={styles["qsum-group"]}>
+                  <div className={styles["qsum-label"]}>🔑 핵심 질문</div>
+                  <ul className={styles["qsum-list"]}>
+                    {p.qnaSummary.keyQuestions.map((q, i) => (
+                      <li key={i}>{q}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {p.qnaSummary.decisions.length > 0 && (
+                <div className={styles["qsum-group"]}>
+                  <div className={styles["qsum-label"]}>✅ 결정사항</div>
+                  <ul className={styles["qsum-list"]}>
+                    {p.qnaSummary.decisions.map((d, i) => (
+                      <li key={i}>{d}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {p.qnaSummary.riskSignals.length > 0 && (
+                <div className={styles["qsum-group"]}>
+                  <div className={styles["qsum-label"]}>⚠️ 리스크</div>
+                  <ul className={styles["qsum-list"]}>
+                    {p.qnaSummary.riskSignals.map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )}
+          {p.qnaSummary.keywords.length > 0 && (
+            <div className={styles["qsum-keywords"]}>
+              {p.qnaSummary.keywords.map((k, i) => (
+                <span key={i} className={styles["qsum-kw"]}>
+                  {k}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {p.qna.length > 0 && (
         <div className={styles["posting-accordion"]}>
           <button

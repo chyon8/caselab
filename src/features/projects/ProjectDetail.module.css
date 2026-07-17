@@ -517,6 +517,73 @@
   color: var(--text-faint);
 }
 
+/* ===== 개발사 Q&A 요약 ===== */
+.qsum {
+  margin-bottom: 28px;
+}
+
+.qsum-group {
+  margin-top: 14px;
+}
+
+.qsum-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--page-text);
+  margin-bottom: 6px;
+}
+
+.qsum-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.qsum-list li {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--page-text);
+}
+
+.qsum-empty {
+  margin-top: 4px;
+  padding: 16px 18px;
+  border-radius: var(--rounded-lg);
+  background: var(--status-recruit-bg);
+}
+
+.qsum-empty-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--status-recruit-fg);
+  margin-bottom: 4px;
+}
+
+.qsum-empty-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--status-recruit-fg);
+  opacity: 0.85;
+}
+
+.qsum-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.qsum-kw {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--rounded-pill);
+  padding: 3px 10px;
+}
+
 /* ===== 미팅 녹취록 ===== */
 .meeting-card {
   border: 1px solid var(--card-border);
