@@ -42,6 +42,8 @@ export interface DataSource {
   getProject(id: string): Promise<ProjectFull | undefined>;
   /** 유사사례(L2) — 해당 프로젝트 공고문과 의미적으로 가까운 과거 프로젝트 상위 N건 */
   getSimilarProjects(id: string, limit?: number): Promise<SimilarProject[]>;
+  /** 유사사례(L2) — 즉석 임베딩한 벡터(공고문 붙여넣기 검색)로 가까운 과거 프로젝트 상위 N건 */
+  searchSimilarByVector(vector: number[], limit?: number): Promise<SimilarProject[]>;
   getReportStats(): Promise<ReportStats>;
   getNotifications(): Promise<AppNotification[]>;
   getReviews(): Promise<Record<string, CaseReview>>;
@@ -103,6 +105,10 @@ class MockDataSource implements DataSource {
 
   /** Mock은 임베딩이 없어 유사사례를 만들지 않는다 */
   async getSimilarProjects(): Promise<SimilarProject[]> {
+    return [];
+  }
+
+  async searchSimilarByVector(): Promise<SimilarProject[]> {
     return [];
   }
 

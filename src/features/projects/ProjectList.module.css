@@ -595,3 +595,72 @@
     font-size: 12px;
   }
 }
+
+/* ===== 공고문 붙여넣기 검색(L2) ===== */
+.search-modes {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.mode-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.posting-search {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.posting-box {
+  width: 100%;
+  min-height: 140px;
+  padding: 14px 18px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--rounded-lg);
+  font-size: 15px;
+  font-family: inherit;
+  line-height: 1.6;
+  color: var(--page-text);
+  background: var(--input-bg);
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.posting-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.posting-btn {
+  height: 44px;
+  padding: 0 28px;
+  border: none;
+  border-radius: var(--rounded-pill);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-body-on-dark);
+  background: var(--color-primary);
+  cursor: pointer;
+}
+
+.posting-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.posting-error {
+  font-size: 13px;
+  color: var(--status-cancel-fg);
+}
+
+.posting-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

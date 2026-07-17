@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Select from "@/components/Select";
 import { ListSkeleton, KanbanSkeleton } from "@/components/Skeleton";
-import type { KanbanColumn, ProjectPage } from "@/data/types";
+import type { KanbanColumn, ProjectPage, SimilarProject } from "@/data/types";
 import { onActivate } from "@/lib/a11y";
 import { OTHER_MANAGERS, PRIMARY_MANAGERS } from "@/lib/managers";
 import { useApp } from "@/state/AppContext";
@@ -85,6 +85,38 @@ export default function ProjectList({
   };
 
   const q = query.trim();
+
+  // ── 공고문 붙여넣기 검색(L2) — 일회성이라 AppContext 안 쓰고 로컬 상태로 둔다 ──
+  const [searchMode, setSearchMode] = useState<"keyword" | "posting">("keyword");
+  const [postingText, setPostingText] = useState("");
+  const [simResults, setSimResults] = useState<SimilarProject[] | null>(null);
+  const [simLoading, setSimLoading] = useState(false);
+  const [simError, setSimError] = useState("");
+
+  const runPostingSearch = async () => {
+    const body = postingText.trim();
+    if (body.length < 3) {
+      setSimError("검색할 내용을 입력해주세요.");
+      return;
+    }
+    setSimLoading(true);
+    setSimError("");
+    try {
+      const res = await fetch("/api/similar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: body }),
+      });
+      const data = (await res.json()) as { results?: SimilarProject[]; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "검색 실패");
+      setSimResults(data.results ?? []);
+    } catch (e) {
+      setSimError(e instanceof Error ? e.message : "검색 중 문제가 발생했습니다.");
+      setSimResults(null);
+    } finally {
+      setSimLoading(false);
+    }
+  };
 
   /** 필터가 바뀌면 1페이지로 — 3페이지 보던 중 필터를 좁히면 빈 화면이 뜬다 */
   const withReset = <T,>(set: (v: T) => void) => (v: T) => {
@@ -210,68 +242,120 @@ export default function ProjectList({
           <div className={styles["title-group"]}>
             <h1 className={styles.title}>전체 프로젝트</h1>
             <div className={styles.count}>
-              {viewMode === "list" ? `${total.toLocaleString()}건` : ""}
-              {listLoading && viewMode === "list" ? " · 검색 중…" : ""}
+              {searchMode === "keyword" && viewMode === "list" ? `${total.toLocaleString()}건` : ""}
+              {searchMode === "keyword" && listLoading && viewMode === "list" ? " · 검색 중…" : ""}
             </div>
           </div>
-          <div className={styles.controls}>
+          {searchMode === "keyword" && (
+            <div className={styles.controls}>
+              <div
+                className={`${styles["star-filter"]} ${starredOnly ? styles.active : ""}`}
+                onClick={() => {
+                  setStarredOnly((v) => !v);
+                  setPage(1);
+                }}
+              >
+                ★ 관심
+              </div>
+              <div className={styles["seg-group"]}>
+                <div
+                  className={`${styles.seg} ${viewMode === "list" ? styles.active : ""}`}
+                  onClick={() => setViewMode("list")}
+                >
+                  ☰ 리스트
+                </div>
+                <div
+                  className={`${styles.seg} ${viewMode === "grid" ? styles.active : ""}`}
+                  onClick={() => setViewMode("grid")}
+                >
+                  ▦ 칸반
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className={styles["search-modes"]}>
+          <div className={styles["seg-group"]}>
             <div
-              className={`${styles["star-filter"]} ${starredOnly ? styles.active : ""}`}
-              onClick={() => {
-                setStarredOnly((v) => !v);
+              className={`${styles.seg} ${searchMode === "keyword" ? styles.active : ""}`}
+              onClick={() => setSearchMode("keyword")}
+              role="button"
+              tabIndex={0}
+              onKeyDown={onActivate(() => setSearchMode("keyword"))}
+            >
+              키워드
+            </div>
+            <div
+              className={`${styles.seg} ${searchMode === "posting" ? styles.active : ""}`}
+              onClick={() => setSearchMode("posting")}
+              role="button"
+              tabIndex={0}
+              onKeyDown={onActivate(() => setSearchMode("posting"))}
+            >
+              공고문
+            </div>
+          </div>
+          {searchMode === "posting" && (
+            <span className={styles["mode-hint"]}>
+              정리 안 된 원본·문답형·PDF 복사 텍스트를 붙여넣으면 AI가 정리해 비슷한 과거 프로젝트를 찾습니다
+            </span>
+          )}
+        </div>
+
+        {searchMode === "keyword" ? (
+          <div className={styles.filters}>
+            <input
+              className={styles.search}
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
                 setPage(1);
               }}
-            >
-              ★ 관심
-            </div>
-            <div className={styles["seg-group"]}>
-              <div
-                className={`${styles.seg} ${viewMode === "list" ? styles.active : ""}`}
-                onClick={() => setViewMode("list")}
+              placeholder="프로젝트명 · 고객사 · 공고 본문 · 키워드 검색 (예: LLM, 크롤링, 쇼핑몰)"
+            />
+            <Select
+              value={statusFilter}
+              options={STATUS_OPTIONS}
+              onChange={withReset(setStatusFilter)}
+              ariaLabel="상태 필터"
+            />
+            <Select
+              value={managerFilter}
+              options={MANAGER_OPTIONS}
+              onChange={withReset(setManagerFilter)}
+              ariaLabel="검수매니저 필터"
+            />
+            <Select
+              value={periodFilter}
+              options={PERIOD_OPTIONS}
+              onChange={withReset(setPeriodFilter)}
+              ariaLabel="기간 필터"
+            />
+          </div>
+        ) : (
+          <div className={styles["posting-search"]}>
+            <textarea
+              className={styles["posting-box"]}
+              value={postingText}
+              onChange={(e) => setPostingText(e.target.value)}
+              rows={7}
+              placeholder="검수할 공고 내용을 통째로 붙여넣으세요. 정리되지 않은 원본이어도 괜찮습니다."
+            />
+            <div className={styles["posting-actions"]}>
+              <button
+                className={styles["posting-btn"]}
+                onClick={runPostingSearch}
+                disabled={simLoading}
               >
-                ☰ 리스트
-              </div>
-              <div
-                className={`${styles.seg} ${viewMode === "grid" ? styles.active : ""}`}
-                onClick={() => setViewMode("grid")}
-              >
-                ▦ 칸반
-              </div>
+                {simLoading ? "찾는 중…" : "유사사례 찾기"}
+              </button>
+              {simError && <span className={styles["posting-error"]}>{simError}</span>}
             </div>
           </div>
-        </div>
+        )}
 
-        <div className={styles.filters}>
-          <input
-            className={styles.search}
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setPage(1);
-            }}
-            placeholder="프로젝트명 · 고객사 · 공고 본문 · 키워드 검색 (예: LLM, 크롤링, 쇼핑몰)"
-          />
-          <Select
-            value={statusFilter}
-            options={STATUS_OPTIONS}
-            onChange={withReset(setStatusFilter)}
-            ariaLabel="상태 필터"
-          />
-          <Select
-            value={managerFilter}
-            options={MANAGER_OPTIONS}
-            onChange={withReset(setManagerFilter)}
-            ariaLabel="검수매니저 필터"
-          />
-          <Select
-            value={periodFilter}
-            options={PERIOD_OPTIONS}
-            onChange={withReset(setPeriodFilter)}
-            ariaLabel="기간 필터"
-          />
-        </div>
-
-        {viewMode === "list" && (
+        {searchMode === "keyword" && viewMode === "list" && (
           <>
             <div className={styles["table-head"]}>
               <div />
@@ -377,7 +461,7 @@ export default function ProjectList({
           </>
         )}
 
-        {viewMode === "grid" && (
+        {searchMode === "keyword" && viewMode === "grid" && (
           <div className={styles.kanban}>
             {kanbanLoading ? (
               <KanbanSkeleton />
@@ -432,8 +516,56 @@ export default function ProjectList({
           </div>
         )}
 
-        {viewMode === "list" && !listLoading && rows.length === 0 && (
+        {searchMode === "keyword" && viewMode === "list" && !listLoading && rows.length === 0 && (
           <div className={styles.empty}>조건에 맞는 프로젝트가 없습니다.</div>
+        )}
+
+        {searchMode === "posting" && (simLoading || simResults) && (
+          <div className={styles["ai-panel"]}>
+            <div className={styles["ai-head"]}>
+              <span className={styles["ai-chip"]}>공고문 유사사례</span>
+              <span className={styles["ai-sub"]}>
+                {simLoading
+                  ? "AI가 공고를 정리하고 비슷한 과거 프로젝트를 찾는 중…"
+                  : `상위 ${simResults?.length ?? 0}건 · 공고문 의미 기반`}
+              </span>
+            </div>
+            {!simLoading && simResults && simResults.length === 0 && (
+              <div className={styles.empty}>비슷한 과거 프로젝트를 찾지 못했어요.</div>
+            )}
+            {!simLoading && simResults && simResults.length > 0 && (
+              <div className={styles["ai-list"]}>
+                {simResults.map((s) => (
+                  <div
+                    key={s.id}
+                    className={styles["ai-row"]}
+                    onClick={() => open(s.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={onActivate(() => open(s.id))}
+                  >
+                    <div className={styles["ai-name"]}>
+                      <b>{s.name}</b>
+                      <span className={styles["ai-meta"]}>
+                        {" "}
+                        {[s.client, s.cat, s.budget].filter(Boolean).join(" · ")}
+                      </span>
+                    </div>
+                    <div className={styles["posting-right"]}>
+                      <span
+                        className={`${styles.sim} ${s.similarity >= 0.5 ? styles.high : styles.mid}`}
+                      >
+                        유사 {Math.round(s.similarity * 100)}%
+                      </span>
+                      <span className={`${st.chip} ${st[STATUS_KEY[s.status]]}`}>
+                        {statusLabel(s.status)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

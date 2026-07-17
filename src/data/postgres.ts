@@ -648,23 +648,48 @@ export class PostgresDataSource implements DataSource {
   }
 
   /**
-   * 유사사례(L2) — 공고문 임베딩 코사인 유사도(pgvector <=>)로 가까운 과거 프로젝트.
-   * 기준 프로젝트에 임베딩이 없으면 빈 배열. 저장된 벡터만 쓰므로 OpenAI 호출은 없다.
+   * 유사사례(L2) 벡터 코어 — 주어진 벡터와 코사인 유사도(pgvector <=>)로 가까운 프로젝트.
+   * 상세보기(기준 프로젝트 id)와 공고문 붙여넣기 검색(즉석 임베딩 벡터)이 공유한다.
+   * @param vec  "[0.1,0.2,…]" 형태의 pgvector 리터럴 문자열
+   */
+  private async similarByVector(
+    vec: string,
+    limit: number,
+    excludeId?: string,
+  ): Promise<SimilarProject[]> {
+    const where = excludeId ? "p.id <> $3 AND " : "";
+    const params: unknown[] = excludeId ? [vec, limit, excludeId] : [vec, limit];
+    const rows = await query<ProjectRow & { similarity: number }>(
+      `SELECT ${LIST_COLUMNS}, 1 - (p.embedding <=> $1::vector) AS similarity
+         FROM projects p
+         LEFT JOIN ai_insights ai ON ai.project_id = p.id
+        WHERE ${where}p.embedding IS NOT NULL
+          AND p.deleted_at IS NULL AND p.hidden = false
+        ORDER BY p.embedding <=> $1::vector
+        LIMIT $2`,
+      params,
+    );
+    return rows.map((r) => ({ ...toProject(r), similarity: Number(r.similarity) }));
+  }
+
+  /**
+   * 상세보기 유사사례 — 기준 프로젝트의 저장된 임베딩으로 검색. OpenAI 호출 없음.
+   * 기준 프로젝트에 임베딩이 없으면 빈 배열.
    */
   async getSimilarProjects(id: string, limit = 5): Promise<SimilarProject[]> {
     if (!/^\d+$/.test(id)) return [];
-    const rows = await query<ProjectRow & { similarity: number }>(
-      `SELECT ${LIST_COLUMNS}, 1 - (p.embedding <=> base.embedding) AS similarity
-         FROM projects p
-         LEFT JOIN ai_insights ai ON ai.project_id = p.id
-         CROSS JOIN (SELECT embedding FROM projects WHERE id = $1) base
-        WHERE p.id <> $1 AND p.embedding IS NOT NULL AND base.embedding IS NOT NULL
-          AND p.deleted_at IS NULL AND p.hidden = false
-        ORDER BY p.embedding <=> base.embedding
-        LIMIT $2`,
-      [id, limit],
+    const base = await query<{ embedding: string | null }>(
+      "SELECT embedding::text AS embedding FROM projects WHERE id = $1",
+      [id],
     );
-    return rows.map((r) => ({ ...toProject(r), similarity: Number(r.similarity) }));
+    const vec = base[0]?.embedding;
+    if (!vec) return [];
+    return this.similarByVector(vec, limit, id);
+  }
+
+  /** 공고문 붙여넣기 검색 — 라우트에서 즉석 임베딩한 벡터로 유사사례를 찾는다. */
+  async searchSimilarByVector(vector: number[], limit = 8): Promise<SimilarProject[]> {
+    return this.similarByVector(`[${vector.join(",")}]`, limit);
   }
 
   /** 알림은 아직 원천이 없다 (본진에 대응 테이블 없음) */
