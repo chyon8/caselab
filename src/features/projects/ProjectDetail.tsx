@@ -475,11 +475,15 @@ export default function ProjectDetail({
                 <div className={styles["sim-info"]}>
                   <div className={styles["sim-name"]}>{s.name}</div>
                   <div className={styles["sim-meta"]}>
-                    {[s.client, s.cat, s.budget].filter(Boolean).join(" · ")}
+                    {[s.client, s.cat].filter(Boolean).join(" · ")}
                   </div>
-                  {s.contractAmount && (
-                    <div className={styles["sim-contract"]}>계약 {s.contractAmount}</div>
-                  )}
+                  <div className={styles["sim-budget"]}>
+                    {s.budget && <>공고 {s.budget}</>}
+                    {s.budget && s.contractAmount && <span className={styles["sim-sep"]}>·</span>}
+                    {s.contractAmount && (
+                      <span className={styles["sim-contract"]}>계약 {s.contractAmount}</span>
+                    )}
+                  </div>
                 </div>
                 <div className={styles["sim-right"]}>
                   <span className={styles["sim-score"]}>유사 {Math.round(s.similarity * 100)}%</span>

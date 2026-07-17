@@ -12,7 +12,6 @@ import { useApp } from "@/state/AppContext";
 
 const STATUS_OPTIONS = [
   { value: "전체", label: "상태 전체" },
-  { value: "검수", label: "검수" },
   { value: "모집", label: "모집" },
   { value: "미팅중", label: "미팅중" },
   { value: "계약", label: "계약체결중" },
@@ -576,11 +575,15 @@ export default function ProjectList({
                       <b>{s.name}</b>
                       <span className={styles["ai-meta"]}>
                         {" "}
-                        {[s.client, s.cat, s.budget].filter(Boolean).join(" · ")}
+                        {[s.client, s.cat].filter(Boolean).join(" · ")}
                       </span>
-                      {s.contractAmount && (
-                        <div className={styles["posting-contract"]}>계약 {s.contractAmount}</div>
-                      )}
+                      <div className={styles["posting-budget"]}>
+                        {s.budget && <>공고 {s.budget}</>}
+                        {s.budget && s.contractAmount && <span className={styles["posting-sep"]}>·</span>}
+                        {s.contractAmount && (
+                          <span className={styles["posting-contract"]}>계약 {s.contractAmount}</span>
+                        )}
+                      </div>
                     </div>
                     <div className={styles["posting-right"]}>
                       <span

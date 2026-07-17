@@ -635,10 +635,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.sim-contract {
+.sim-budget {
   font-size: 13px;
-  color: var(--status-success-fg);
+  color: var(--page-text);
   margin-top: 3px;
+}
+.sim-sep {
+  margin: 0 4px;
+  color: var(--text-muted);
+}
+.sim-contract {
+  color: var(--text-muted);
 }
 
 .sim-right {
