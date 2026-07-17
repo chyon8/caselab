@@ -29,6 +29,7 @@ import type {
   QnaSummary,
   ReportStats,
   SimilarProject,
+  SimilarStats,
   TimelineEvent,
   TranscriptLine,
 } from "./types";
@@ -357,6 +358,25 @@ const WON = `stage >= 3 AND status <> '완료(취소)'`;
 /** 표본이 이보다 적은 구간은 리포트에 싣지 않는다 — 비율이 우연에 흔들린다 */
 const MIN_SAMPLE = 100;
 
+/** 유사사례 집계 통계 — 코사인 유사도 상위 N건을 표본으로 삼는다(카드로 보여주는 5~8건보다 크게) */
+const SIMILAR_STATS_POOL = 30;
+/** 표본이 이보다 적으면 계약률·취소단계·모집기간·예산증감은 숨긴다 — 리포트 MIN_SAMPLE(100)보다 훨씬 작다 */
+const SIMILAR_MIN_DECIDED = 5;
+/** dev_scope 조합별 계약금액은 이보다 적은 조합이면 숨긴다 */
+const SIMILAR_MIN_SCOPE = 3;
+
+/** 기준 프로젝트에 임베딩이 없을 때(통계 풀을 만들 수 없음) */
+const EMPTY_SIMILAR_STATS: SimilarStats = {
+  poolSize: 0,
+  decided: 0,
+  contractRate: null,
+  cancelByStage: [],
+  recruitingDaysMedian: null,
+  contractByScope: [],
+  proposalBuckets: [],
+  budgetDelta: null,
+};
+
 /** 검색 토큰 상한 — 쿼리 길이를 묶는다 */
 const SEARCH_MAX_TOKENS = 6;
 
@@ -431,6 +451,81 @@ function toBreakdown(rows: BreakdownRow[]): Breakdown[] {
       decided: Number(r.decided),
       rate: Number(r.rate ?? 0),
     }));
+}
+
+interface ScopeAmountRow {
+  label: string | null;
+  n: string;
+  median: string | null;
+  q1: string | null;
+  q3: string | null;
+}
+
+interface ProposalBucketRow {
+  label: string | null;
+  n: string;
+  sort_key: string;
+}
+
+interface StatsRow {
+  pool_size: string;
+  decided: string;
+  contracted: string;
+  recruiting_days: string | null;
+  recruiting_sample: string;
+  budget_increased: string;
+  budget_same: string;
+  budget_decreased: string;
+  budget_sample: string;
+  cancel_by_stage: BreakdownRow[] | null;
+  contract_by_scope: ScopeAmountRow[] | null;
+  proposal_buckets: ProposalBucketRow[] | null;
+}
+
+function toSimilarStats(row: StatsRow): SimilarStats {
+  const poolSize = Number(row.pool_size);
+  const decided = Number(row.decided);
+  const recruitingSample = Number(row.recruiting_sample);
+  const budgetSample = Number(row.budget_sample);
+  const enough = decided >= SIMILAR_MIN_DECIDED;
+
+  return {
+    poolSize,
+    decided,
+    contractRate: enough
+      ? Math.round((Number(row.contracted) / decided) * 1000) / 10
+      : null,
+    cancelByStage: enough ? toBreakdown(row.cancel_by_stage ?? []) : [],
+    recruitingDaysMedian:
+      recruitingSample >= SIMILAR_MIN_DECIDED ? Math.round(Number(row.recruiting_days ?? 0)) : null,
+    contractByScope: (row.contract_by_scope ?? [])
+      .filter((s) => s.label !== null)
+      .map((s) => ({
+        label: s.label as string,
+        count: Number(s.n),
+        median: formatWon(s.median) ?? "-",
+        q1: formatWon(s.q1) ?? "-",
+        q3: formatWon(s.q3) ?? "-",
+      })),
+    proposalBuckets: poolSize >= SIMILAR_MIN_DECIDED
+      ? (row.proposal_buckets ?? [])
+          .filter((b) => b.label !== null)
+          .sort((a, b) => Number(a.sort_key) - Number(b.sort_key))
+          .map((b) => ({
+            label: b.label as string,
+            count: Number(b.n),
+            rate: poolSize ? Math.round((Number(b.n) / poolSize) * 1000) / 10 : 0,
+          }))
+      : [],
+    budgetDelta:
+      budgetSample >= SIMILAR_MIN_DECIDED
+        ? {
+            increased: Number(row.budget_increased),
+            same: Number(row.budget_same),
+            decreased: Number(row.budget_decreased),
+          }
+        : null,
+  };
 }
 
 export class PostgresDataSource implements DataSource {
@@ -692,6 +787,83 @@ export class PostgresDataSource implements DataSource {
   /** 공고문 붙여넣기 검색 — 라우트에서 즉석 임베딩한 벡터로 유사사례를 찾는다. */
   async searchSimilarByVector(vector: number[], limit = 8): Promise<SimilarProject[]> {
     return this.similarByVector(`[${vector.join(",")}]`, limit);
+  }
+
+  /**
+   * 유사사례(L2) 집계 통계 코어 — 카드로 보여주는 상위 5~8건보다 큰 풀(SIMILAR_STATS_POOL)을
+   * 표본 삼아 계약률·취소단계·모집기간·계약금액(dev_scope별)·제안건수·예산증감을 한 번의 왕복으로 계산한다.
+   * pool은 MATERIALIZED로 고정 — 안 그러면 벡터 정렬(전체 테이블 스캔)이 하위 CTE마다 반복될 수 있다.
+   */
+  private async statsByVector(vec: string, excludeId?: string): Promise<SimilarStats> {
+    const where = excludeId ? "p.id <> $2 AND " : "";
+    const params: unknown[] = excludeId ? [vec, excludeId] : [vec];
+    const [row] = await query<StatsRow>(
+      `WITH pool AS MATERIALIZED (
+         SELECT p.status, p.stage, p.cancel_stage, p.dev_scope, p.contract_amount, p.budget,
+                p.recruit_started_at, p.progress_started_at, p.proposal_count
+           FROM projects p
+          WHERE ${where}p.embedding IS NOT NULL AND p.deleted_at IS NULL AND p.hidden = false
+          ORDER BY p.embedding <=> $1::vector
+          LIMIT ${SIMILAR_STATS_POOL}
+       ),
+       cancel_stage AS (
+         SELECT cancel_stage AS label, count(*) AS decided,
+                round(100.0 * count(*) / NULLIF(sum(count(*)) OVER (), 0), 1) AS rate
+           FROM pool WHERE status = '완료(취소)' AND cancel_stage IS NOT NULL
+          GROUP BY 1
+       ),
+       scope AS (
+         SELECT dev_scope AS label, count(*) AS n,
+                percentile_cont(0.5) WITHIN GROUP (ORDER BY contract_amount) AS median,
+                percentile_cont(0.25) WITHIN GROUP (ORDER BY contract_amount) AS q1,
+                percentile_cont(0.75) WITHIN GROUP (ORDER BY contract_amount) AS q3
+           FROM pool WHERE contract_amount > 0 AND dev_scope IS NOT NULL
+          GROUP BY 1 HAVING count(*) >= ${SIMILAR_MIN_SCOPE}
+          ORDER BY count(*) DESC
+       ),
+       proposals AS (
+         SELECT CASE WHEN proposal_count = 0            THEN '0건'
+                     WHEN proposal_count BETWEEN 1 AND 4   THEN '1~4건'
+                     WHEN proposal_count BETWEEN 5 AND 9   THEN '5~9건'
+                     WHEN proposal_count BETWEEN 10 AND 19 THEN '10~19건'
+                     ELSE '20건 이상' END AS label,
+                count(*) AS n, min(proposal_count) AS sort_key
+           FROM pool WHERE proposal_count IS NOT NULL
+          GROUP BY 1
+       )
+       SELECT
+         (SELECT count(*) FROM pool) AS pool_size,
+         (SELECT count(*) FILTER (WHERE ${DECIDED}) FROM pool) AS decided,
+         (SELECT count(*) FILTER (WHERE ${WON}) FROM pool) AS contracted,
+         (SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY EXTRACT(DAY FROM progress_started_at - recruit_started_at)) FROM pool) AS recruiting_days,
+         (SELECT count(*) FROM pool WHERE recruit_started_at IS NOT NULL AND progress_started_at IS NOT NULL) AS recruiting_sample,
+         (SELECT count(*) FROM pool WHERE contract_amount > 0 AND budget > 0 AND contract_amount > budget) AS budget_increased,
+         (SELECT count(*) FROM pool WHERE contract_amount > 0 AND budget > 0 AND contract_amount = budget) AS budget_same,
+         (SELECT count(*) FROM pool WHERE contract_amount > 0 AND budget > 0 AND contract_amount < budget) AS budget_decreased,
+         (SELECT count(*) FROM pool WHERE contract_amount > 0 AND budget > 0) AS budget_sample,
+         (SELECT json_agg(cancel_stage) FROM cancel_stage) AS cancel_by_stage,
+         (SELECT json_agg(scope) FROM scope) AS contract_by_scope,
+         (SELECT json_agg(proposals) FROM proposals) AS proposal_buckets`,
+      params,
+    );
+    return toSimilarStats(row);
+  }
+
+  /** 상세보기 유사사례 집계 통계 — 기준 프로젝트의 저장된 임베딩으로 통계 풀을 찾는다. */
+  async getSimilarStats(id: string): Promise<SimilarStats> {
+    if (!/^\d+$/.test(id)) return EMPTY_SIMILAR_STATS;
+    const base = await query<{ embedding: string | null }>(
+      "SELECT embedding::text AS embedding FROM projects WHERE id = $1",
+      [id],
+    );
+    const vec = base[0]?.embedding;
+    if (!vec) return EMPTY_SIMILAR_STATS;
+    return this.statsByVector(vec, id);
+  }
+
+  /** 공고문 붙여넣기 검색 집계 통계 — 즉석 임베딩한 벡터로 통계 풀을 찾는다. */
+  async searchSimilarStats(vector: number[]): Promise<SimilarStats> {
+    return this.statsByVector(`[${vector.join(",")}]`);
   }
 
   /** 알림은 아직 원천이 없다 (본진에 대응 테이블 없음) */

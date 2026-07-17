@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import { CHECK_ITEMS } from "@/data/mock-data";
-import type { CallRecord, IssueType, Project, ProjectFull, SimilarProject } from "@/data/types";
+import type { CallRecord, IssueType, Project, ProjectFull, SimilarProject, SimilarStats } from "@/data/types";
 import { useApp } from "@/state/AppContext";
+import SimilarStatsPanel from "./SimilarStatsPanel";
 import st from "./status.module.css";
 import { STATUS_KEY, statusLabel } from "./status";
 import styles from "./ProjectDetail.module.css";
@@ -177,9 +178,11 @@ function MeetingCard({ meeting }: { meeting: CallRecord }) {
 export default function ProjectDetail({
   project: p,
   similar = [],
+  similarStats,
 }: {
   project: ProjectFull;
   similar?: SimilarProject[];
+  similarStats?: SimilarStats;
 }) {
   const app = useApp();
   const saved = app.reviews[p.id];
@@ -469,6 +472,7 @@ export default function ProjectDetail({
             </span>
           </div>
           <div className={styles.hint}>비슷한 과거 사례의 리스크·진행 경과를 참고하세요</div>
+          {similarStats && <SimilarStatsPanel stats={similarStats} />}
           <div className={styles["sim-list"]}>
             {similar.map((s) => (
               <Link key={s.id} href={`/projects/${s.id}`} className={styles["sim-card"]}>

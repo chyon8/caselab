@@ -12,6 +12,7 @@ import type {
   ProjectStatus,
   ReportStats,
   SimilarProject,
+  SimilarStats,
 } from "./types";
 
 /** Mock은 리포트 집계를 만들지 않는다 — 표본 14건으로는 비율이 무의미하다 */
@@ -29,6 +30,18 @@ const EMPTY_STATS: ReportStats = {
   budgetDelta: { increased: 0, same: 0, decreased: 0 },
 };
 
+/** Mock은 임베딩이 없어 유사사례 통계도 만들지 않는다 */
+const EMPTY_SIMILAR_STATS: SimilarStats = {
+  poolSize: 0,
+  decided: 0,
+  contractRate: null,
+  cancelByStage: [],
+  recruitingDaysMedian: null,
+  contractByScope: [],
+  proposalBuckets: [],
+  budgetDelta: null,
+};
+
 /**
  * 데이터 소스 어댑터 인터페이스.
  * CASELAB_DATA_SOURCE=postgres 이면 CaseLab DB(Neon)를, 아니면 Mock을 바라본다.
@@ -44,6 +57,10 @@ export interface DataSource {
   getSimilarProjects(id: string, limit?: number): Promise<SimilarProject[]>;
   /** 유사사례(L2) — 즉석 임베딩한 벡터(공고문 붙여넣기 검색)로 가까운 과거 프로젝트 상위 N건 */
   searchSimilarByVector(vector: number[], limit?: number): Promise<SimilarProject[]>;
+  /** 유사사례(L2) 집계 통계 — 기준 프로젝트의 저장된 임베딩으로 통계 풀을 찾는다 */
+  getSimilarStats(id: string): Promise<SimilarStats>;
+  /** 유사사례(L2) 집계 통계 — 즉석 임베딩한 벡터(공고문 붙여넣기 검색)로 통계 풀을 찾는다 */
+  searchSimilarStats(vector: number[]): Promise<SimilarStats>;
   getReportStats(): Promise<ReportStats>;
   getNotifications(): Promise<AppNotification[]>;
   getReviews(): Promise<Record<string, CaseReview>>;
@@ -110,6 +127,14 @@ class MockDataSource implements DataSource {
 
   async searchSimilarByVector(): Promise<SimilarProject[]> {
     return [];
+  }
+
+  async getSimilarStats(): Promise<SimilarStats> {
+    return EMPTY_SIMILAR_STATS;
+  }
+
+  async searchSimilarStats(): Promise<SimilarStats> {
+    return EMPTY_SIMILAR_STATS;
   }
 
   async getReportStats(): Promise<ReportStats> {

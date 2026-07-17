@@ -201,6 +201,41 @@ export interface SimilarProject extends Project {
   similarity: number;
 }
 
+/** 단순 분포 한 줄 — "1~4건 : 10건 (32.3%)". Breakdown과 달리 결판(decided) 개념이 없다 */
+export interface Bucket {
+  label: string;
+  count: number;
+  /** % — 전체 표본(poolSize) 대비 */
+  rate: number;
+}
+
+/** dev_scope 조합별 계약금액 중앙값·사분위수. 금액 성격이 combo마다 달라 반드시 분리해서 본다 */
+export interface ScopeAmount {
+  label: string;
+  count: number;
+  median: string;
+  q1: string;
+  q3: string;
+}
+
+/**
+ * 유사사례(L2) 풀 집계 통계 — 개별 카드 나열 대신 상위 유사사례 묶음의 경향을 본다.
+ * 표본이 작으면(SIMILAR_MIN_DECIDED 미만) 해당 지표는 null/빈 배열로 내려온다 — 화면에서 숨긴다.
+ */
+export interface SimilarStats {
+  /** 통계에 포함된 유사사례 표본 크기 */
+  poolSize: number;
+  /** 결판난 건수(계약률의 분모) */
+  decided: number;
+  contractRate: number | null;
+  cancelByStage: Breakdown[];
+  /** 모집 기간(모집 시작→진행 착수) 중앙값, 일 */
+  recruitingDaysMedian: number | null;
+  contractByScope: ScopeAmount[];
+  proposalBuckets: Bucket[];
+  budgetDelta: { increased: number; same: number; decreased: number } | null;
+}
+
 /**
  * 리포트 집계. 전부 SQL에서 계산해 내려온다 —
  * Project의 budget·contractAmount는 화면용 문자열("4,500만원")이라 클라이언트에서 못 센다.

@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Select from "@/components/Select";
 import { ListSkeleton, KanbanSkeleton } from "@/components/Skeleton";
-import type { KanbanColumn, ProjectPage, SimilarProject } from "@/data/types";
+import type { KanbanColumn, ProjectPage, SimilarProject, SimilarStats } from "@/data/types";
 import { onActivate } from "@/lib/a11y";
 import { OTHER_MANAGERS, PRIMARY_MANAGERS } from "@/lib/managers";
 import { useApp } from "@/state/AppContext";
+import SimilarStatsPanel from "./SimilarStatsPanel";
 
 const STATUS_OPTIONS = [
   { value: "전체", label: "상태 전체" },
@@ -80,6 +81,7 @@ export default function ProjectList({
     searchMode,
     postingText,
     postingResults,
+    postingStats,
   } = app.listState;
 
   const setQuery = (v: string) => app.setListState({ query: v });
@@ -124,12 +126,16 @@ export default function ProjectList({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: body }),
       });
-      const data = (await res.json()) as { results?: SimilarProject[]; error?: string };
+      const data = (await res.json()) as {
+        results?: SimilarProject[];
+        stats?: SimilarStats;
+        error?: string;
+      };
       if (!res.ok) throw new Error(data.error ?? "검색 실패");
-      app.setListState({ postingResults: data.results ?? [] });
+      app.setListState({ postingResults: data.results ?? [], postingStats: data.stats ?? null });
     } catch (e) {
       setSimError(e instanceof Error ? e.message : "검색 중 문제가 발생했습니다.");
-      app.setListState({ postingResults: null });
+      app.setListState({ postingResults: null, postingStats: null });
     } finally {
       setSimLoading(false);
     }
@@ -567,6 +573,7 @@ export default function ProjectList({
             {!simLoading && postingResults && postingResults.length === 0 && (
               <div className={styles.empty}>비슷한 과거 프로젝트를 찾지 못했어요.</div>
             )}
+            {!simLoading && postingStats && <SimilarStatsPanel stats={postingStats} />}
             {!simLoading && postingResults && postingResults.length > 0 && (
               <div className={styles["ai-list"]}>
                 {postingResults.map((s) => (

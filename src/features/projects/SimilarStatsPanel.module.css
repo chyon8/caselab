@@ -1,0 +1,11 @@
+.line {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0 0 12px;
+}
+
+.title {
+  font-weight: 600;
+  color: var(--page-text);
+}
