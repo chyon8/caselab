@@ -749,21 +749,36 @@ export class PostgresDataSource implements DataSource {
    * 유사사례(L2) 벡터 코어 — 주어진 벡터와 코사인 유사도(pgvector <=>)로 가까운 프로젝트.
    * 상세보기(기준 프로젝트 id)와 공고문 붙여넣기 검색(즉석 임베딩 벡터)이 공유한다.
    * @param vec  "[0.1,0.2,…]" 형태의 pgvector 리터럴 문자열
+   * @param boostScope  주어지면 dev_scope가 정확히 같은 프로젝트를 소프트 부스트(거리에서 BOOST만큼 뺌).
+   *   하드 필터가 아니라 순위 조정 — 의미상 훨씬 가까운 다른 스코프 프로젝트를 밀어내지 않는다
+   *   (실측: BOOST=0.02가 진짜 강한 매치는 안 건드리고 근소한 순위만 스코프 일치로 재정렬함).
    */
   private async similarByVector(
     vec: string,
     limit: number,
     excludeId?: string,
+    boostScope?: string,
   ): Promise<SimilarProject[]> {
-    const where = excludeId ? "p.id <> $3 AND " : "";
-    const params: unknown[] = excludeId ? [vec, limit, excludeId] : [vec, limit];
+    const BOOST = 0.02;
+    const clauses: string[] = [];
+    const params: unknown[] = [vec, limit];
+    if (excludeId) {
+      params.push(excludeId);
+      clauses.push(`p.id <> $${params.length}`);
+    }
+    let orderExpr = "p.embedding <=> $1::vector";
+    if (boostScope) {
+      params.push(boostScope);
+      orderExpr = `(p.embedding <=> $1::vector) - (CASE WHEN p.dev_scope = $${params.length} THEN ${BOOST} ELSE 0 END)`;
+    }
+    const where = clauses.length ? `${clauses.join(" AND ")} AND ` : "";
     const rows = await query<ProjectRow & { similarity: number }>(
       `SELECT ${LIST_COLUMNS}, 1 - (p.embedding <=> $1::vector) AS similarity
          FROM projects p
          LEFT JOIN ai_insights ai ON ai.project_id = p.id
         WHERE ${where}p.embedding IS NOT NULL
           AND p.deleted_at IS NULL AND p.hidden = false
-        ORDER BY p.embedding <=> $1::vector
+        ORDER BY ${orderExpr}
         LIMIT $2`,
       params,
     );
@@ -772,17 +787,17 @@ export class PostgresDataSource implements DataSource {
 
   /**
    * 상세보기 유사사례 — 기준 프로젝트의 저장된 임베딩으로 검색. OpenAI 호출 없음.
-   * 기준 프로젝트에 임베딩이 없으면 빈 배열.
+   * 기준 프로젝트의 dev_scope로 소프트 부스트(같은 업무범위를 살짝 우선). 임베딩 없으면 빈 배열.
    */
   async getSimilarProjects(id: string, limit = 5): Promise<SimilarProject[]> {
     if (!/^\d+$/.test(id)) return [];
-    const base = await query<{ embedding: string | null }>(
-      "SELECT embedding::text AS embedding FROM projects WHERE id = $1",
+    const base = await query<{ embedding: string | null; dev_scope: string | null }>(
+      "SELECT embedding::text AS embedding, dev_scope FROM projects WHERE id = $1",
       [id],
     );
     const vec = base[0]?.embedding;
     if (!vec) return [];
-    return this.similarByVector(vec, limit, id);
+    return this.similarByVector(vec, limit, id, base[0]?.dev_scope ?? undefined);
   }
 
   /** 공고문 붙여넣기 검색 — 라우트에서 즉석 임베딩한 벡터로 유사사례를 찾는다. */
