@@ -28,6 +28,18 @@ const MANAGER_OPTIONS = [
   { value: OTHER_MANAGERS, label: OTHER_MANAGERS },
 ];
 
+// 공고문 검색 업무범위 — value는 실제 dev_scope 문자열(정확일치 부스트용), label만 다듬음
+const SCOPE_OPTIONS = [
+  { value: "전체", label: "업무범위 전체" },
+  { value: "개발", label: "개발" },
+  { value: "디자인", label: "디자인" },
+  { value: "기획", label: "기획" },
+  { value: "개발,디자인", label: "개발+디자인" },
+  { value: "개발,기획", label: "개발+기획" },
+  { value: "디자인,기획", label: "디자인+기획" },
+  { value: "개발,디자인,기획", label: "개발+디자인+기획" },
+];
+
 /** 한 번에 보여줄 페이지 번호 개수 */
 const PAGE_BLOCK = 10;
 /** 칸반 컬럼당 한 번에 더 불러올 카드 수 (서버 KANBAN_PAGE_SIZE와 같아야 한다) */
@@ -81,6 +93,7 @@ export default function ProjectList({
     page,
     searchMode,
     postingText,
+    postingScope,
     postingResults,
     postingStats,
     postingReviewTips,
@@ -113,6 +126,7 @@ export default function ProjectList({
   const [simError, setSimError] = useState("");
   const setSearchMode = (v: "keyword" | "posting") => app.setListState({ searchMode: v });
   const setPostingText = (v: string) => app.setListState({ postingText: v });
+  const setPostingScope = (v: string) => app.setListState({ postingScope: v });
 
   const runPostingSearch = async () => {
     const body = postingText.trim();
@@ -126,7 +140,7 @@ export default function ProjectList({
       const res = await fetch("/api/similar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: body }),
+        body: JSON.stringify({ text: body, scope: postingScope }),
       });
       const data = (await res.json()) as {
         results?: SimilarProject[];
@@ -385,6 +399,15 @@ export default function ProjectList({
               >
                 {simLoading ? "찾는 중…" : "유사사례 찾기"}
               </button>
+              <div className={styles["posting-scope"]}>
+                <span className={styles["posting-scope-label"]}>내 프로젝트 업무범위</span>
+                <Select
+                  value={postingScope}
+                  options={SCOPE_OPTIONS}
+                  onChange={setPostingScope}
+                  ariaLabel="내 프로젝트 업무범위 선택"
+                />
+              </div>
               {simError && <span className={styles["posting-error"]}>{simError}</span>}
             </div>
           </div>

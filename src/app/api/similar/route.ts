@@ -10,9 +10,12 @@ import { mergeReviewTips } from "@/lib/review-tips";
  */
 export async function POST(req: Request): Promise<Response> {
   let text: string;
+  let scope: string | undefined;
   try {
-    const body = (await req.json()) as { text?: string };
+    const body = (await req.json()) as { text?: string; scope?: string };
     text = (body.text ?? "").trim();
+    // "전체"(또는 미지정)는 부스트 없음 — 순수 의미 검색
+    scope = body.scope && body.scope !== "전체" ? body.scope : undefined;
   } catch {
     return Response.json({ error: "잘못된 요청입니다." }, { status: 400 });
   }
@@ -25,7 +28,7 @@ export async function POST(req: Request): Promise<Response> {
     const normalized = await normalizePosting(text);
     const vector = await embedText(normalized);
     const [results, stats, pool] = await Promise.all([
-      dataSource.searchSimilarByVector(vector, 8),
+      dataSource.searchSimilarByVector(vector, 8, scope),
       dataSource.searchSimilarStats(vector),
       dataSource.searchSimilarQnaPool(vector),
     ]);

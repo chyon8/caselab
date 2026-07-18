@@ -800,9 +800,12 @@ export class PostgresDataSource implements DataSource {
     return this.similarByVector(vec, limit, id, base[0]?.dev_scope ?? undefined);
   }
 
-  /** 공고문 붙여넣기 검색 — 라우트에서 즉석 임베딩한 벡터로 유사사례를 찾는다. */
-  async searchSimilarByVector(vector: number[], limit = 8): Promise<SimilarProject[]> {
-    return this.similarByVector(`[${vector.join(",")}]`, limit);
+  /**
+   * 공고문 붙여넣기 검색 — 라우트에서 즉석 임베딩한 벡터로 유사사례를 찾는다.
+   * scope(내 프로젝트 업무범위)가 주어지면 같은 dev_scope 사례를 소프트 부스트한다.
+   */
+  async searchSimilarByVector(vector: number[], limit = 8, scope?: string): Promise<SimilarProject[]> {
+    return this.similarByVector(`[${vector.join(",")}]`, limit, undefined, scope);
   }
 
   /**

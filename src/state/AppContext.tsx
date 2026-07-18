@@ -15,6 +15,8 @@ interface ListState {
   searchMode: "keyword" | "posting";
   /** 공고문 모드에서 붙여넣은 원본 텍스트 */
   postingText: string;
+  /** 공고문 검색 시 내 프로젝트의 업무범위(dev_scope) — 같은 범위 사례를 소프트 부스트. "전체"면 부스트 없음 */
+  postingScope: string;
   /** 공고문 유사사례 결과 — 다시 방문했을 때 재검색(비용) 없이 복원하려고 함께 보관 */
   postingResults: SimilarProject[] | null;
   /** 공고문 유사사례 집계 통계 — results와 같은 검색 응답에서 함께 옴 */
@@ -83,6 +85,7 @@ export function AppProvider({
     page: 1,
     searchMode: "keyword",
     postingText: "",
+    postingScope: "전체",
     postingResults: null,
     postingStats: null,
     postingReviewTips: null,
@@ -126,6 +129,7 @@ export function AppProvider({
         page: 1,
         searchMode: "keyword",
         postingText: "",
+        postingScope: "전체",
         postingResults: null,
         postingStats: null,
         postingReviewTips: null,

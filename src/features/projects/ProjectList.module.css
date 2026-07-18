@@ -768,6 +768,18 @@
   color: var(--status-cancel-fg);
 }
 
+.posting-scope {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.posting-scope-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 .posting-right {
   display: flex;
   align-items: center;

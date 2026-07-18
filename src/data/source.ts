@@ -56,8 +56,9 @@ export interface DataSource {
   getProject(id: string): Promise<ProjectFull | undefined>;
   /** 유사사례(L2) — 해당 프로젝트 공고문과 의미적으로 가까운 과거 프로젝트 상위 N건 */
   getSimilarProjects(id: string, limit?: number): Promise<SimilarProject[]>;
-  /** 유사사례(L2) — 즉석 임베딩한 벡터(공고문 붙여넣기 검색)로 가까운 과거 프로젝트 상위 N건 */
-  searchSimilarByVector(vector: number[], limit?: number): Promise<SimilarProject[]>;
+  /** 유사사례(L2) — 즉석 임베딩한 벡터(공고문 붙여넣기 검색)로 가까운 과거 프로젝트 상위 N건.
+   *  scope(내 프로젝트 업무범위)를 주면 같은 dev_scope 사례를 소프트 부스트한다 */
+  searchSimilarByVector(vector: number[], limit?: number, scope?: string): Promise<SimilarProject[]>;
   /** 유사사례(L2) 집계 통계 — 기준 프로젝트의 저장된 임베딩으로 통계 풀을 찾는다 */
   getSimilarStats(id: string): Promise<SimilarStats>;
   /** 유사사례(L2) 집계 통계 — 즉석 임베딩한 벡터(공고문 붙여넣기 검색)로 통계 풀을 찾는다 */
