@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import type { AppNotification, CaseReview, SimilarProject, SimilarStats } from "@/data/types";
+import type { AppNotification, CaseReview, ReviewTips, SimilarProject, SimilarStats } from "@/data/types";
 
 interface ListState {
   query: string;
@@ -19,6 +19,8 @@ interface ListState {
   postingResults: SimilarProject[] | null;
   /** 공고문 유사사례 집계 통계 — results와 같은 검색 응답에서 함께 옴 */
   postingStats: SimilarStats | null;
+  /** 검수 팁 — 유사 풀의 리스크·질문·키워드를 통합한 것. 같은 검색 응답에서 함께 옴 */
+  postingReviewTips: ReviewTips | null;
 }
 
 interface AppContextValue {
@@ -83,6 +85,7 @@ export function AppProvider({
     postingText: "",
     postingResults: null,
     postingStats: null,
+    postingReviewTips: null,
   });
 
   useEffect(() => {
@@ -125,6 +128,7 @@ export function AppProvider({
         postingText: "",
         postingResults: null,
         postingStats: null,
+        postingReviewTips: null,
       })),
   };
 

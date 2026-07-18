@@ -1,5 +1,6 @@
 import { query } from "@/lib/db";
 import { managerFilterSql, managerName } from "@/lib/managers";
+import type { PoolQna } from "@/lib/review-tips";
 import {
   daysBetween,
   daysSince,
@@ -787,6 +788,29 @@ export class PostgresDataSource implements DataSource {
   /** 공고문 붙여넣기 검색 — 라우트에서 즉석 임베딩한 벡터로 유사사례를 찾는다. */
   async searchSimilarByVector(vector: number[], limit = 8): Promise<SimilarProject[]> {
     return this.similarByVector(`[${vector.join(",")}]`, limit);
+  }
+
+  /**
+   * 검수 팁용 — 유사 풀(통계와 같은 30건)의 qna 요약(리스크·질문·키워드)을 가져온다.
+   * 통계(숫자)와 달리 여기선 텍스트를 gpt로 묶어야 하므로 원문 배열이 필요하다.
+   */
+  async searchSimilarQnaPool(vector: number[], limit = SIMILAR_STATS_POOL): Promise<PoolQna[]> {
+    const rows = await query<{ title: string; qna_summary: QnaSummary | null }>(
+      `SELECT p.title, ai.qna_summary
+         FROM projects p
+         JOIN ai_insights ai ON ai.project_id = p.id
+        WHERE p.embedding IS NOT NULL AND p.deleted_at IS NULL AND p.hidden = false
+          AND ai.qna_summary IS NOT NULL
+        ORDER BY p.embedding <=> $1::vector
+        LIMIT $2`,
+      [`[${vector.join(",")}]`, limit],
+    );
+    return rows.map((r) => ({
+      title: r.title,
+      riskSignals: r.qna_summary?.riskSignals ?? [],
+      keyQuestions: r.qna_summary?.keyQuestions ?? [],
+      keywords: r.qna_summary?.keywords ?? [],
+    }));
   }
 
   /**

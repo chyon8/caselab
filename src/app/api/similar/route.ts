@@ -1,11 +1,12 @@
 import { dataSource } from "@/data/source";
 import { embedText } from "@/lib/embed";
 import { normalizePosting } from "@/lib/normalize";
+import { mergeReviewTips } from "@/lib/review-tips";
 
 /**
  * POST /api/similar { text } — 공고문 붙여넣기 유사사례 검색(L2).
  * 정리 안 된 원본 의뢰 내용 → 표준 공고 형식으로 정규화 → 즉석 임베딩 → pgvector 유사도 검색.
- * 응답: { normalized(정규화 텍스트), results(유사 프로젝트 상위 N건), stats(유사사례 집계 통계) }.
+ * 응답: { normalized, results(유사 상위 N건), stats(집계 통계), reviewTips(풀 리스크·질문 통합) }.
  */
 export async function POST(req: Request): Promise<Response> {
   let text: string;
@@ -23,11 +24,14 @@ export async function POST(req: Request): Promise<Response> {
   try {
     const normalized = await normalizePosting(text);
     const vector = await embedText(normalized);
-    const [results, stats] = await Promise.all([
+    const [results, stats, pool] = await Promise.all([
       dataSource.searchSimilarByVector(vector, 8),
       dataSource.searchSimilarStats(vector),
+      dataSource.searchSimilarQnaPool(vector),
     ]);
-    return Response.json({ normalized, results, stats });
+    // 검수 팁은 풀 내용을 gpt로 묶으므로 풀을 받은 뒤에 실행(순차)
+    const reviewTips = await mergeReviewTips(pool);
+    return Response.json({ normalized, results, stats, reviewTips });
   } catch (e) {
     console.error("[/api/similar]", e);
     return Response.json({ error: "검색 중 문제가 발생했습니다." }, { status: 500 });

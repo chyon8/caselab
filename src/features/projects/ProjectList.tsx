@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Select from "@/components/Select";
 import { ListSkeleton, KanbanSkeleton } from "@/components/Skeleton";
-import type { KanbanColumn, ProjectPage, SimilarProject, SimilarStats } from "@/data/types";
+import type { KanbanColumn, ProjectPage, ReviewTips, SimilarProject, SimilarStats } from "@/data/types";
 import { onActivate } from "@/lib/a11y";
 import { OTHER_MANAGERS, PRIMARY_MANAGERS } from "@/lib/managers";
 import { useApp } from "@/state/AppContext";
+import ReviewTipsPanel from "./ReviewTipsPanel";
 import SimilarStatsPanel from "./SimilarStatsPanel";
 
 const STATUS_OPTIONS = [
@@ -82,6 +83,7 @@ export default function ProjectList({
     postingText,
     postingResults,
     postingStats,
+    postingReviewTips,
   } = app.listState;
 
   const setQuery = (v: string) => app.setListState({ query: v });
@@ -129,13 +131,18 @@ export default function ProjectList({
       const data = (await res.json()) as {
         results?: SimilarProject[];
         stats?: SimilarStats;
+        reviewTips?: ReviewTips;
         error?: string;
       };
       if (!res.ok) throw new Error(data.error ?? "검색 실패");
-      app.setListState({ postingResults: data.results ?? [], postingStats: data.stats ?? null });
+      app.setListState({
+        postingResults: data.results ?? [],
+        postingStats: data.stats ?? null,
+        postingReviewTips: data.reviewTips ?? null,
+      });
     } catch (e) {
       setSimError(e instanceof Error ? e.message : "검색 중 문제가 발생했습니다.");
-      app.setListState({ postingResults: null, postingStats: null });
+      app.setListState({ postingResults: null, postingStats: null, postingReviewTips: null });
     } finally {
       setSimLoading(false);
     }
@@ -574,6 +581,7 @@ export default function ProjectList({
               <div className={styles.empty}>비슷한 과거 프로젝트를 찾지 못했어요.</div>
             )}
             {!simLoading && postingStats && <SimilarStatsPanel stats={postingStats} />}
+            {!simLoading && postingReviewTips && <ReviewTipsPanel tips={postingReviewTips} />}
             {!simLoading && postingResults && postingResults.length > 0 && (
               <div className={styles["ai-list"]}>
                 {postingResults.map((s) => (

@@ -1,4 +1,5 @@
 import { matchesManager } from "@/lib/managers";
+import type { PoolQna } from "@/lib/review-tips";
 import { MOCK_NOTIFICATIONS, MOCK_PROJECTS, MOCK_REVIEWS } from "./mock-data";
 import { DEFAULT_PAGE_SIZE, KANBAN_PAGE_SIZE, PostgresDataSource } from "./postgres";
 import type {
@@ -61,6 +62,8 @@ export interface DataSource {
   getSimilarStats(id: string): Promise<SimilarStats>;
   /** 유사사례(L2) 집계 통계 — 즉석 임베딩한 벡터(공고문 붙여넣기 검색)로 통계 풀을 찾는다 */
   searchSimilarStats(vector: number[]): Promise<SimilarStats>;
+  /** 검수 팁 — 즉석 임베딩한 벡터로 유사 풀의 qna 요약(리스크·질문·키워드)을 가져온다 */
+  searchSimilarQnaPool(vector: number[], limit?: number): Promise<PoolQna[]>;
   getReportStats(): Promise<ReportStats>;
   getNotifications(): Promise<AppNotification[]>;
   getReviews(): Promise<Record<string, CaseReview>>;
@@ -135,6 +138,10 @@ class MockDataSource implements DataSource {
 
   async searchSimilarStats(): Promise<SimilarStats> {
     return EMPTY_SIMILAR_STATS;
+  }
+
+  async searchSimilarQnaPool(): Promise<PoolQna[]> {
+    return [];
   }
 
   async getReportStats(): Promise<ReportStats> {

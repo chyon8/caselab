@@ -236,6 +236,25 @@ export interface SimilarStats {
   budgetDelta: { increased: number; same: number; decreased: number } | null;
 }
 
+/** 검수 팁 한 줄. 원본 나열이면 freq 생략, 빈도/AI 집계면 freq(지지 사례 수)를 채운다 */
+export interface ReviewTip {
+  text: string;
+  freq?: number;
+}
+
+/**
+ * 검수 팁 — 유사사례 풀의 qna_summary(리스크·질문·키워드)를 합친 정성 인사이트.
+ * SimilarStats(숫자)의 텍스트 짝. 집계 방식(원본 나열 / AI 재요약)이 바뀌어도
+ * 이 형태로만 내려오면 화면은 그대로다 — UI를 먼저 이 계약에 고정한다.
+ */
+export interface ReviewTips {
+  /** 팁 산출에 실제로 쓴 사례 수 (qna_summary가 있는 것만) */
+  sampleSize: number;
+  risks: ReviewTip[];
+  questions: ReviewTip[];
+  keywords: { term: string; count: number }[];
+}
+
 /**
  * 리포트 집계. 전부 SQL에서 계산해 내려온다 —
  * Project의 budget·contractAmount는 화면용 문자열("4,500만원")이라 클라이언트에서 못 센다.
