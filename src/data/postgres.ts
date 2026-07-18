@@ -365,6 +365,9 @@ const SIMILAR_STATS_POOL = 30;
 const SIMILAR_MIN_DECIDED = 5;
 /** dev_scope 조합별 계약금액은 이보다 적은 조합이면 숨긴다 */
 const SIMILAR_MIN_SCOPE = 3;
+/** 업무범위(dev_scope) 정확일치 시 코사인 거리에서 빼주는 소프트 부스트 —
+ *  하드 필터가 아니라 순위 조정. 실측으로 진짜 강한 매치는 안 밀어내는 값으로 보정(0.02). */
+const SCOPE_BOOST = 0.02;
 
 /** 기준 프로젝트에 임베딩이 없을 때(통계 풀을 만들 수 없음) */
 const EMPTY_SIMILAR_STATS: SimilarStats = {
@@ -749,27 +752,32 @@ export class PostgresDataSource implements DataSource {
    * 유사사례(L2) 벡터 코어 — 주어진 벡터와 코사인 유사도(pgvector <=>)로 가까운 프로젝트.
    * 상세보기(기준 프로젝트 id)와 공고문 붙여넣기 검색(즉석 임베딩 벡터)이 공유한다.
    * @param vec  "[0.1,0.2,…]" 형태의 pgvector 리터럴 문자열
-   * @param boostScope  주어지면 dev_scope가 정확히 같은 프로젝트를 소프트 부스트(거리에서 BOOST만큼 뺌).
-   *   하드 필터가 아니라 순위 조정 — 의미상 훨씬 가까운 다른 스코프 프로젝트를 밀어내지 않는다
-   *   (실측: BOOST=0.02가 진짜 강한 매치는 안 건드리고 근소한 순위만 스코프 일치로 재정렬함).
+   * @param boostScope  dev_scope가 정확히 같은 프로젝트를 소프트 부스트(거리에서 BOOST만큼 뺌).
+   *   하드 필터가 아니라 순위 조정 — 상세보기(자동)용. 강한 매치를 밀어내지 않는다.
+   * @param filterScope  dev_scope가 정확히 같은 프로젝트만 남기는 하드 필터 — 공고문 검색에서
+   *   유저가 업무범위를 명시적으로 골랐을 때 쓴다(그 범위 사례만 보고 싶다는 뜻).
    */
   private async similarByVector(
     vec: string,
     limit: number,
     excludeId?: string,
     boostScope?: string,
+    filterScope?: string,
   ): Promise<SimilarProject[]> {
-    const BOOST = 0.02;
     const clauses: string[] = [];
     const params: unknown[] = [vec, limit];
     if (excludeId) {
       params.push(excludeId);
       clauses.push(`p.id <> $${params.length}`);
     }
+    if (filterScope) {
+      params.push(filterScope);
+      clauses.push(`p.dev_scope = $${params.length}`);
+    }
     let orderExpr = "p.embedding <=> $1::vector";
     if (boostScope) {
       params.push(boostScope);
-      orderExpr = `(p.embedding <=> $1::vector) - (CASE WHEN p.dev_scope = $${params.length} THEN ${BOOST} ELSE 0 END)`;
+      orderExpr = `(p.embedding <=> $1::vector) - (CASE WHEN p.dev_scope = $${params.length} THEN ${SCOPE_BOOST} ELSE 0 END)`;
     }
     const where = clauses.length ? `${clauses.join(" AND ")} AND ` : "";
     const rows = await query<ProjectRow & { similarity: number }>(
@@ -802,26 +810,37 @@ export class PostgresDataSource implements DataSource {
 
   /**
    * 공고문 붙여넣기 검색 — 라우트에서 즉석 임베딩한 벡터로 유사사례를 찾는다.
-   * scope(내 프로젝트 업무범위)가 주어지면 같은 dev_scope 사례를 소프트 부스트한다.
+   * scope(유저가 고른 업무범위)가 주어지면 그 dev_scope 사례만 하드 필터한다.
    */
   async searchSimilarByVector(vector: number[], limit = 8, scope?: string): Promise<SimilarProject[]> {
-    return this.similarByVector(`[${vector.join(",")}]`, limit, undefined, scope);
+    return this.similarByVector(`[${vector.join(",")}]`, limit, undefined, undefined, scope);
   }
 
   /**
    * 검수 팁용 — 유사 풀(통계와 같은 30건)의 qna 요약(리스크·질문·키워드)을 가져온다.
    * 통계(숫자)와 달리 여기선 텍스트를 gpt로 묶어야 하므로 원문 배열이 필요하다.
+   * scope(유저가 고른 업무범위)가 있으면 그 dev_scope 사례만 하드 필터한다.
    */
-  async searchSimilarQnaPool(vector: number[], limit = SIMILAR_STATS_POOL): Promise<PoolQna[]> {
+  async searchSimilarQnaPool(
+    vector: number[],
+    limit = SIMILAR_STATS_POOL,
+    scope?: string,
+  ): Promise<PoolQna[]> {
+    const params: unknown[] = [`[${vector.join(",")}]`, limit];
+    let scopeClause = "";
+    if (scope) {
+      params.push(scope);
+      scopeClause = `AND p.dev_scope = $${params.length}`;
+    }
     const rows = await query<{ title: string; qna_summary: QnaSummary | null }>(
       `SELECT p.title, ai.qna_summary
          FROM projects p
          JOIN ai_insights ai ON ai.project_id = p.id
         WHERE p.embedding IS NOT NULL AND p.deleted_at IS NULL AND p.hidden = false
-          AND ai.qna_summary IS NOT NULL
+          AND ai.qna_summary IS NOT NULL ${scopeClause}
         ORDER BY p.embedding <=> $1::vector
         LIMIT $2`,
-      [`[${vector.join(",")}]`, limit],
+      params,
     );
     return rows.map((r) => ({
       title: r.title,
@@ -836,9 +855,21 @@ export class PostgresDataSource implements DataSource {
    * 표본 삼아 계약률·취소단계·모집기간·계약금액(dev_scope별)·제안건수·예산증감을 한 번의 왕복으로 계산한다.
    * pool은 MATERIALIZED로 고정 — 안 그러면 벡터 정렬(전체 테이블 스캔)이 하위 CTE마다 반복될 수 있다.
    */
-  private async statsByVector(vec: string, excludeId?: string): Promise<SimilarStats> {
-    const where = excludeId ? "p.id <> $2 AND " : "";
-    const params: unknown[] = excludeId ? [vec, excludeId] : [vec];
+  private async statsByVector(
+    vec: string,
+    excludeId?: string,
+    filterScope?: string,
+  ): Promise<SimilarStats> {
+    const params: unknown[] = [vec];
+    let where = "";
+    if (excludeId) {
+      params.push(excludeId);
+      where += `p.id <> $${params.length} AND `;
+    }
+    if (filterScope) {
+      params.push(filterScope);
+      where += `p.dev_scope = $${params.length} AND `;
+    }
     const [row] = await query<StatsRow>(
       `WITH pool AS MATERIALIZED (
          SELECT p.status, p.stage, p.cancel_stage, p.dev_scope, p.contract_amount, p.budget,
@@ -903,9 +934,12 @@ export class PostgresDataSource implements DataSource {
     return this.statsByVector(vec, id);
   }
 
-  /** 공고문 붙여넣기 검색 집계 통계 — 즉석 임베딩한 벡터로 통계 풀을 찾는다. */
-  async searchSimilarStats(vector: number[]): Promise<SimilarStats> {
-    return this.statsByVector(`[${vector.join(",")}]`);
+  /**
+   * 공고문 붙여넣기 검색 집계 통계 — 즉석 임베딩한 벡터로 통계 풀을 찾는다.
+   * scope(유저가 고른 업무범위)가 있으면 그 dev_scope 사례만 하드 필터한다.
+   */
+  async searchSimilarStats(vector: number[], scope?: string): Promise<SimilarStats> {
+    return this.statsByVector(`[${vector.join(",")}]`, undefined, scope);
   }
 
   /** 알림은 아직 원천이 없다 (본진에 대응 테이블 없음) */

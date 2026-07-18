@@ -61,10 +61,12 @@ export interface DataSource {
   searchSimilarByVector(vector: number[], limit?: number, scope?: string): Promise<SimilarProject[]>;
   /** 유사사례(L2) 집계 통계 — 기준 프로젝트의 저장된 임베딩으로 통계 풀을 찾는다 */
   getSimilarStats(id: string): Promise<SimilarStats>;
-  /** 유사사례(L2) 집계 통계 — 즉석 임베딩한 벡터(공고문 붙여넣기 검색)로 통계 풀을 찾는다 */
-  searchSimilarStats(vector: number[]): Promise<SimilarStats>;
-  /** 검수 팁 — 즉석 임베딩한 벡터로 유사 풀의 qna 요약(리스크·질문·키워드)을 가져온다 */
-  searchSimilarQnaPool(vector: number[], limit?: number): Promise<PoolQna[]>;
+  /** 유사사례(L2) 집계 통계 — 즉석 임베딩한 벡터(공고문 붙여넣기 검색)로 통계 풀을 찾는다.
+   *  scope를 주면 같은 dev_scope 사례로 풀을 소프트 부스트한다 */
+  searchSimilarStats(vector: number[], scope?: string): Promise<SimilarStats>;
+  /** 검수 팁 — 즉석 임베딩한 벡터로 유사 풀의 qna 요약(리스크·질문·키워드)을 가져온다.
+   *  scope를 주면 같은 dev_scope 사례로 풀을 소프트 부스트한다 */
+  searchSimilarQnaPool(vector: number[], limit?: number, scope?: string): Promise<PoolQna[]>;
   getReportStats(): Promise<ReportStats>;
   getNotifications(): Promise<AppNotification[]>;
   getReviews(): Promise<Record<string, CaseReview>>;

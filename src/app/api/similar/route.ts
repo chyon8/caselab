@@ -29,8 +29,8 @@ export async function POST(req: Request): Promise<Response> {
     const vector = await embedText(normalized);
     const [results, stats, pool] = await Promise.all([
       dataSource.searchSimilarByVector(vector, 8, scope),
-      dataSource.searchSimilarStats(vector),
-      dataSource.searchSimilarQnaPool(vector),
+      dataSource.searchSimilarStats(vector, scope),
+      dataSource.searchSimilarQnaPool(vector, undefined, scope),
     ]);
     // 검수 팁은 풀 내용을 gpt로 묶으므로 풀을 받은 뒤에 실행(순차)
     const reviewTips = await mergeReviewTips(pool);
