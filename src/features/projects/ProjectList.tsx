@@ -586,12 +586,11 @@ export default function ProjectList({
               <div className={styles["ai-list"]}>
                 {postingResults.map((s) => (
                   <Link key={s.id} href={`/projects/${s.id}`} className={styles["ai-row"]}>
-                    <div className={styles["ai-name"]}>
-                      <b>{s.name}</b>
-                      <span className={styles["ai-meta"]}>
-                        {" "}
+                    <div className={styles["ai-info"]}>
+                      <div className={styles["ai-name"]}>{s.name}</div>
+                      <div className={styles["ai-meta"]}>
                         {[s.client, s.cat].filter(Boolean).join(" · ")}
-                      </span>
+                      </div>
                       <div className={styles["posting-budget"]}>
                         {s.budget && <>공고 {s.budget}</>}
                         {s.budget && s.contractAmount && <span className={styles["posting-sep"]}>·</span>}

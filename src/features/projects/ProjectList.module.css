@@ -413,22 +413,27 @@
   border-color: var(--color-primary);
 }
 
+.ai-info {
+  min-width: 0;
+  flex: 1;
+}
+
 .ai-name {
   font-size: 14px;
+  font-weight: 600;
   color: var(--page-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-width: 0;
-}
-
-.ai-name b {
-  font-weight: 600;
 }
 
 .ai-meta {
+  font-size: 13px;
   color: var(--text-faint);
-  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
 }
 
 .sim {
@@ -664,6 +669,17 @@
     align-items: flex-start;
     gap: 8px;
     padding: 12px 14px;
+  }
+
+  /* 모바일: 상세보기 유사사례 카드(sim-name)와 동일하게 — 제목은 2줄까지 줄바꿈,
+     고객사는 한 줄 유지. 세로 배치에서 텍스트가 카드 밖으로 넘치지 않게. */
+  .ai-name {
+    font-size: 14px;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .posting-right {
