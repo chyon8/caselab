@@ -458,25 +458,29 @@ export default function ProjectList({
                 placeholder="검수할 공고 내용을 통째로 붙여넣거나, word·pdf·excel·ppt 파일을 이 안에 끌어다 놓으세요. 정리되지 않은 원본이어도 괜찮습니다."
               />
               <div className={styles["posting-file-row"]}>
-                <label className={styles["posting-file-btn"]}>
-                  📎 파일 첨부
+                <label
+                  className={`${styles["posting-file-btn"]} ${fileUploading ? styles["posting-file-btn-disabled"] : ""}`}
+                >
+                  📎 {fileUploading ? "읽는 중…" : "파일 첨부"}
                   <input
                     type="file"
                     multiple
                     accept=".docx,.xlsx,.pptx,.pdf"
                     hidden
+                    disabled={fileUploading}
                     onChange={(e) => {
                       if (e.target.files) handleFiles(e.target.files);
                       e.target.value = "";
                     }}
                   />
                 </label>
-                <span className={styles["posting-file-hint"]}>
-                  word · pdf · excel · ppt (한글 .hwp는 아직 미지원 — 텍스트로 붙여넣어 주세요)
-                </span>
-                {fileUploading && (
+                {fileUploading ? (
                   <span className={styles["posting-file-status"]}>
-                    파일 읽는 중… (이미지 PDF는 글자 인식에 1분 이상 걸릴 수 있어요)
+                    ⏳ 파일 읽는 중… (이미지 PDF는 글자 인식에 1분 이상 걸릴 수 있어요)
+                  </span>
+                ) : (
+                  <span className={styles["posting-file-hint"]}>
+                    word · pdf · excel · ppt (한글 .hwp는 아직 미지원 — 텍스트로 붙여넣어 주세요)
                   </span>
                 )}
               </div>
