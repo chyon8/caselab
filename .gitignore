@@ -22,3 +22,6 @@
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# tesseract.js OCR 언어 데이터 (런타임에 자동 다운로드되는 캐시, 소스 아님)
+*.traineddata

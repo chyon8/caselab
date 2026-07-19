@@ -33,10 +33,21 @@ export async function POST(req: Request): Promise<Response> {
       dataSource.searchSimilarQnaPool(vector, undefined, scope),
     ]);
     // 검수 팁은 풀 내용을 gpt로 묶으므로 풀을 받은 뒤에 실행(순차)
-    const reviewTips = await mergeReviewTips(pool, normalized);
-    return Response.json({ normalized, results, stats, reviewTips });
+    // 별도 try/catch: 검수 팁 생성 실패(quota 초과 등)가 결과·통계까지 함께 죽이면 안 된다
+    let reviewTips = null;
+    let reviewTipsError: string | undefined;
+    try {
+      reviewTips = await mergeReviewTips(pool, normalized);
+    } catch (e) {
+      console.error("[/api/similar] reviewTips", e);
+      reviewTipsError = e instanceof Error ? e.message : "검수 팁 생성 중 문제가 발생했습니다.";
+    }
+    return Response.json({ normalized, results, stats, reviewTips, reviewTipsError });
   } catch (e) {
     console.error("[/api/similar]", e);
-    return Response.json({ error: "검색 중 문제가 발생했습니다." }, { status: 500 });
+    // 원인을 그대로 보여준다 — "검색 중 문제가 발생했습니다"만으로는 quota 초과인지
+    // 키 문제인지 입력이 빈약한 건지 구분할 수 없어 사용자가 대응할 수 없다.
+    const detail = e instanceof Error ? e.message : String(e);
+    return Response.json({ error: `검색 실패: ${detail}` }, { status: 500 });
   }
 }

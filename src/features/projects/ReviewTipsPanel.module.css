@@ -97,3 +97,24 @@
   color: var(--status-recruit-fg);
   opacity: 0.85;
 }
+
+.errorBox {
+  margin-top: 8px;
+  padding: 14px 16px;
+  border-radius: var(--rounded-lg);
+  background: var(--status-cancel-bg);
+}
+
+.error-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--status-cancel-fg);
+  margin-bottom: 4px;
+}
+
+.error-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--status-cancel-fg);
+  opacity: 0.85;
+}

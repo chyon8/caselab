@@ -23,6 +23,8 @@ interface ListState {
   postingStats: SimilarStats | null;
   /** 검수 팁 — 유사 풀의 리스크·질문·키워드를 통합한 것. 같은 검색 응답에서 함께 옴 */
   postingReviewTips: ReviewTips | null;
+  /** 검수 팁 생성 실패 사유(quota 초과 등) — 결과·통계는 정상인데 팁만 실패했을 때 채워짐 */
+  postingReviewTipsError: string | null;
 }
 
 interface AppContextValue {
@@ -89,6 +91,7 @@ export function AppProvider({
     postingResults: null,
     postingStats: null,
     postingReviewTips: null,
+    postingReviewTipsError: null,
   });
 
   useEffect(() => {
@@ -133,6 +136,7 @@ export function AppProvider({
         postingResults: null,
         postingStats: null,
         postingReviewTips: null,
+        postingReviewTipsError: null,
       })),
   };
 

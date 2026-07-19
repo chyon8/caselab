@@ -11,8 +11,45 @@ const MIN_SAMPLE = 5;
  * SimilarStatsPanel(숫자) 바로 아래에 놓여, 숫자 뒤의 "무엇을 확인해야 하나"를 채운다.
  * 집계 방식(원본 나열 / AI 재요약)과 무관하게 ReviewTips 형태만 받는다.
  */
-export default function ReviewTipsPanel({ tips: t }: { tips: ReviewTips }) {
-  if (t.sampleSize < MIN_SAMPLE) return null;
+export default function ReviewTipsPanel({
+  tips: t,
+  error,
+}: {
+  tips: ReviewTips | null;
+  error?: string | null;
+}) {
+  if (error) {
+    return (
+      <div className={styles.panel}>
+        <div className={styles.head}>
+          <span className={styles.chip}>검수 팁</span>
+        </div>
+        <div className={styles.errorBox}>
+          <div className={styles["error-title"]}>⚠️ 검수 팁을 불러오지 못했어요</div>
+          <div className={styles["error-desc"]}>{error}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!t) return null;
+
+  if (t.sampleSize < MIN_SAMPLE) {
+    return (
+      <div className={styles.panel}>
+        <div className={styles.head}>
+          <span className={styles.chip}>검수 팁</span>
+        </div>
+        <div className={styles.empty}>
+          <div className={styles["empty-title"]}>ℹ️ 유사사례 데이터가 부족해요</div>
+          <div className={styles["empty-desc"]}>
+            검수 팁을 만들려면 참고할 유사사례가 최소 {MIN_SAMPLE}건 필요한데, 지금은 {t.sampleSize}
+            건뿐이에요.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const isEmpty =
     t.risks.length === 0 && t.questions.length === 0 && t.keywords.length === 0;

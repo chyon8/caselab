@@ -97,6 +97,7 @@ export default function ProjectList({
     postingResults,
     postingStats,
     postingReviewTips,
+    postingReviewTipsError,
   } = app.listState;
 
   const setQuery = (v: string) => app.setListState({ query: v });
@@ -146,6 +147,7 @@ export default function ProjectList({
         results?: SimilarProject[];
         stats?: SimilarStats;
         reviewTips?: ReviewTips;
+        reviewTipsError?: string;
         error?: string;
       };
       if (!res.ok) throw new Error(data.error ?? "검색 실패");
@@ -153,12 +155,63 @@ export default function ProjectList({
         postingResults: data.results ?? [],
         postingStats: data.stats ?? null,
         postingReviewTips: data.reviewTips ?? null,
+        postingReviewTipsError: data.reviewTipsError ?? null,
       });
     } catch (e) {
       setSimError(e instanceof Error ? e.message : "검색 중 문제가 발생했습니다.");
-      app.setListState({ postingResults: null, postingStats: null, postingReviewTips: null });
+      app.setListState({
+        postingResults: null,
+        postingStats: null,
+        postingReviewTips: null,
+        postingReviewTipsError: null,
+      });
     } finally {
       setSimLoading(false);
+    }
+  };
+
+  // ── 공고문 첨부파일(word/pdf/excel/ppt) — 텍스트만 뽑아 postingText에 이어붙인다.
+  // 파싱은 서버의 결정적 라이브러리가 하므로 AI 비용은 들지 않는다(정규화·임베딩은 검색 시 1회뿐).
+  const [dragActive, setDragActive] = useState(false);
+  const [fileUploading, setFileUploading] = useState(false);
+  const [fileTopError, setFileTopError] = useState("");
+  const [fileNotices, setFileNotices] = useState<{ filename: string; error?: string }[]>([]);
+
+  const handleFiles = async (fileList: FileList | File[]) => {
+    const files = Array.from(fileList);
+    if (files.length === 0) return;
+    setFileUploading(true);
+    setFileTopError("");
+    try {
+      const fd = new FormData();
+      files.forEach((f) => fd.append("files", f));
+      const res = await fetch("/api/extract-text", { method: "POST", body: fd });
+      const data = (await res.json()) as {
+        results?: { filename: string; text: string; error?: string }[];
+        error?: string;
+      };
+      if (!res.ok) {
+        setFileTopError(data.error ?? "파일 처리 중 문제가 발생했습니다.");
+        return;
+      }
+      const results = data.results ?? [];
+      // 여러 번 나눠 첨부해도 이전 알림이 남도록 누적한다(덮어쓰면 마지막 파일 하나만 보인다)
+      setFileNotices((prev) => [
+        ...prev,
+        ...results.map((r) => ({ filename: r.filename, error: r.error })),
+      ]);
+      const appended = results
+        .filter((r) => r.text.trim() !== "")
+        .map((r) => `--- 📎 ${r.filename} ---\n${r.text.trim()}`)
+        .join("\n\n");
+      if (appended) {
+        const cur = postingText.trim();
+        setPostingText(cur ? `${cur}\n\n${appended}` : appended);
+      }
+    } catch {
+      setFileTopError("파일 업로드 중 문제가 발생했습니다.");
+    } finally {
+      setFileUploading(false);
     }
   };
 
@@ -384,13 +437,63 @@ export default function ProjectList({
           </div>
         ) : (
           <div className={styles["posting-search"]}>
-            <textarea
-              className={styles["posting-box"]}
-              value={postingText}
-              onChange={(e) => setPostingText(e.target.value)}
-              rows={7}
-              placeholder="검수할 공고 내용을 통째로 붙여넣으세요. 정리되지 않은 원본이어도 괜찮습니다."
-            />
+            <div
+              className={`${styles["posting-drop"]} ${dragActive ? styles["posting-drop-active"] : ""}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragActive(true);
+              }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragActive(false);
+                handleFiles(e.dataTransfer.files);
+              }}
+            >
+              <textarea
+                className={styles["posting-box"]}
+                value={postingText}
+                onChange={(e) => setPostingText(e.target.value)}
+                rows={7}
+                placeholder="검수할 공고 내용을 통째로 붙여넣거나, word·pdf·excel·ppt 파일을 이 안에 끌어다 놓으세요. 정리되지 않은 원본이어도 괜찮습니다."
+              />
+              <div className={styles["posting-file-row"]}>
+                <label className={styles["posting-file-btn"]}>
+                  📎 파일 첨부
+                  <input
+                    type="file"
+                    multiple
+                    accept=".docx,.xlsx,.pptx,.pdf"
+                    hidden
+                    onChange={(e) => {
+                      if (e.target.files) handleFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+                <span className={styles["posting-file-hint"]}>
+                  word · pdf · excel · ppt (한글 .hwp는 아직 미지원 — 텍스트로 붙여넣어 주세요)
+                </span>
+                {fileUploading && (
+                  <span className={styles["posting-file-status"]}>
+                    파일 읽는 중… (이미지 PDF는 글자 인식에 1분 이상 걸릴 수 있어요)
+                  </span>
+                )}
+              </div>
+              {fileTopError && <div className={styles["posting-file-error"]}>{fileTopError}</div>}
+              {fileNotices.length > 0 && (
+                <ul className={styles["posting-file-list"]}>
+                  {fileNotices.map((f, i) => (
+                    <li
+                      key={i}
+                      className={f.error ? styles["posting-file-error"] : styles["posting-file-ok"]}
+                    >
+                      {f.error ? `⚠️ ${f.filename}: ${f.error}` : `✅ ${f.filename} 추가됨`}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             <div className={styles["posting-actions"]}>
               <button
                 className={styles["posting-btn"]}
@@ -604,7 +707,9 @@ export default function ProjectList({
               <div className={styles.empty}>비슷한 과거 프로젝트를 찾지 못했어요.</div>
             )}
             {!simLoading && postingStats && <SimilarStatsPanel stats={postingStats} />}
-            {!simLoading && postingReviewTips && <ReviewTipsPanel tips={postingReviewTips} />}
+            {!simLoading && (postingReviewTips || postingReviewTipsError) && (
+              <ReviewTipsPanel tips={postingReviewTips} error={postingReviewTipsError} />
+            )}
             {!simLoading && postingResults && postingResults.length > 0 && (
               <div className={styles["ai-list"]}>
                 {postingResults.map((s) => (

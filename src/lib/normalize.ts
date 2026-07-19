@@ -123,6 +123,6 @@ export async function normalizePosting(raw: string): Promise<string> {
 
   const j = (await res.json()) as ChatResponse;
   const out = j.choices?.[0]?.message?.content;
-  if (!out) throw new Error("정규화 응답이 비어 있습니다.");
+  if (!out) throw new Error("공고로 정리할 내용이 없습니다. 공고 본문을 붙여넣어 주세요.");
   return cleanPosting(out);
 }

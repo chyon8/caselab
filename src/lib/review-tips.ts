@@ -146,7 +146,16 @@ export async function mergeReviewTips(pool: PoolQna[], posting: string): Promise
       ],
     }),
   });
-  if (!res.ok) throw new Error(`검수 팁 요청 실패: ${res.status}`);
+  if (!res.ok) {
+    let detail = "";
+    try {
+      const errBody = (await res.json()) as { error?: { message?: string; type?: string; code?: string } };
+      detail = errBody.error?.message ?? errBody.error?.code ?? errBody.error?.type ?? "";
+    } catch {
+      // OpenAI 에러 응답이 JSON이 아닌 경우(드묾) — 상태코드만 남긴다
+    }
+    throw new Error(`검수 팁 요청 실패 (${res.status})${detail ? `: ${detail}` : ""}`);
+  }
 
   const j = (await res.json()) as ChatResponse;
   const out = j.choices?.[0]?.message?.content;
