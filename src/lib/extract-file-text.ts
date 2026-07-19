@@ -1,10 +1,12 @@
 // 공고문 검색 첨부파일 텍스트 추출 — word/pdf/excel/ppt를 텍스트로 변환해
 // 기존 공고문 붙여넣기 검색(normalizePosting → embedText) 입력에 그대로 얹는다.
 // 파싱은 라이브러리(officeparser)가 결정적으로 처리하므로 AI 비용이 들지 않는다.
+// 단, 이미지로만 된(텍스트 레이어 없는) PDF는 OpenAI 비전 모델로 읽는다(ocrPdf, 파일 하단).
 
 // 이름 있는 export(OfficeParser)는 Turbopack의 CJS 인터롭에서 undefined로 깨진다
 // (getter로 정의된 export를 초기값 스냅샷으로 읽는 버그) — default export는 정상 동작해 이걸 쓴다.
 import OfficeParser, { type OfficeContentNode, type SupportedFileType } from "officeparser";
+import { createCanvas, loadImage } from "@napi-rs/canvas";
 
 const EXT_TO_FILE_TYPE: Record<string, SupportedFileType> = {
   docx: "docx",
@@ -72,18 +74,54 @@ async function astText(
   return value.trim();
 }
 
-/**
- * OCR 폴백 상한. 페이지 1장당 ~3.5초 + 원본 해상도 비트맵(장당 10MB대)을 메모리에 올리므로
- * 장수가 많으면 함수 타임아웃·메모리 초과로 이어진다. 통째로 실패시키는 대신 미리 거절한다.
- */
+/** OCR 폴백 상한 — 페이지마다 OpenAI 비전 호출 1회(병렬)라 비용·지연을 여기서 미리 방어한다. */
 const OCR_MAX_PAGES = 15;
 
+/** 이보다 작은(가로·세로 모두) 이미지는 본문 스캔이 아니라 로고·아이콘 같은 장식 요소로 보고 건너뛴다 */
+const OCR_MIN_IMAGE_PX = 150;
+
+/** officeparser가 PDF 이미지를 뽑을 때 항상 BMP로 인코딩하는데, OpenAI 비전 API는 BMP를 지원하지 않아 PNG로 바꿔준다 */
+async function bmpToPng(base64Bmp: string): Promise<{ base64Png: string; width: number; height: number }> {
+  const image = await loadImage(Buffer.from(base64Bmp, "base64"));
+  const canvas = createCanvas(image.width, image.height);
+  canvas.getContext("2d").drawImage(image, 0, 0);
+  return { base64Png: canvas.toBuffer("image/png").toString("base64"), width: image.width, height: image.height };
+}
+
+/** 이미지 한 장의 텍스트를 그대로 전사한다. 사람이 읽는 게 아니라 검색 임베딩 입력으로만 쓰이므로 서식은 필요 없다 */
+async function visionTranscribe(base64Png: string): Promise<string> {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) throw new Error("OPENAI_API_KEY가 설정되지 않았습니다.");
+
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      temperature: 0,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "이 이미지에 보이는 모든 텍스트를 있는 그대로 전사해줘. 설명이나 요약 없이 텍스트만 출력해." },
+            { type: "image_url", image_url: { url: `data:image/png;base64,${base64Png}` } },
+          ],
+        },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`OCR 요청 실패: ${res.status}`);
+  const j = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+  return (j.choices?.[0]?.message?.content ?? "").trim();
+}
+
 /**
- * 이미지·스캔 PDF를 tesseract로 읽는다. 결과는 페이지 이미지별 ocrText에 담기므로
- * ast.to("text")가 아니라 attachments를 모아야 한다(본문 변환엔 "[Image: ...]"만 남는다).
+ * 이미지·스캔 PDF를 페이지별로 읽는다. officeparser의 extractAttachments(ocr 없이)로
+ * 페이지 이미지만 뽑고, 인식은 OpenAI 비전 모델에 맡긴다.
  *
- * 인식 품질은 완벽하지 않다(제목·장식 글꼴이 특히 약함). 다만 이 텍스트는 사람이 읽는 게 아니라
- * normalizePosting → 임베딩으로 흘러가고, 그 과정에서 노이즈가 상당 부분 정리된다.
+ * tesseract.js 대신인 이유: 워커스레드+wasm+CDN 한글 학습데이터가 Vercel 서버리스
+ * 트레이싱과 계속 부딪혔다(모듈 누락 → 고쳐도 콜드스타트 다운로드로 타임아웃). 이 경로는
+ * officeparser가 이미지만 뽑을 때 tesseract를 아예 로드하지 않아(lazy import) 그 문제 전체가 없어진다.
  */
 async function ocrPdf(filename: string, buffer: Buffer, pageCount: number): Promise<ExtractedFile> {
   if (pageCount > OCR_MAX_PAGES) {
@@ -94,23 +132,21 @@ async function ocrPdf(filename: string, buffer: Buffer, pageCount: number): Prom
     };
   }
 
-  const ast = await OfficeParser.parseOffice(buffer, {
-    fileType: "pdf",
-    ocr: true,
-    // ocrText는 attachments에만 실린다 — 이 옵션이 없으면 OCR 자체가 돌지 않는다
-    extractAttachments: true,
-    ocrConfig: {
-      language: "kor+eng",
-      // 첫 실행 때 한글 학습데이터(수십 MB)를 내려받으므로 로딩 타임아웃을 넉넉히 준다
-      timeout: { workerLoad: 180000, recognition: 120000, autoTerminate: 5000 },
-    },
-  });
+  const ast = await OfficeParser.parseOffice(buffer, { fileType: "pdf", extractAttachments: true });
 
-  const text = (ast.attachments ?? [])
-    .map((a) => (a.ocrText ?? "").trim())
-    .filter((t) => t !== "")
-    .join("\n\n");
+  const pageTexts = await Promise.all(
+    (ast.attachments ?? []).map(async (a): Promise<string> => {
+      try {
+        const { base64Png, width, height } = await bmpToPng(a.data);
+        if (width < OCR_MIN_IMAGE_PX || height < OCR_MIN_IMAGE_PX) return "";
+        return await visionTranscribe(base64Png);
+      } catch {
+        return "";
+      }
+    }),
+  );
 
+  const text = pageTexts.filter((t) => t !== "").join("\n\n");
   if (text === "") {
     return {
       filename,

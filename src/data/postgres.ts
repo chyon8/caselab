@@ -381,8 +381,17 @@ const SCOPE_BOOST = 0.02;
 const SIMILAR_REL_MARGIN = 0.06;
 /** 상대 컷과 별개인 바닥값 — 코퍼스 전체 중앙값이 0.477이라 이 아래는 사실상 무관하다 */
 const SIMILAR_MIN_SIM = 0.5;
-/** 유사도 하한을 적용하는 SQL 조건 — raw CTE(유사도순 정렬·MATERIALIZED)를 받아 쓴다 */
+/** 유사도 하한을 적용하는 SQL 조건 — raw CTE(유사도순 정렬·MATERIALIZED)를 받아 쓴다. 통계·검수팁 풀 전용. */
 const SIMILAR_CUTOFF = `sim >= greatest((SELECT max(sim) FROM raw) - ${SIMILAR_REL_MARGIN}, ${SIMILAR_MIN_SIM})`;
+
+/**
+ * 카드(사람이 직접 보고 판단)는 통계·검수팁 풀보다 마진을 넉넉히 준다 — 실측상 4~8위도
+ * 1위와 큰 차이 없이 관련 있는 경우가 많은데, 통계용 마진(0.06)이 그걸 잘라내고 있었다.
+ * 카드는 화면에 유사도가 같이 찍혀서 사람이 보고 걸러낼 수 있어 무관한 게 섞이는 비용이 낮다
+ * (반대로 통계·검수팁은 자동 집계라 무관한 게 섞이면 일반론으로 수렴 — 그쪽은 SIMILAR_CUTOFF 유지).
+ */
+const CARD_REL_MARGIN = 0.15;
+const CARD_CUTOFF = `sim >= greatest((SELECT max(sim) FROM raw) - ${CARD_REL_MARGIN}, ${SIMILAR_MIN_SIM})`;
 
 /** 기준 프로젝트에 임베딩이 없을 때(통계 풀을 만들 수 없음) */
 const EMPTY_SIMILAR_STATS: SimilarStats = {
@@ -831,7 +840,7 @@ export class PostgresDataSource implements DataSource {
       orderExpr = `(p.embedding <=> $1::vector) - (CASE WHEN p.dev_scope = $${params.length} THEN ${SCOPE_BOOST} ELSE 0 END)`;
     }
     const where = clauses.length ? `${clauses.join(" AND ")} AND ` : "";
-    // 상위 N건을 뽑은 뒤 유사도 하한(SIMILAR_CUTOFF)으로 한 번 더 자른다 — 결과가 하한에 못 미치면
+    // 상위 N건을 뽑은 뒤 유사도 하한(CARD_CUTOFF)으로 한 번 더 자른다 — 결과가 하한에 못 미치면
     // 8건을 억지로 채우지 않고 적게 돌려준다. sort_key를 들고 나가야 부스트 순서가 보존된다.
     const rows = await query<ProjectRow & { similarity: number }>(
       `WITH raw AS MATERIALIZED (
@@ -846,7 +855,7 @@ export class PostgresDataSource implements DataSource {
           LIMIT $2
        )
        SELECT *, sim AS similarity FROM raw
-        WHERE ${SIMILAR_CUTOFF}
+        WHERE ${CARD_CUTOFF}
         ORDER BY sort_key`,
       params,
     );

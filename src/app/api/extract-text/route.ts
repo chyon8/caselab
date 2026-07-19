@@ -1,10 +1,10 @@
 import { extractFileText } from "@/lib/extract-file-text";
 
 /**
- * 이미지 PDF의 OCR 폴백은 페이지당 수 초가 걸린다(15쪽이면 1분 안팎).
- * 기본 제한(Vercel 10~60초)으로는 중간에 잘리므로 상한을 올린다.
+ * 이미지 PDF는 페이지 이미지를 병렬로 OpenAI 비전 모델에 보내 읽는다(ocrPdf).
+ * 페이지 수와 무관하게 가장 느린 호출 1건 정도의 시간이지만, 네트워크 여유를 넉넉히 둔다.
  */
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 /** 한 요청에서 처리할 파일 수 상한 — 과도한 동시 파싱으로 함수가 타임아웃되는 것을 막는다 */
 const MAX_FILES = 10;
