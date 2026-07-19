@@ -369,6 +369,21 @@ const SIMILAR_MIN_SCOPE = 3;
  *  하드 필터가 아니라 순위 조정. 실측으로 진짜 강한 매치는 안 밀어내는 값으로 보정(0.02). */
 const SCOPE_BOOST = 0.02;
 
+/**
+ * 유사도 하한 — 풀을 항상 30건으로 채우지 않고, 최고점에서 이만큼 멀어지면 자른다.
+ *
+ * ⚠️ 절대 임계값을 쓰면 안 된다. 유사도 스케일이 쿼리마다 달라서다(실측):
+ *   "앱 유지보수" 쿼리는 1위 0.687 / 8위 0.634인데, "여행 홈페이지" 쿼리는 30위가 0.660이다.
+ *   0.65 같은 고정 컷은 앞 검색을 통째로 날리면서 뒤 검색은 하나도 못 거른다.
+ * 그래서 1위 대비 상대 거리로 자른다. 결과가 적으면 적게 보여주는 게 맞다 —
+ * 억지로 30건을 채우면 무관한 사례가 통계·검수 팁의 재료로 섞여 일반론을 만든다.
+ */
+const SIMILAR_REL_MARGIN = 0.06;
+/** 상대 컷과 별개인 바닥값 — 코퍼스 전체 중앙값이 0.477이라 이 아래는 사실상 무관하다 */
+const SIMILAR_MIN_SIM = 0.5;
+/** 유사도 하한을 적용하는 SQL 조건 — raw CTE(유사도순 정렬·MATERIALIZED)를 받아 쓴다 */
+const SIMILAR_CUTOFF = `sim >= greatest((SELECT max(sim) FROM raw) - ${SIMILAR_REL_MARGIN}, ${SIMILAR_MIN_SIM})`;
+
 /** 기준 프로젝트에 임베딩이 없을 때(통계 풀을 만들 수 없음) */
 const EMPTY_SIMILAR_STATS: SimilarStats = {
   poolSize: 0,
@@ -384,6 +399,14 @@ const EMPTY_SIMILAR_STATS: SimilarStats = {
 /** 검색 토큰 상한 — 쿼리 길이를 묶는다 */
 const SEARCH_MAX_TOKENS = 6;
 
+/**
+ * 검색 관련도 필드 가중치. WHERE는 여전히 필드 간 OR(=recall 유지)이지만, 정렬은 이 점수로 한다.
+ * 실측 근거: "유지보수" 한 단어가 1,023건을 맞히는데 그중 829건(81%)이 본문에만 스친 언급이다
+ * ("유지보수는 별도 협의" 같은 상투구). 날짜순 정렬이면 그 829건이 앞을 다 덮는다.
+ * 제목·카테고리에 있는 말이 그 프로젝트의 정체고, 본문에 있는 말은 곁가지다.
+ */
+const SEARCH_WEIGHT = { title: 10, categoryTech: 5, client: 3, body: 1 };
+
 /** ILIKE 패턴 특수문자(\ % _)를 리터럴로 이스케이프 (기본 ESCAPE '\') */
 function escapeLike(s: string): string {
   return s.replace(/[\\%_]/g, (c) => `\\${c}`);
@@ -394,7 +417,10 @@ function escapeLike(s: string): string {
  * 검색은 토큰 간 AND, 필드(제목·본문·고객사·기술·카테고리) 간 OR.
  * @param includeStatus 칸반은 상태 드롭다운을 무시하므로 false로 뺀다.
  */
-function buildWhere(q: ProjectQuery, includeStatus: boolean): { sql: string; params: unknown[] } {
+function buildWhere(
+  q: ProjectQuery,
+  includeStatus: boolean,
+): { sql: string; params: unknown[]; score: string | null } {
   const conds: string[] = ["p.deleted_at IS NULL", "p.hidden = false"];
   const params: unknown[] = [];
   const add = (v: unknown): string => {
@@ -431,14 +457,30 @@ function buildWhere(q: ProjectQuery, includeStatus: boolean): { sql: string; par
   }
 
   const tokens = (q.q ?? "").trim().split(/\s+/).filter(Boolean).slice(0, SEARCH_MAX_TOKENS);
+  const likes: string[] = [];
   for (const t of tokens) {
     const like = add(`%${escapeLike(t)}%`);
+    likes.push(like);
     conds.push(
       `(p.id::text ILIKE ${like} OR p.title ILIKE ${like} OR p.client_name ILIKE ${like} OR p.tech ILIKE ${like} OR p.category ILIKE ${like} OR p.posting_raw ILIKE ${like})`,
     );
   }
 
-  return { sql: conds.join(" AND "), params };
+  // 관련도 점수 — 토큰이 어느 필드에서 맞았는지에 가중치를 주고 토큰별로 합산한다.
+  // WHERE에서 이미 쓴 플레이스홀더를 그대로 재사용하므로 파라미터가 늘지 않는다.
+  const score = likes.length
+    ? likes
+        .map(
+          (l) =>
+            `(CASE WHEN p.title ILIKE ${l} THEN ${SEARCH_WEIGHT.title} ELSE 0 END` +
+            ` + CASE WHEN p.category ILIKE ${l} OR p.tech ILIKE ${l} THEN ${SEARCH_WEIGHT.categoryTech} ELSE 0 END` +
+            ` + CASE WHEN p.client_name ILIKE ${l} THEN ${SEARCH_WEIGHT.client} ELSE 0 END` +
+            ` + CASE WHEN p.posting_raw ILIKE ${l} THEN ${SEARCH_WEIGHT.body} ELSE 0 END)`,
+        )
+        .join(" + ")
+    : null;
+
+  return { sql: conds.join(" AND "), params, score };
 }
 
 interface BreakdownRow {
@@ -636,12 +678,17 @@ export class PostgresDataSource implements DataSource {
   async getProjects(params: ProjectQuery): Promise<ProjectPage> {
     const page = Math.max(1, params.page ?? 1);
     const size = params.pageSize ?? DEFAULT_PAGE_SIZE;
-    const { sql, params: whereParams } = buildWhere(params, true);
+    const { sql, params: whereParams, score } = buildWhere(params, true);
     const limit = `$${whereParams.length + 1}`;
     const offset = `$${whereParams.length + 2}`;
 
     // count(*) OVER() 로 필터 적용 후 전체 건수를 페이지 행과 함께 한 번에 받는다.
-    // 정렬은 화면에 표시하는 날짜(검수완료일)와 같아야 "정렬 안 된 것처럼" 안 보인다.
+    // 정렬: 검색어가 없으면 화면에 표시하는 날짜(검수완료일) 순 — 표시값과 같아야 "정렬 안 된 것처럼"
+    // 안 보인다. 검색어가 있으면 관련도 우선(동점은 최신순) — 날짜순만으로는 본문에 스친 언급이
+    // 제목이 정확히 일치하는 건을 덮어버린다.
+    const order = score
+      ? `${score} DESC, p.recruit_started_at DESC NULLS LAST, p.id DESC`
+      : `p.recruit_started_at DESC NULLS LAST, p.id DESC`;
     const rows = await query<ProjectRow & { total: string }>(
       `SELECT ${LIST_COLUMNS},
               (p.status = '모집' AND ${MEETING_STARTED}) AS is_meeting,
@@ -649,7 +696,7 @@ export class PostgresDataSource implements DataSource {
          FROM projects p
          LEFT JOIN ai_insights ai ON ai.project_id = p.id
         WHERE ${sql}
-        ORDER BY p.recruit_started_at DESC NULLS LAST, p.id DESC
+        ORDER BY ${order}
         LIMIT ${limit} OFFSET ${offset}`,
       [...whereParams, size, (page - 1) * size],
     );
@@ -662,16 +709,20 @@ export class PostgresDataSource implements DataSource {
   async getKanban(params: ProjectQuery): Promise<KanbanColumn[]> {
     // 칸반은 상태 드롭다운을 무시한다(컬럼 자체가 상태). 상태별 상위 N + 총계를 한 쿼리로.
     // 모집은 사전 미팅 진행분을 '미팅중' 가상 컬럼(kstatus)으로 쪼갠다 — 총계·row_number도 그 기준.
-    const { sql, params: whereParams } = buildWhere(params, false);
+    const { sql, params: whereParams, score } = buildWhere(params, false);
+    // 목록과 같은 규칙: 검색어가 있으면 컬럼 안에서도 관련도 우선으로 상위 N건을 고른다.
+    const order = score
+      ? `relevance DESC, recruit_started_at DESC NULLS LAST, id DESC`
+      : `recruit_started_at DESC NULLS LAST, id DESC`;
     const rows = await query<ProjectRow & { kstatus: string; status_total: string; rn: string }>(
       `SELECT * FROM (
          SELECT *,
                 count(*) OVER (PARTITION BY kstatus) AS status_total,
-                row_number() OVER (PARTITION BY kstatus
-                  ORDER BY recruit_started_at DESC NULLS LAST, id DESC) AS rn
+                row_number() OVER (PARTITION BY kstatus ORDER BY ${order}) AS rn
            FROM (
              SELECT ${LIST_COLUMNS},
                     (p.status = '모집' AND ${MEETING_STARTED}) AS is_meeting,
+                    ${score ?? "0"} AS relevance,
                     CASE WHEN p.status = '모집' AND ${MEETING_STARTED} THEN '미팅중' ELSE p.status END AS kstatus
                FROM projects p
                LEFT JOIN ai_insights ai ON ai.project_id = p.id
@@ -780,14 +831,23 @@ export class PostgresDataSource implements DataSource {
       orderExpr = `(p.embedding <=> $1::vector) - (CASE WHEN p.dev_scope = $${params.length} THEN ${SCOPE_BOOST} ELSE 0 END)`;
     }
     const where = clauses.length ? `${clauses.join(" AND ")} AND ` : "";
+    // 상위 N건을 뽑은 뒤 유사도 하한(SIMILAR_CUTOFF)으로 한 번 더 자른다 — 결과가 하한에 못 미치면
+    // 8건을 억지로 채우지 않고 적게 돌려준다. sort_key를 들고 나가야 부스트 순서가 보존된다.
     const rows = await query<ProjectRow & { similarity: number }>(
-      `SELECT ${LIST_COLUMNS}, 1 - (p.embedding <=> $1::vector) AS similarity
-         FROM projects p
-         LEFT JOIN ai_insights ai ON ai.project_id = p.id
-        WHERE ${where}p.embedding IS NOT NULL
-          AND p.deleted_at IS NULL AND p.hidden = false
-        ORDER BY ${orderExpr}
-        LIMIT $2`,
+      `WITH raw AS MATERIALIZED (
+         SELECT ${LIST_COLUMNS},
+                1 - (p.embedding <=> $1::vector) AS sim,
+                ${orderExpr} AS sort_key
+           FROM projects p
+           LEFT JOIN ai_insights ai ON ai.project_id = p.id
+          WHERE ${where}p.embedding IS NOT NULL
+            AND p.deleted_at IS NULL AND p.hidden = false
+          ORDER BY ${orderExpr}
+          LIMIT $2
+       )
+       SELECT *, sim AS similarity FROM raw
+        WHERE ${SIMILAR_CUTOFF}
+        ORDER BY sort_key`,
       params,
     );
     return rows.map((r) => ({ ...toProject(r), similarity: Number(r.similarity) }));
@@ -832,20 +892,26 @@ export class PostgresDataSource implements DataSource {
       params.push(scope);
       scopeClause = `AND p.dev_scope = $${params.length}`;
     }
+    // 통계·카드와 같은 유사도 하한을 적용한다 — 무관한 사례가 재료로 섞이면
+    // 검수 팁이 "요구사항을 명확히 하라"류 일반론으로 수렴한다.
     const rows = await query<{ title: string; qna_summary: QnaSummary | null }>(
-      `SELECT p.title, ai.qna_summary
-         FROM projects p
-         JOIN ai_insights ai ON ai.project_id = p.id
-        WHERE p.embedding IS NOT NULL AND p.deleted_at IS NULL AND p.hidden = false
-          AND ai.qna_summary IS NOT NULL ${scopeClause}
-        ORDER BY p.embedding <=> $1::vector
-        LIMIT $2`,
+      `WITH raw AS MATERIALIZED (
+         SELECT p.title, ai.qna_summary, 1 - (p.embedding <=> $1::vector) AS sim
+           FROM projects p
+           JOIN ai_insights ai ON ai.project_id = p.id
+          WHERE p.embedding IS NOT NULL AND p.deleted_at IS NULL AND p.hidden = false
+            AND ai.qna_summary IS NOT NULL ${scopeClause}
+          ORDER BY p.embedding <=> $1::vector
+          LIMIT $2
+       )
+       SELECT title, qna_summary FROM raw WHERE ${SIMILAR_CUTOFF} ORDER BY sim DESC`,
       params,
     );
     return rows.map((r) => ({
       title: r.title,
       riskSignals: r.qna_summary?.riskSignals ?? [],
       keyQuestions: r.qna_summary?.keyQuestions ?? [],
+      technicalNotes: r.qna_summary?.technicalNotes ?? [],
       keywords: r.qna_summary?.keywords ?? [],
     }));
   }
@@ -871,14 +937,18 @@ export class PostgresDataSource implements DataSource {
       where += `p.dev_scope = $${params.length} AND `;
     }
     const [row] = await query<StatsRow>(
-      `WITH pool AS MATERIALIZED (
+      `WITH raw AS MATERIALIZED (
          SELECT p.status, p.stage, p.cancel_stage, p.dev_scope, p.contract_amount, p.budget,
-                p.recruit_started_at, p.progress_started_at, p.proposal_count
+                p.recruit_started_at, p.progress_started_at, p.proposal_count,
+                1 - (p.embedding <=> $1::vector) AS sim
            FROM projects p
           WHERE ${where}p.embedding IS NOT NULL AND p.deleted_at IS NULL AND p.hidden = false
           ORDER BY p.embedding <=> $1::vector
           LIMIT ${SIMILAR_STATS_POOL}
        ),
+       -- 카드·검수 팁과 같은 유사도 하한. 표본이 줄면 poolSize가 줄고,
+       -- SIMILAR_MIN_DECIDED 미만이 되면 계약률 등은 기존대로 숨겨진다.
+       pool AS (SELECT * FROM raw WHERE ${SIMILAR_CUTOFF}),
        cancel_stage AS (
          SELECT cancel_stage AS label, count(*) AS decided,
                 round(100.0 * count(*) / NULLIF(sum(count(*)) OVER (), 0), 1) AS rate

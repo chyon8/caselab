@@ -562,7 +562,8 @@ export default function ProjectDetail({
           </div>
           {p.qnaSummary.keyQuestions.length === 0 &&
           p.qnaSummary.decisions.length === 0 &&
-          p.qnaSummary.riskSignals.length === 0 ? (
+          p.qnaSummary.riskSignals.length === 0 &&
+          !p.qnaSummary.technicalNotes?.length ? (
             <div className={styles["qsum-empty"]}>
               <div className={styles["qsum-empty-title"]}>ℹ️ 특이사항 없음</div>
               <div className={styles["qsum-empty-desc"]}>
@@ -571,6 +572,17 @@ export default function ProjectDetail({
             </div>
           ) : (
             <>
+              {/* 기술 쟁점을 맨 위에 둔다 — 근거가 실린 유일한 항목이라 검수 판단에 가장 값지다 */}
+              {p.qnaSummary.technicalNotes && p.qnaSummary.technicalNotes.length > 0 && (
+                <div className={styles["qsum-group"]}>
+                  <div className={styles["qsum-label"]}>🔧 기술 쟁점 · 제안</div>
+                  <ul className={styles["qsum-list"]}>
+                    {p.qnaSummary.technicalNotes.map((t, i) => (
+                      <li key={i}>{t}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {p.qnaSummary.keyQuestions.length > 0 && (
                 <div className={styles["qsum-group"]}>
                   <div className={styles["qsum-label"]}>🔑 핵심 질문</div>

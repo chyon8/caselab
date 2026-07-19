@@ -75,6 +75,17 @@ export interface QnaSummary {
   keyQuestions: string[];
   decisions: string[];
   riskSignals: string[];
+  /**
+   * 기술적 제약·실현가능성 지적·대안 구현 제안. 개발사가 "이건 이래서 이렇게 안 된다"고
+   * 근거를 대며 짚은 내용 — 검수에서 가장 값진 재료다.
+   *
+   * 이 필드가 없던 시절엔 갈 곳이 없어서 keyQuestions로 밀려 들어갔고, 그 과정에서 근거가
+   * 잘려나갔다. 실례(148661): "30~60초 영상은 현재 API로 고정 아바타 모델 외엔 불가, 이어붙이면
+   * 토큰 소모 큼"이라는 지적이 "이어붙이는 형태인지?"라는 맹탕 질문으로 남았다.
+   *
+   * 이 필드가 추가되기 전에 추출된 요약에는 없다(undefined).
+   */
+  technicalNotes?: string[];
   keywords: string[];
   noiseDropped: number;
 }

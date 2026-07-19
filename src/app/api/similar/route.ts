@@ -33,7 +33,7 @@ export async function POST(req: Request): Promise<Response> {
       dataSource.searchSimilarQnaPool(vector, undefined, scope),
     ]);
     // 검수 팁은 풀 내용을 gpt로 묶으므로 풀을 받은 뒤에 실행(순차)
-    const reviewTips = await mergeReviewTips(pool);
+    const reviewTips = await mergeReviewTips(pool, normalized);
     return Response.json({ normalized, results, stats, reviewTips });
   } catch (e) {
     console.error("[/api/similar]", e);
