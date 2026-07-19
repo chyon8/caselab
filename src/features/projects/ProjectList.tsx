@@ -125,6 +125,8 @@ export default function ProjectList({
   // 진행중/에러는 일회성이라 로컬 상태로 둔다.
   const [simLoading, setSimLoading] = useState(false);
   const [simError, setSimError] = useState("");
+  // 검수 팁은 카드보다 5초 넘게 늦게 오므로 별도 진행 상태를 둔다(카드는 먼저 그린다)
+  const [tipsLoading, setTipsLoading] = useState(false);
   const setSearchMode = (v: "keyword" | "posting") => app.setListState({ searchMode: v });
   const setPostingText = (v: string) => app.setListState({ postingText: v });
   const setPostingScope = (v: string) => app.setListState({ postingScope: v });
@@ -137,6 +139,8 @@ export default function ProjectList({
     }
     setSimLoading(true);
     setSimError("");
+    // 이전 검색의 팁이 새 결과 옆에 남아 있으면 안 된다
+    app.setListState({ postingReviewTips: null, postingReviewTipsError: null });
     try {
       const res = await fetch("/api/similar", {
         method: "POST",
@@ -144,19 +148,18 @@ export default function ProjectList({
         body: JSON.stringify({ text: body, scope: postingScope }),
       });
       const data = (await res.json()) as {
+        normalized?: string;
         results?: SimilarProject[];
         stats?: SimilarStats;
-        reviewTips?: ReviewTips;
-        reviewTipsError?: string;
         error?: string;
       };
       if (!res.ok) throw new Error(data.error ?? "검색 실패");
       app.setListState({
         postingResults: data.results ?? [],
         postingStats: data.stats ?? null,
-        postingReviewTips: data.reviewTips ?? null,
-        postingReviewTipsError: data.reviewTipsError ?? null,
       });
+      // 카드를 먼저 그린 뒤 검수 팁을 이어서 받는다(await 하지 않아야 카드가 안 밀린다)
+      if (data.normalized) void loadReviewTips(data.normalized, postingScope);
     } catch (e) {
       setSimError(e instanceof Error ? e.message : "검색 중 문제가 발생했습니다.");
       app.setListState({
@@ -167,6 +170,28 @@ export default function ProjectList({
       });
     } finally {
       setSimLoading(false);
+    }
+  };
+
+  /** 검수 팁을 뒤이어 받아 채운다. 실패해도 이미 그려진 카드·통계는 건드리지 않는다. */
+  const loadReviewTips = async (normalized: string, scope: string) => {
+    setTipsLoading(true);
+    try {
+      const res = await fetch("/api/review-tips", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ normalized, scope }),
+      });
+      const data = (await res.json()) as { reviewTips?: ReviewTips; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "검수 팁 생성 실패");
+      app.setListState({ postingReviewTips: data.reviewTips ?? null, postingReviewTipsError: null });
+    } catch (e) {
+      app.setListState({
+        postingReviewTips: null,
+        postingReviewTipsError: e instanceof Error ? e.message : "검수 팁 생성 중 문제가 발생했습니다.",
+      });
+    } finally {
+      setTipsLoading(false);
     }
   };
 
@@ -710,10 +735,6 @@ export default function ProjectList({
             {!simLoading && postingResults && postingResults.length === 0 && (
               <div className={styles.empty}>비슷한 과거 프로젝트를 찾지 못했어요.</div>
             )}
-            {!simLoading && postingStats && <SimilarStatsPanel stats={postingStats} />}
-            {!simLoading && (postingReviewTips || postingReviewTipsError) && (
-              <ReviewTipsPanel tips={postingReviewTips} error={postingReviewTipsError} />
-            )}
             {!simLoading && postingResults && postingResults.length > 0 && (
               <div className={styles["ai-list"]}>
                 {postingResults.map((s) => (
@@ -744,6 +765,15 @@ export default function ProjectList({
                   </Link>
                 ))}
               </div>
+            )}
+            {/* 집계·팁은 카드 아래에 둔다 — 실제 사례를 먼저 확인한 뒤 보는 순서이기도 하고,
+                검수 팁은 카드보다 5초쯤 늦게 도착해서 위에 있으면 도착하는 순간 카드가 밀린다 */}
+            {!simLoading && postingStats && <SimilarStatsPanel stats={postingStats} />}
+            {!simLoading && tipsLoading && (
+              <div className={styles["tips-loading"]}>⏳ 검수 팁을 정리하는 중…</div>
+            )}
+            {!simLoading && !tipsLoading && (postingReviewTips || postingReviewTipsError) && (
+              <ReviewTipsPanel tips={postingReviewTips} error={postingReviewTipsError} />
             )}
           </div>
         )}

@@ -789,6 +789,13 @@
   color: var(--color-primary);
 }
 
+/* 검수 팁은 카드보다 늦게 도착한다 — 그 자리를 비워두지 않고 진행 중임을 알린다 */
+.tips-loading {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 12px 0;
+}
+
 .posting-file-list {
   list-style: none;
   margin: 8px 0 0;
