@@ -385,13 +385,17 @@ const SIMILAR_MIN_SIM = 0.5;
 const SIMILAR_CUTOFF = `sim >= greatest((SELECT max(sim) FROM raw) - ${SIMILAR_REL_MARGIN}, ${SIMILAR_MIN_SIM})`;
 
 /**
- * 카드(사람이 직접 보고 판단)는 통계·검수팁 풀보다 마진을 넉넉히 준다 — 실측상 4~8위도
- * 1위와 큰 차이 없이 관련 있는 경우가 많은데, 통계용 마진(0.06)이 그걸 잘라내고 있었다.
- * 카드는 화면에 유사도가 같이 찍혀서 사람이 보고 걸러낼 수 있어 무관한 게 섞이는 비용이 낮다
- * (반대로 통계·검수팁은 자동 집계라 무관한 게 섞이면 일반론으로 수렴 — 그쪽은 SIMILAR_CUTOFF 유지).
+ * 카드(사람이 직접 보고 판단)는 상대 컷을 쓰지 않고 바닥값만 적용한다.
+ *
+ * ⚠️ 상대 컷(1위 대비)을 카드에 쓰면 안 된다. 1위가 거의 중복인 사례일 때 창이 통째로 끌려올라간다(실측):
+ *   아티스트 플랫폼 공고는 1위가 0.875(거의 같은 프로젝트)인데 2~12위는 0.725~0.703에 몰려 있어,
+ *   마진 0.15로도 컷이 0.725까지 올라가 관련 있는 3위(0.715)부터 전부 잘렸다. 마진을 키워도
+ *   1위가 더 튀는 문서가 오면 같은 일이 반복된다 — 이상치에 기준을 매다는 것 자체가 문제다.
+ * 카드는 LIMIT 8로 이미 개수가 묶여 있고 화면에 유사도가 같이 찍혀 사람이 걸러낼 수 있으므로,
+ * 무관한 게 섞이는 비용보다 관련 있는 게 안 보이는 비용이 크다.
+ * (반대로 통계·검수팁은 자동 집계라 무관한 게 섞이면 일반론으로 수렴 — 그쪽은 SIMILAR_CUTOFF 유지.)
  */
-const CARD_REL_MARGIN = 0.15;
-const CARD_CUTOFF = `sim >= greatest((SELECT max(sim) FROM raw) - ${CARD_REL_MARGIN}, ${SIMILAR_MIN_SIM})`;
+const CARD_CUTOFF = `sim >= ${SIMILAR_MIN_SIM}`;
 
 /** 기준 프로젝트에 임베딩이 없을 때(통계 풀을 만들 수 없음) */
 const EMPTY_SIMILAR_STATS: SimilarStats = {
