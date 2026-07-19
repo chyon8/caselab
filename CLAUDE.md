@@ -78,18 +78,21 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ### 5-1. 문서 참조 (Source of Truth)
 
-제품 방향과 도메인 지식은 아래 문서가 기준이다. 서로 충돌하면 최신 문서가 우선.
+**새 세션은 [`HANDOFF.md`](./HANDOFF.md)부터 읽는다.** 그 외 제품 방향과 도메인 지식은 아래 문서가 기준. 서로 충돌하면 최신 문서가 우선.
 
 | 문서 | 내용 |
 |---|---|
+| [`HANDOFF.md`](./HANDOFF.md) | **세션 핸드오프 — 현재 완료·가동 중, 다음 착수, 블로커.** 세션 시작점 |
+| [`NEXT_STEPS.md`](./NEXT_STEPS.md) | 확정된 결정·미해결 진단·미착수 백로그 (HANDOFF.md의 상세 레퍼런스) |
 | [`design.md`](./design.md) | 디자인 시스템 (토큰, 타이포, 컴포넌트 스펙) — **유일한 디자인 기준** |
 | [`SCORING_SPEC.md`](./SCORING_SPEC.md) | Completion 점수 산정 기준 (12개 섹션, 가중치, 공고 매핑) |
-| [`DATA_SCHEMA.md`](./DATA_SCHEMA.md) | 본진(위시켓) DB 스키마 & 연동 레퍼런스 |
-| [`ROADMAP.md`](./ROADMAP.md) | 비전, 완료 사항, 향후 개발 방향 |
-| [`CASELAB_DECISIONS.md`](./CASELAB_DECISIONS.md) | 확정된 의사결정 기록 |
+| [`DATA_SCHEMA.md`](./DATA_SCHEMA.md) / [`DATA_INTEGRATION.md`](./DATA_INTEGRATION.md) | 본진(위시켓) DB 스키마 & 연동 레퍼런스 |
 | `CaseLab_v2.0.html` | UI 프로토타입 — 디자인/레이아웃 참고용 (하드코딩, 코드는 재사용하지 않음) |
 
 > 구버전 PRD의 Project Model 스키마, 모드 A/B, Owner/Member/Viewer 역할 체계는 **폐기됨**. 참조하지 않는다.
+> [`ROADMAP.md`](./ROADMAP.md)·[`CASELAB_DECISIONS.md`](./CASELAB_DECISIONS.md)는 2026-07-10 이후 갱신 안 됨(구현 전 초기 기획 문서) — **HANDOFF.md/NEXT_STEPS.md가 최신 상태를 대체**. 비전 서술 등 참고용으로만.
+
+**세션 정리·인수인계는 HANDOFF.md/NEXT_STEPS.md에만 기록한다.** Claude Code의 로컬 메모리(`~/.claude` 등 외부 저장소)에 프로젝트 진행상황·다음 단계를 적지 않는다 — 사용자가 여러 머신(집/회사)에서 작업해 로컬 메모리는 다음 세션에 안 보인다. "정리해놔"는 곧 이 두 파일을 갱신하라는 뜻: 완료된 건 위로 옮기고, 낡은 항목은 지우고, 새 결정이 기존 계획과 안 맞으면 계획 쪽을 고친다.
 
 ### 5-2. 기술 스택
 
