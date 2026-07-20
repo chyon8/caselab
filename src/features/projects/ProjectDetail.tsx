@@ -627,6 +627,22 @@ export default function ProjectDetail({
         </div>
       )}
 
+      {/* 원본 Q&A는 있는데 요약이 없으면 = 재추출 크론이 아직 이 프로젝트를 안 돈 상태 */}
+      {!p.qnaSummary && p.qna.length > 0 && (
+        <div className={styles["qsum"]}>
+          <div className={styles["section-head"]}>
+            <span className={styles["section-title"]}>개발사 Q&A 요약</span>
+          </div>
+          <div className={styles["qsum-empty"]}>
+            <div className={styles["qsum-empty-title"]}>⏳ AI 요약 동기화 대기 중</div>
+            <div className={styles["qsum-empty-desc"]}>
+              원본 Q&A {p.qna.length}건은 아래에서 볼 수 있습니다. AI 정리 요약은 아직 생성되지
+              않았습니다.
+            </div>
+          </div>
+        </div>
+      )}
+
       {p.qna.length > 0 && (
         <div className={styles["posting-accordion"]}>
           <button
