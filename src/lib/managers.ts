@@ -28,6 +28,23 @@ export function managerName(username: string | null): string {
   return MANAGER_NAMES[username] ?? username;
 }
 
+/**
+ * 본진 계정명 → Slack 멤버 ID. Slack 프로필 "더보기 → 멤버 ID 복사"로 확인.
+ * 매핑 없는 매니저는 알림에 핑 없이 실명만 표시된다(알림 자체는 계속 감).
+ */
+export const MANAGER_SLACK_IDS: Record<string, string> = {
+  manager_sangmin: "U07V76R1PLN",
+  manager_semin: "U0B3X3HHB1C",
+  manager_suyong: "U1FCQ09JQ",
+};
+
+/** Slack 메시지용 태그 — 매핑 있으면 <@ID>(멘션), 없으면 실명(멘션 없이 표시만) */
+export function managerSlackTag(username: string | null): string {
+  if (!username) return "";
+  const slackId = MANAGER_SLACK_IDS[username];
+  return slackId ? `<@${slackId}>` : managerName(username);
+}
+
 /** "그 외"는 주요 매니저 3인이 아닌 모든 담당자를 뜻한다 */
 export function matchesManager(manager: string, filter: string): boolean {
   if (filter === "전체") return true;

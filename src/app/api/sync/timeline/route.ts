@@ -4,7 +4,6 @@ import { formatCursor, maxByCursor } from "@/lib/sync/cursor";
 import { readCursor, saveCursor } from "@/lib/sync/sync-state";
 import { scrubPii } from "@/lib/sync/pii";
 import { valuesClause } from "@/lib/sync/sql";
-import { notifySlack, projectLink } from "@/lib/notify-slack";
 
 /** 본진 원본 이벤트 (노트·미팅·계약·마일스톤·Q&A) */
 interface RawTimelineEvent {
@@ -72,14 +71,13 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ upserted: 0, skipped: 0, cursor: null });
   }
 
-  // FK — 아직 없는 프로젝트의 이벤트는 넣지 않는다. title은 미팅 알림 메시지용으로 같이 가져온다.
+  // FK — 아직 없는 프로젝트의 이벤트는 넣지 않는다
   const ids = [...new Set(rows.map((r) => String(r.project_id)))];
-  const known = await query<{ id: string; title: string }>(
-    "SELECT id, title FROM projects WHERE id = ANY($1::bigint[])",
+  const known = await query<{ id: string }>(
+    "SELECT id FROM projects WHERE id = ANY($1::bigint[])",
     [ids],
   );
   const knownIds = new Set(known.map((k) => String(k.id)));
-  const titleById = new Map(known.map((k) => [String(k.id), k.title]));
 
   const insertable = rows.filter((r) => knownIds.has(String(r.project_id)));
   const skipped = rows.length - insertable.length;
@@ -108,22 +106,6 @@ export async function POST(req: Request): Promise<Response> {
          meta     = EXCLUDED.meta`,
       params,
     );
-
-    // 사전 미팅 알림 (취소 건 제외) — meeting_incremental.sql이 body에 방식·파트너·미팅일을 이미 담아온다
-    if (source === "meeting") {
-      await Promise.all(
-        insertable
-          .filter((r) => r.meta?.is_cancelled !== true)
-          .map((r) => {
-            const title = titleById.get(String(r.project_id));
-            if (!title) return Promise.resolve();
-            const body = scrubPii(r.body ?? null);
-            return notifySlack(
-              `📅 사전 미팅 — ${title}${body ? ` · ${body}` : ""}\n${projectLink(String(r.project_id))}`,
-            );
-          }),
-      );
-    }
   }
 
   // skip이 있으면 커서를 세우지 않는다 — 다음 주기에 같은 구간을 다시 받아 재시도해야 하므로

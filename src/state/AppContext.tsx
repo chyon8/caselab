@@ -64,7 +64,7 @@ export function AppProvider({
   children: React.ReactNode;
 }) {
   const [darkMode, setDarkMode] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [starred, setStarred] = useState<Record<string, boolean>>({ p1: true });
   const [notifRead, setNotifRead] = useState<Record<string, boolean>>({});
   const [reviews, setReviews] = useState(initialReviews);

@@ -5,7 +5,7 @@ import { readCursor, SAVE_CURSOR_SQL } from "@/lib/sync/sync-state";
 import { mapProject, type MappedProject, type RawProject } from "@/lib/sync/mapping";
 import { valuesClause } from "@/lib/sync/sql";
 import { notifySlack, projectLink } from "@/lib/notify-slack";
-import { managerName } from "@/lib/managers";
+import { managerSlackTag } from "@/lib/managers";
 
 /** projects 테이블 적재 컬럼 (MappedProject의 키와 1:1) */
 const COLS = [
@@ -259,7 +259,7 @@ export async function POST(req: Request): Promise<Response> {
   await Promise.all(
     contractNotices.map((n) =>
       notifySlack(
-        `✅ 계약 체결 — ${n.title}${n.manager ? ` (담당 ${managerName(n.manager)})` : ""}\n${projectLink(n.id)}`,
+        `✅ 계약 체결 — ${n.title}${n.manager ? ` (담당 ${managerSlackTag(n.manager)})` : ""}\n${projectLink(n.id)}`,
       ),
     ),
   );
