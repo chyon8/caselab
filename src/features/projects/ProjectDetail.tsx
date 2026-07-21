@@ -637,7 +637,7 @@ export default function ProjectDetail({
             <div className={styles["qsum-empty-title"]}>⏳ AI 요약 동기화 대기 중</div>
             <div className={styles["qsum-empty-desc"]}>
               원본 Q&A {p.qna.length}건은 아래에서 볼 수 있습니다. AI 정리 요약은 아직 생성되지
-              않았습니다.
+              않았습니다 — 매일 09:30 · 13:00 · 17:00에 자동 생성되니 다음 갱신 때 반영됩니다.
             </div>
           </div>
         </div>

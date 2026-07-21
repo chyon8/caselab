@@ -4,6 +4,8 @@ import { formatCursor, maxByCursor } from "@/lib/sync/cursor";
 import { readCursor, SAVE_CURSOR_SQL } from "@/lib/sync/sync-state";
 import { mapProject, type MappedProject, type RawProject } from "@/lib/sync/mapping";
 import { valuesClause } from "@/lib/sync/sql";
+import { notifySlack, projectLink } from "@/lib/notify-slack";
+import { managerName } from "@/lib/managers";
 
 /** projects 테이블 적재 컬럼 (MappedProject의 키와 1:1) */
 const COLS = [
@@ -185,6 +187,8 @@ export async function POST(req: Request): Promise<Response> {
   // 기존 행이 이미 새 값이라 diff가 잡히지 않아 변경 이력이 영구 유실된다.
   const stmts: { text: string; params?: unknown[] }[] = [];
   let events = 0;
+  // 계약 체결(상태 → '계약') 전이 — 트랜잭션 커밋 후에만 Slack 알림을 보낸다 (§ 계약 체결 노티)
+  const contractNotices: { id: string; title: string; manager: string | null }[] = [];
 
   if (mappedRows.length > 0) {
     // 덮어쓰기 전 기존 값 확보 (읽기 전용 — 트랜잭션 밖)
@@ -231,6 +235,9 @@ export async function POST(req: Request): Promise<Response> {
           c.field === "status" ? `${c.before} → ${c.after}` : null,
           JSON.stringify({ field: c.field, before: c.before, after: c.after }),
         ]);
+        if (c.field === "status" && c.after === "계약") {
+          contractNotices.push({ id: m.id, title: m.title, manager: m.inspection_manager });
+        }
       }
     }
 
@@ -247,6 +254,15 @@ export async function POST(req: Request): Promise<Response> {
 
   stmts.push({ text: SAVE_CURSOR_SQL, params: ["projects", cursor] });
   await transaction(stmts);
+
+  // 커밋 성공 후에만 알림 — 실패한 동기화를 계약 체결로 잘못 알리지 않는다
+  await Promise.all(
+    contractNotices.map((n) =>
+      notifySlack(
+        `✅ 계약 체결 — ${n.title}${n.manager ? ` (담당 ${managerName(n.manager)})` : ""}\n${projectLink(n.id)}`,
+      ),
+    ),
+  );
 
   return Response.json({ upserted: mappedRows.length, skipped, events, cursor });
 }
