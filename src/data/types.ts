@@ -263,6 +263,8 @@ export interface ReviewTip {
 export interface ReviewTips {
   /** 팁 산출에 실제로 쓴 사례 수 (qna_summary가 있는 것만) */
   sampleSize: number;
+  /** 기술적 제약·실현가능성·대안 구현 — 근거가 실린 재료라 가장 값지다 (화면 최상단) */
+  technicalNotes: ReviewTip[];
   risks: ReviewTip[];
   questions: ReviewTip[];
   keywords: { term: string; count: number }[];

@@ -375,14 +375,25 @@ const SCOPE_BOOST = 0.02;
  * ⚠️ 절대 임계값을 쓰면 안 된다. 유사도 스케일이 쿼리마다 달라서다(실측):
  *   "앱 유지보수" 쿼리는 1위 0.687 / 8위 0.634인데, "여행 홈페이지" 쿼리는 30위가 0.660이다.
  *   0.65 같은 고정 컷은 앞 검색을 통째로 날리면서 뒤 검색은 하나도 못 거른다.
- * 그래서 1위 대비 상대 거리로 자른다. 결과가 적으면 적게 보여주는 게 맞다 —
+ * 그래서 상대 거리로 자른다. 결과가 적으면 적게 보여주는 게 맞다 —
  * 억지로 30건을 채우면 무관한 사례가 통계·검수 팁의 재료로 섞여 일반론을 만든다.
+ *
+ * ⚠️ 기준은 1위가 아니라 2위다(2026-07-21 수정). 1위가 이상치(거의 중복 사례)면 마진을
+ *   1위 기준으로 재는 순간 창이 통째로 끌려올라가 poolSize가 5 미만까지 줄어 통계·검수팁
+ *   패널이 통째로 안 뜨는 문제가 실측됨(카드 컷을 바닥값만으로 바꾼 것과 같은 결함,
+ *   NEXT_STEPS "재개 조건" 참조). 2위 기준으로 재면 1위 혼자 튀어도 나머지 창은 안정적이다.
  */
 const SIMILAR_REL_MARGIN = 0.06;
 /** 상대 컷과 별개인 바닥값 — 코퍼스 전체 중앙값이 0.477이라 이 아래는 사실상 무관하다 */
 const SIMILAR_MIN_SIM = 0.5;
-/** 유사도 하한을 적용하는 SQL 조건 — raw CTE(유사도순 정렬·MATERIALIZED)를 받아 쓴다. 통계·검수팁 풀 전용. */
-const SIMILAR_CUTOFF = `sim >= greatest((SELECT max(sim) FROM raw) - ${SIMILAR_REL_MARGIN}, ${SIMILAR_MIN_SIM})`;
+/**
+ * 유사도 하한을 적용하는 SQL 조건 — raw CTE(유사도순 정렬·MATERIALIZED)를 받아 쓴다. 통계·검수팁 풀 전용.
+ * 2위 sim이 없으면(풀이 1건) max(sim)으로 대체 — 1건뿐이면 이상치 문제 자체가 없다.
+ */
+const SIMILAR_CUTOFF = `sim >= greatest(
+    COALESCE((SELECT sim FROM raw ORDER BY sim DESC OFFSET 1 LIMIT 1), (SELECT max(sim) FROM raw)) - ${SIMILAR_REL_MARGIN},
+    ${SIMILAR_MIN_SIM}
+  )`;
 
 /**
  * 카드(사람이 직접 보고 판단)는 상대 컷을 쓰지 않고 바닥값만 적용한다.

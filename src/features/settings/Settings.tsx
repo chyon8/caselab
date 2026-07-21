@@ -1,7 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useApp } from "@/state/AppContext";
 import styles from "./Settings.module.css";
+
+interface RefreshResult {
+  qna: { targets: number; done: number; fail: number };
+  embed: { done: number; fail: number };
+}
 
 const NOTIFICATION_TOGGLES = [
   {
@@ -46,10 +52,58 @@ function Switch({
 
 export default function Settings() {
   const app = useApp();
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshResult, setRefreshResult] = useState<RefreshResult | null>(null);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+
+  const runRefreshNow = async () => {
+    setRefreshing(true);
+    setRefreshError(null);
+    try {
+      const res = await fetch("/api/refresh-now", { method: "POST" });
+      if (!res.ok) throw new Error(`요청 실패 (${res.status})`);
+      setRefreshResult((await res.json()) as RefreshResult);
+    } catch (e) {
+      setRefreshError(e instanceof Error ? e.message : "갱신 실패");
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>설정</h1>
+
+      <div className={styles["section-head"]}>
+        <span className={styles["section-title"]}>데이터 갱신</span>
+      </div>
+      <div className={styles["slack-card"]}>
+        <div className={styles["slack-row"]}>
+          <div className={styles["slack-id"]}>
+            <div>
+              <div className={styles["slack-name"]}>Q&A 요약 · 공고문 임베딩</div>
+              <div className={styles["slack-status"]}>
+                평소엔 하루 3회(09:30·13:00·17:00) 자동 갱신 — 신규 유입분만
+              </div>
+            </div>
+          </div>
+          <button
+            className={styles["refresh-btn"]}
+            onClick={runRefreshNow}
+            disabled={refreshing}
+          >
+            {refreshing ? "갱신 중…" : "지금 갱신"}
+          </button>
+        </div>
+        {refreshError && <div className={styles["refresh-error"]}>⚠️ {refreshError}</div>}
+        {refreshResult && !refreshError && (
+          <div className={styles["refresh-result"]}>
+            Q&A 요약 {refreshResult.qna.done}건 · 임베딩 {refreshResult.embed.done}건 갱신됨
+            {refreshResult.qna.fail + refreshResult.embed.fail > 0 &&
+              ` (실패 ${refreshResult.qna.fail + refreshResult.embed.fail}건)`}
+          </div>
+        )}
+      </div>
 
       <div className={styles["section-head"]}>
         <span className={styles["section-title"]}>슬랙 알림 연동</span>

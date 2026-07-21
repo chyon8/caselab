@@ -52,7 +52,10 @@ export default function ReviewTipsPanel({
   }
 
   const isEmpty =
-    t.risks.length === 0 && t.questions.length === 0 && t.keywords.length === 0;
+    t.technicalNotes.length === 0 &&
+    t.risks.length === 0 &&
+    t.questions.length === 0 &&
+    t.keywords.length === 0;
 
   return (
     <div className={styles.panel}>
@@ -72,6 +75,21 @@ export default function ReviewTipsPanel({
         </div>
       ) : (
         <>
+          {/* 근거가 실린 유일한 항목이라 검수 판단에 가장 값지다 — 맨 위에 둔다 */}
+          {t.technicalNotes.length > 0 && (
+            <div className={styles.group}>
+              <div className={styles.label}>🔧 기술 쟁점 · 제안</div>
+              <ul className={styles.list}>
+                {t.technicalNotes.map((n, i) => (
+                  <li key={i}>
+                    {n.text}
+                    {n.freq != null && <span className={styles.freq}>{n.freq}건</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {t.risks.length > 0 && (
             <div className={styles.group}>
               <div className={styles.label}>⚠️ 확인할 리스크</div>
