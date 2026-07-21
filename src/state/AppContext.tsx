@@ -63,7 +63,11 @@ export function AppProvider({
   initialReviews: Record<string, CaseReview>;
   children: React.ReactNode;
 }) {
-  const [darkMode, setDarkMode] = useState(false);
+  // 초기값은 OS 다크모드 설정을 따른다. SSR(window 없음)에선 라이트로 렌더 후
+  // 클라이언트 하이드레이션 시 시스템 설정으로 즉시 보정된다. 이후엔 수동 토글이 우선한다.
+  const [darkMode, setDarkMode] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches,
+  );
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [starred, setStarred] = useState<Record<string, boolean>>({ p1: true });
   const [notifRead, setNotifRead] = useState<Record<string, boolean>>({});
