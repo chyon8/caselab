@@ -37,17 +37,25 @@ export async function GET(req: Request): Promise<Response> {
 
   const deadline = Date.now() + BUDGET_MS;
 
-  // 1) Q&A 요약 — scripts/extract-qna.mjs와 같은 대상 조건
+  // 1) Q&A 요약 대상:
+  //    ① 요약 없음(신규) ② technicalNotes 없는 구버전 ③ 요약 후 댓글 수가 바뀜(개수 변화 재분석).
+  //    ③은 sourceCount가 있는 요약만 비교 → sourceCount 없는 기존 요약을 대량 재처리하지 않는다.
   const qnaTargets = await query<QnaTarget>(
-    `SELECT t.project_id, p.title,
-            json_agg(json_build_object('title', left(t.title,700), 'body', left(t.body,700), 'by', t.meta->>'by')) AS threads
-       FROM timeline_events t
-       JOIN projects p ON p.id = t.project_id
-       LEFT JOIN ai_insights ai ON ai.project_id = t.project_id
-      WHERE t.source = 'qna' AND t.title IS NOT NULL
-        AND p.deleted_at IS NULL AND p.hidden = false
-        AND (ai.qna_summary IS NULL OR ai.qna_summary->'technicalNotes' IS NULL)
-      GROUP BY t.project_id, p.title
+    `SELECT g.project_id, g.title, g.threads
+       FROM (
+         SELECT t.project_id, p.title,
+                json_agg(json_build_object('title', left(t.title,700), 'body', left(t.body,700), 'by', t.meta->>'by')) AS threads,
+                count(*) AS cnt
+           FROM timeline_events t
+           JOIN projects p ON p.id = t.project_id
+          WHERE t.source = 'qna' AND t.title IS NOT NULL
+            AND p.deleted_at IS NULL AND p.hidden = false
+          GROUP BY t.project_id, p.title
+       ) g
+       LEFT JOIN ai_insights ai ON ai.project_id = g.project_id
+      WHERE ai.qna_summary IS NULL
+         OR ai.qna_summary->'technicalNotes' IS NULL
+         OR (ai.qna_summary ? 'sourceCount' AND g.cnt <> (ai.qna_summary->>'sourceCount')::int)
       LIMIT $1`,
     [QNA_LIMIT],
   );

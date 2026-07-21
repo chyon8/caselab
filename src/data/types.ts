@@ -88,6 +88,8 @@ export interface QnaSummary {
   technicalNotes?: string[];
   keywords: string[];
   noiseDropped: number;
+  /** 요약 생성 시점의 Q&A 스레드 수. 이후 이 수가 늘면 cron이 재분석한다(개수 변화 트리거). 구버전 요약엔 없다. */
+  sourceCount?: number;
 }
 
 export interface TimelineEvent {

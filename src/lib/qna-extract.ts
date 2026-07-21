@@ -87,5 +87,6 @@ export async function extractQnaSummary(title: string, threads: QnaThread[]): Pr
     technicalNotes: o.technical_notes ?? [],
     keywords: o.keywords ?? [],
     noiseDropped: o.noise_dropped ?? 0,
+    sourceCount: threads.length,
   };
 }

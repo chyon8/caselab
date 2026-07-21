@@ -87,9 +87,15 @@ SELECT
     WHERE a.project_id = pp.id AND a.hide = 0 AND a.date_deleted IS NULL
     ORDER BY a.id DESC LIMIT 1) AS agreement_id,
 
-  (SELECT a.agreement_price FROM agreement_agreement a
+  -- 계약금액 = 유효 특약(sub_contract) 합. 특약제 계약은 헤더 a.agreement_price 가 흔히 0이라
+  --   그대로 쓰면 실제 금액이 안 잡힌다(=계약금액 0원 정체의 원인). 돈은 특약 행에 있다.
+  --   has_valid_agreement 와 같은 조건(is_incomplete_addon=0 AND is_cancel_addon=0)으로 합산 →
+  --   증액(추가 특약) 자동 반영. 별칭은 agreement_price 유지(mapping 이 contract_amount 로 읽음).
+  (SELECT COALESCE(SUM(sc.total_price), 0)
+     FROM agreement_agreement a
+     JOIN sub_contract_subcontract sc ON sc.agreement_id = a.id
     WHERE a.project_id = pp.id AND a.hide = 0 AND a.date_deleted IS NULL
-    ORDER BY a.id DESC LIMIT 1) AS agreement_price,
+      AND sc.is_incomplete_addon = 0 AND sc.is_cancel_addon = 0) AS agreement_price,
 
   (SELECT DATE_FORMAT(a.date_start_progress, '%Y-%m-%dT%H:%i:%sZ') FROM agreement_agreement a
     WHERE a.project_id = pp.id AND a.hide = 0 AND a.date_deleted IS NULL
