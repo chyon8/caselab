@@ -1,0 +1,439 @@
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-xl) var(--space-lg) var(--space-xxl);
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin-bottom: var(--space-xxs);
+}
+.subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: var(--space-lg);
+}
+
+.inputWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xl);
+}
+.textarea {
+  width: 100%;
+  min-height: 160px;
+  resize: vertical;
+  padding: var(--space-md);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-rule);
+  border-radius: 12px;
+}
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-primary-focus);
+}
+.runRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.runBtn {
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-primary);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.runBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.topError {
+  font-size: 13px;
+  color: var(--status-cancel-fg);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+}
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  border: 1px solid var(--color-hairline);
+  border-radius: 14px;
+  background: var(--color-surface-pearl);
+  padding: var(--space-lg);
+}
+.panelWide {
+  grid-column: 1 / -1;
+}
+.panelHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+.panelTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+.panelHint {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.muted {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.err {
+  font-size: 13px;
+  color: var(--status-cancel-fg);
+}
+
+/* ── 스코어링 ── */
+.gateRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+.total {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--color-ink);
+  line-height: 1;
+}
+.totalUnit {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.gateBadge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.gatePass {
+  background: var(--status-success-bg);
+  color: var(--status-success-fg);
+}
+.gateBlock {
+  background: var(--status-progress-bg);
+  color: var(--status-progress-fg);
+}
+.blocking {
+  font-size: 12px;
+  color: var(--status-progress-fg);
+  margin-bottom: var(--space-md);
+}
+
+/* 고객에게 물어볼 질문 — 범위·견적을 위한 핵심 산출물, 상단에 크게 */
+.questionsPanel {
+  margin-bottom: var(--space-lg);
+  background: var(--color-canvas);
+}
+.questionList {
+  margin: 0;
+  padding-left: 18px;
+}
+.questionList li {
+  font-size: 13.5px;
+  color: var(--color-ink);
+  line-height: 1.65;
+  margin-bottom: 6px;
+}
+.qTag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 6px;
+  margin-right: 4px;
+}
+.qScope {
+  color: var(--status-recruit-fg);
+  background: var(--status-recruit-bg);
+}
+.qQuote {
+  color: var(--status-progress-fg);
+  background: var(--status-progress-bg);
+}
+.qBoth {
+  color: var(--status-contract-fg);
+  background: var(--status-contract-bg);
+}
+
+.section {
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--color-divider-soft);
+}
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: 4px;
+}
+.sectionLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.reqDot {
+  font-size: 11px;
+  color: var(--color-primary);
+  font-weight: 700;
+}
+.confBadge {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.bar {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--color-divider-soft);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.barFill {
+  height: 100%;
+  border-radius: 3px;
+}
+.sectionSummary {
+  font-size: 12.5px;
+  color: var(--text-body-soft);
+  line-height: 1.5;
+}
+.notes {
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--status-recruit-bg);
+  border-radius: 10px;
+}
+.notesTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--status-recruit-fg);
+  margin-bottom: 4px;
+}
+.notes ul {
+  margin: 0;
+  padding-left: 16px;
+}
+.notes li {
+  font-size: 12.5px;
+  color: var(--color-ink);
+  line-height: 1.5;
+}
+
+/* ── 견적 ── */
+.estType {
+  font-size: 13px;
+  color: var(--text-body-soft);
+  margin-bottom: var(--space-md);
+}
+.estTypeReason {
+  color: var(--text-muted);
+}
+
+.optionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+@media (max-width: 700px) {
+  .optionGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.optionCard {
+  border: 1px solid var(--color-hairline);
+  border-radius: 12px;
+  padding: var(--space-md);
+  background: var(--color-canvas);
+}
+.optionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.optionName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+.optionPeriod {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+.optionApproach {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: var(--status-recruit-bg);
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-bottom: var(--space-sm);
+}
+
+/* 포함 기능 — ✓ 마커 */
+.featIncluded {
+  list-style: none;
+  margin: 0 0 var(--space-xs);
+  padding: 0;
+}
+.featIncluded li {
+  position: relative;
+  padding-left: 18px;
+  font-size: 12.5px;
+  color: var(--text-body-soft);
+  line-height: 1.55;
+}
+.featIncluded li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--status-success-fg);
+  font-weight: 700;
+}
+/* 제외/대체 — ✗ 마커, 흐리게 */
+.featExcluded {
+  list-style: none;
+  margin: 0 0 var(--space-sm);
+  padding: 0;
+}
+.featExcluded li {
+  position: relative;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--text-faint);
+  line-height: 1.5;
+}
+.featExcluded li::before {
+  content: "✗";
+  position: absolute;
+  left: 0;
+  color: var(--status-cancel-fg);
+  font-weight: 700;
+}
+
+.costTable {
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-divider-soft);
+}
+.costRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-body-soft);
+  padding: 2px 0;
+}
+.costTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: var(--space-xs);
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--color-hairline);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+.costTotalAmount {
+  font-size: 15px;
+  color: var(--color-primary);
+}
+
+/* ── 유사사례 ── */
+.simItem {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0;
+  border-top: 1px solid var(--color-divider-soft);
+  text-decoration: none;
+}
+.simItem:hover .simName {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+.simName {
+  font-size: 13px;
+  color: var(--color-ink);
+  flex: 1;
+}
+.simMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.simStatus {
+  color: var(--text-faint);
+}
+.simSim {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+/* ── 검수팁 (유사사례 밑) ── */
+.tips {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-hairline);
+}
+.tipsHead {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin-bottom: var(--space-sm);
+}
+.tipGroup {
+  margin-bottom: var(--space-sm);
+}
+.tipGroupTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.tipList {
+  margin: 0;
+  padding-left: 16px;
+}
+.tipList li {
+  font-size: 12.5px;
+  color: var(--text-body-soft);
+  line-height: 1.55;
+}
+.tipFreq {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-weight: 600;
+}
