@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "CaseLab",
+  title: { template: "%s · CaseLab", default: "CaseLab" },
   description: "위시켓 프로젝트 인텔리전스 대시보드",
 };
 
