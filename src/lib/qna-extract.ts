@@ -68,6 +68,7 @@ export async function extractQnaSummary(title: string, threads: QnaThread[]): Pr
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
     body: JSON.stringify({
       model: QNA_MODEL,
+      store: true,
       temperature: 0.2,
       response_format: { type: "json_object" },
       messages: [

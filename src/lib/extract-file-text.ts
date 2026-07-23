@@ -98,6 +98,7 @@ async function visionTranscribe(base64Png: string): Promise<string> {
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
     body: JSON.stringify({
       model: "gpt-4o-mini",
+      store: true,
       temperature: 0,
       messages: [
         {

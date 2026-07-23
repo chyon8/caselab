@@ -153,6 +153,7 @@ export async function mergeReviewTips(pool: PoolQna[], posting: string): Promise
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
     body: JSON.stringify({
       model: "gpt-4o-mini",
+      store: true,
       temperature: 0.2,
       response_format: { type: "json_object" },
       messages: [

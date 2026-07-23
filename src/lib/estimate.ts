@@ -134,6 +134,7 @@ export async function estimateInput(text: string): Promise<EstimateResult> {
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
     body: JSON.stringify({
       model: MODEL,
+      store: true,
       temperature: 0.2,
       response_format: { type: "json_object" },
       messages: [

@@ -50,6 +50,7 @@ export async function generateQuestions(text: string): Promise<AskQuestion[]> {
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
     body: JSON.stringify({
       model: MODEL,
+      store: true,
       temperature: 0.3,
       response_format: { type: "json_object" },
       messages: [
