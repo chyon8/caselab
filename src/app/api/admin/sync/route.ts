@@ -22,7 +22,8 @@ export async function GET(): Promise<Response> {
  *
  * 필요한 환경변수:
  *   N8N_SYNC_WEBHOOK_URL — n8n Webhook 노드의 Production URL (…/webhook/… , test 아님)
- *   CASELAB_SYNC_KEY     — n8n Webhook 에 Header Auth 를 걸었다면 그 값 (안 걸었어도 무해)
+ *   N8N_SYNC_WEBHOOK_KEY — (선택) n8n Webhook 에 Header Auth 를 걸었을 때만. X-CaseLab-Key 헤더로 보낸다.
+ *                          Auth None 이면 비워둔다 — 불필요한 헤더가 앞단 프록시에 막혀 403 날 수 있다.
  */
 export async function POST(): Promise<Response> {
   const url = process.env.N8N_SYNC_WEBHOOK_URL;
@@ -33,7 +34,8 @@ export async function POST(): Promise<Response> {
     );
   }
 
-  const key = process.env.CASELAB_SYNC_KEY;
+  // 웹훅 방향(CaseLab → n8n) 인증은 적재 방향(CASELAB_SYNC_KEY)과 별개다. 기본은 헤더 없이 보낸다.
+  const key = process.env.N8N_SYNC_WEBHOOK_KEY;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 10_000);
 

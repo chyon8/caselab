@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./SyncButton.module.css";
 
-type State = { kind: "idle" | "loading" | "done" | "err"; msg?: string };
+type State = { kind: "idle" | "loading" | "err"; msg?: string };
 
 /** last_run_at(ISO) → "7.24 10:01" (KST). 없으면 null */
 function formatKst(iso: string | null): string | null {
@@ -19,15 +19,10 @@ function formatKst(iso: string | null): string | null {
 
 const ms = (iso: string | null) => (iso ? new Date(iso).getTime() : 0);
 const sleep = (n: number) => new Promise((r) => setTimeout(r, n));
-
-/** 완료 판정 폴링 — last_run_at 이 클릭 시점보다 최신이 될 때까지 (최대 3분) */
 const POLL_INTERVAL = 3000;
-const POLL_MAX = 60; // 3s × 60 = 3분
+const POLL_MAX = 20; // 3s × 20 = 최대 60초까지 완료 대기
 
-/**
- * 홈 상단 수동 동기화 버튼. n8n 웹훅을 트리거만 하고(실제 싱크는 백그라운드), 이후
- * last_run_at 이 전진하는지 폴링해 실제로 완료 보고가 들어오면 "완료됨"으로 바꾼다.
- */
+/** 홈 상단 수동 동기화 버튼. n8n 웹훅 트리거 → 완료(last_run_at 전진)되면 마지막 동기화 시각 갱신. */
 export default function SyncButton() {
   const [state, setState] = useState<State>({ kind: "idle" });
   const [lastRunAt, setLastRunAt] = useState<string | null>(null);
@@ -47,7 +42,7 @@ export default function SyncButton() {
       if (alive.current) setLastRunAt(data.lastRunAt ?? null);
       return data.lastRunAt ?? null;
     } catch {
-      return null; // 표시용이라 실패해도 무시
+      return null;
     }
   }
 
@@ -57,33 +52,28 @@ export default function SyncButton() {
   }, []);
 
   async function run() {
+    if (state.kind === "loading") return;
     const before = ms(lastRunAt);
     setState({ kind: "loading" });
-    let res: Response;
     try {
-      res = await fetch("/api/admin/sync", { method: "POST" });
+      const res = await fetch("/api/admin/sync", { method: "POST" });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setState({ kind: "err", msg: data.error ?? "실패" });
+        return;
+      }
     } catch {
       setState({ kind: "err", msg: "요청 실패" });
       return;
     }
-    const data = (await res.json()) as { ok?: boolean; error?: string };
-    if (!res.ok || !data.ok) {
-      setState({ kind: "err", msg: data.error ?? "실패" });
-      return;
-    }
-
-    // 트리거 성공 — 이제 실제 완료 보고(last_run_at 전진)를 폴링한다.
+    // 트리거 성공. 완료(last_run_at 전진)될 때까지 "동기화 중…" 유지하며 폴링.
     for (let i = 0; i < POLL_MAX; i++) {
       await sleep(POLL_INTERVAL);
       if (!alive.current) return;
       const latest = await fetchLast();
-      if (ms(latest) > before) {
-        setState({ kind: "done", msg: "완료됨" });
-        return;
-      }
+      if (ms(latest) > before) break; // 완료 — 마지막 동기화 시각이 갱신됨
     }
-    // 3분 안에 완료 보고가 안 옴 — 백그라운드에서 계속 도는 중일 수 있다.
-    if (alive.current) setState({ kind: "done", msg: "진행 중 · 잠시 후 반영" });
+    if (alive.current) setState({ kind: "idle" }); // 갱신된 "마지막 동기화 {시각}" 표시
   }
 
   const last = formatKst(lastRunAt);
@@ -101,11 +91,6 @@ export default function SyncButton() {
       </button>
       {state.kind === "err" ? (
         <span className={`${styles.msg} ${styles.err}`}>{state.msg}</span>
-      ) : state.kind === "done" ? (
-        <span className={`${styles.msg} ${styles.ok}`}>
-          {state.msg}
-          {last ? ` · ${last}` : ""}
-        </span>
       ) : (
         last && (
           <span className={styles.msg}>
