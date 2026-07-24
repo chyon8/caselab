@@ -1,0 +1,77 @@
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--rounded-pill);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--color-primary);
+  background: var(--panel-bg);
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn:disabled {
+  cursor: default;
+  color: var(--text-muted);
+}
+
+.spin {
+  display: inline-block;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.msg {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.ok {
+  color: var(--color-primary);
+}
+
+.err {
+  color: var(--status-cancel-fg);
+}
+
+/* 모바일: 버튼+시간을 제목 아래 제 줄에 두고, 긴 글자는 옆으로 넘치지 말고 줄바꿈 */
+@media (max-width: 768px) {
+  .wrap {
+    flex-basis: 100%;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .msg {
+    white-space: normal;
+    font-size: 12px;
+  }
+
+  /* 모바일: "마지막 동기화" 라벨은 빼고 시각만 */
+  .label {
+    display: none;
+  }
+}

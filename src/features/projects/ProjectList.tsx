@@ -11,6 +11,7 @@ import { OTHER_MANAGERS, PRIMARY_MANAGERS } from "@/lib/managers";
 import { useApp } from "@/state/AppContext";
 import ReviewTipsPanel from "./ReviewTipsPanel";
 import SimilarStatsPanel from "./SimilarStatsPanel";
+import SyncButton from "./SyncButton";
 
 const STATUS_OPTIONS = [
   { value: "전체", label: "상태 전체" },
@@ -367,6 +368,7 @@ export default function ProjectList({
               {searchMode === "keyword" && viewMode === "list" ? `${total.toLocaleString()}건` : ""}
               {searchMode === "keyword" && listLoading && viewMode === "list" ? " · 검색 중…" : ""}
             </div>
+            <SyncButton />
           </div>
           {searchMode === "keyword" && (
             <div className={styles.controls}>
