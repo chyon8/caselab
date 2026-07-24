@@ -1,6 +1,6 @@
 # CaseLab 세션 핸드오프 — 여기부터 읽으세요
 
-> 새 세션 시작 시 이 파일 먼저. 최종 업데이트: **2026-07-23**
+> 새 세션 시작 시 이 파일 먼저. 최종 업데이트: **2026-07-24**
 > 제품/도메인 기준 문서는 CLAUDE.md §5-1 표 참조(design.md·SCORING_SPEC.md·DATA_SCHEMA.md 등).
 > 상세 진단·결정·백로그는 [NEXT_STEPS.md](./NEXT_STEPS.md).
 > 이 파일은 로컬 메모리가 아니라 git으로 관리 — 집/회사 어느 머신에서 세션을 열어도 여기서 이어간다.
@@ -12,6 +12,7 @@
 ## ✅ 현재 완료·가동 중
 
 - **데이터 파이프라인**(Neon + n8n push): projects 6,032건, qna 16,717건, 미팅 녹취, 타임라인 이벤트. `CASELAB_DATA_SOURCE=postgres`.
+- **홈 "지금 동기화" 버튼 — Vercel 403 해결** (2026-07-24) — 원인: n8n(`n8n.wishket-automation.com`)이 **Cloudflare Access** 뒤에 있어, Vercel(싱가포르 데이터센터) 서버→서버 호출은 신뢰된 신원·IP 가 없어 Access 로그인 페이지(403)에 막힘. 로컬 dev 는 신뢰된 기기라 통과. Access 설정 관리자가 따로라 Cloudflare 는 못 건드림 → **트리거를 서버에서 사용자 브라우저로 이전**. 버튼이 `POST /api/admin/sync`(서버 프록시) 대신 브라우저에서 n8n 웹훅을 `mode:"no-cors"` 로 직접 트리거(= 로컬이 되는 신뢰된 기기 경로 그대로). 응답은 못 읽으므로 성공 판정은 `last_run_at` 폴링(최대 60초). POST 라우트 삭제, GET(마지막 동기화 시각)만 유지. env 는 `NEXT_PUBLIC_N8N_SYNC_WEBHOOK_URL`(브라우저 노출 — 빌드 때 번들에 박힘, Vercel 에 설정 후 재배포 필수). 관련: [src/features/projects/SyncButton.tsx](./src/features/projects/SyncButton.tsx), [src/app/api/admin/sync/route.ts](./src/app/api/admin/sync/route.ts). 한계: 누르는 기기가 Access 에 신뢰돼 있어야 함(회사가 IP 기반이면 사외에선 실패 — 그땐 관리자에게 "웹훅 경로 하나 Bypass" 요청이 정답).
 - **사전 미팅 녹취 파이프라인 유실 4건 수정 완료** (2026-07-23) — 특정 프로젝트(156571 등)가 상세에 안 뜨던 원인 4개를 순차 해소, 문서(`n8n/meetings_pipeline.md`·`meeting_project_ids.sql`)를 실제 9노드 워크플로에 맞춰 갱신: ①③ 본진조회를 `date_modified` 기준 → `meeting_meeting` JOIN(최근 60일 실제 미팅 유무)으로 교체 + `event_cursor_at/id` 반환, ⑤⑦ HTTP 노드 **Batching** 필수(안 켜면 STT 서버가 동시연결 일부를 `ECONNREFUSED` 거부 → 조용히 누락), ⑧ 단건 응답 배열 언랩(`Array.isArray`)·`return` 누락 수정·배치 500→**25**(Vercel 4.5MB 한도 `413` 회피). 커서(`meeting_transcripts`)는 표시용 — ③이 매번 60일 전량 재스캔·멱등 upsert라 유실 없음.
 - **목록 서버 페이지네이션 + 정밀검색(L1)** — trigram, 관련도 정렬. 모바일 대응 포함.
 - **타임라인 생애주기 마일스톤 시딩**, 모집/미팅 분리, "계약체결중" 라벨.
@@ -22,13 +23,15 @@
 - **Q&A 유실 346건 해소** (2026-07-20 재측정) — 본진 17,271 ≈ Neon 17,272, 자가 복구 확인. 상세는 NEXT_STEPS.
 - **Vercel Cron — 신규분 자동 파생** (`src/app/api/cron/refresh/route.ts`, 커밋 `4a49d42`) — qna 요약 추출 + 공고문 임베딩, 하루 3회(09:30·13:00·17:00 KST). 요약 없는 프로젝트는 상세페이지에 "⏳ AI 요약 동기화 대기 중" 표시. **정상 동작 확인(2026-07-22)** — 9:30 미실행처럼 보였던 건 Vercel Hobby 플랜의 cron 지연(최대 1시간, 정확도 보장 안 됨)일 뿐, 코드·설정 문제 아니었음. 이슈 종결.
 - **동적 페이지 타이틀** (2026-07-22) — 프로젝트 상세 탭에 프로젝트명 표시(`generateMetadata` + `React.cache`로 중복 조회 방지), `/test`는 `layout.tsx`로 지정.
-- **검수 스코어링/견적/질문 프로토타입 — `/test`** (2026-07-22, 격리 라우트, 기존 기능 무영향) — 대기결정 #2(SCORING 보류) 중 스코어링만 사용자 지시로 착수. 러프한 고객 의뢰 인풋 하나 → 4개 병렬 산출:
+- **검수 스코어링/견적/질문 프로토타입 — `/test`** (2026-07-22, 격리 라우트, 기존 기능 무영향) — 대기결정 #2(SCORING 보류) 중 스코어링만 사용자 지시로 착수. 러프한 고객 의뢰 인풋 하나 → 5개 병렬 산출:
   - **질문**(`src/lib/questions.ts`) — 업무범위 구체화·견적용 확인 질문만. 스코어링과 완전 분리, 유사사례/검수팁 재료 안 씀(오염 방지).
   - **스코어링**(`src/lib/scoring.ts`) — SCORING_SPEC.md 12섹션 confidence + "파악된 내용" 요약(원문 안 읽어도 훑기용). 질문은 안 냄, 참고 게이지 역할만.
   - **견적**(`src/lib/estimate.ts` + `src/lib/estimate-calc.ts`) — **판단(LLM)과 계산(코드) 분리.** LLM은 기능 수량(난이도별 개수)·기간·포함/제외 기능만 판단, 금액 산수(M/D·QA/PM·10% 버퍼)는 `estimate-calc.ts`가 `prompt.md` 단가표 그대로 결정적으로 계산 — LLM이 다단계 산수를 직접 하면 같은 인풋도 금액이 흔들리는 문제 실측 확인. 옵션 A~D 카드에 방식·✓포함/✗제외(대체방식 포함)·파트별 금액·총액. R&D 유형은 M/M 범위를 가산해 총액이 범위값으로 나옴(**R&D 단가는 가정값** — prompt.md에 명시 안 돼 있어 개발 L3 단가 준용, `estimate-calc.ts` 상수 하나).
   - **유사사례+검수팁** — 기존 `/api/similar`·`/api/review-tips` 그대로 재사용.
-  - 전부 `gpt-4o-mini`(비용 절감을 위해 4o에서 재조정). **stateless — 저장 안 함.**
+  - **공고문 재배치 미리보기**(`src/lib/repost.ts` + `/api/test-repost`, 2026-07-24) — 러프 인풋을 SCORING_SPEC §1 공고 양식으로 **위치만 재배치**(원문 워딩 불변, 요약·창작 금지). 섹션: 추천 공고문 제목·프로젝트 키워드·개요·배경 및 목표·과업 범위(수행범위/상세기능/비기능 하위구조)·기술·제조 스택·클라이언트 준비 사항·주요 일정·개발 기간·지원 자격 및 우대·산출물·계약 특이사항. 원문에 근거 없는 섹션은 `"없음 · 확인 필요"`. **판단 2건(다음 세션에 확인받을 것):** ①추천 제목·키워드는 생성 항목이나 현재는 재배치 규칙상 원문에 없으면 "없음·확인 필요"로 둠(자동 추천은 별도 기능) ②"일정"과 "개발 기간"을 별도 섹션으로 분리.
+  - 전부 `gpt-4o-mini`(비용 절감을 위해 4o에서 재조정). **결과는 localStorage(`caselab-test-last`)에 저장 → 새로고침해도 마지막 결과 복원.** **Mock 모드(기본 ON)** — API를 아예 안 치고 고정 mock 번들(`src/app/test/mock.ts`, SAMPLE=반려동물 산책 앱)을 즉시 표시(UI 반복 작업 중 API 낭비 방지). 토글 해제 시 실제 5개 병렬 호출.
   - **미완료: 품질 검증.** 구조는 짰지만 실제 검수 사례로 여러 번 돌려보며 프롬프트를 조이는 라운드는 아직 안 함. 다음 세션 착수 후보 1순위.
+  - ⚠️ **미커밋(2026-07-24):** 공고문 재배치 + Mock/저장은 구현·타입체크 완료했으나 사용자 컨펌·커밋 대기 중.
 
 ## 🔜 다음 착수
 
@@ -49,11 +52,6 @@
 - **AI 프롬프트(ⓒAI 필드)** — 리스크태그·이슈로그·미팅요약은 사용자 검토까지 보류(qna 요약·공고문 정규화는 승인·완료). **SCORING은 2026-07-22 사용자 지시로 착수**(`/test` 프로토타입, 위 참조) — 대기결정 #2 일부 해소.
 - **계약금액 0원 건 정체** — 운영팀 확인 중. 집계 시 0 제외 예정.
 - **정규화 미세 이슈(무해)** — 안 고른 선택옵션이 가끔 불릿으로 새어듦(temp 0인데도). 실신호가 지배해 매칭엔 영향 없음. 조이려면 프롬프트 강화 or 선택옵션 정규식 사전제거.
-- **홈 "지금 동기화" 버튼 — Vercel 배포본에서 403 에러 (미해결)**
-  - 현상: 홈에 "지금 동기화" 버튼 추가(`POST /api/admin/sync` → 서버가 n8n 웹훅 production URL로 POST).
-  - 로컬 dev: 정상 동작(n8n 실행됨).
-  - Vercel 배포본(production): `POST /api/admin/sync`가 **502** 반환. 원인은 호출한 n8n 웹훅이 **403** 반환.
-  - 관련 파일/env: [src/app/api/admin/sync/route.ts](./src/app/api/admin/sync/route.ts), [src/features/projects/SyncButton.tsx](./src/features/projects/SyncButton.tsx), `N8N_SYNC_WEBHOOK_URL`.
 
 ## 🔧 운영 스크립트
 
