@@ -1,16 +1,22 @@
 "use client";
 
 // 검수 스코어링 테스트 화면 (/test) — 기존 기능과 격리된 프로토타입.
-// 러프 인풋 하나 → 세 개를 병렬로 독립 로드: ①견적(prompt.md) ②스코어링 ③유사사례(기존 /api/similar 재사용).
-// stateless — 저장 안 함. 결과 검증용.
+// 러프 인풋 하나 → 병렬로 독립 로드: ①견적 ②스코어링 ③유사사례 ④공고문 재배치 미리보기.
+// 결과는 localStorage에 저장 → 새로고침해도 마지막 결과 복원.
+// Mock 모드(기본 ON): API를 아예 안 치고 고정 mock 번들을 즉시 표시(UI 반복 작업용). 토글로 실제 호출.
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { SimilarProject, ReviewTips } from "@/data/types";
 import type { ScoreResult } from "@/lib/scoring";
 import type { AskQuestion } from "@/lib/questions";
 import type { EstimateResult, EstimateOption } from "@/lib/estimate";
+import type { RepostResult } from "@/lib/repost";
+import { REPOST_MISSING } from "@/lib/repost";
 import { formatManwon } from "@/lib/estimate-calc";
+import { MOCK_BUNDLE } from "./mock";
 import styles from "./test.module.css";
+
+const STORAGE_KEY = "caselab-test-last";
 
 const SAMPLE =
   "반려동물 산책 매칭 앱을 만들고 싶어요. 견주가 산책 도우미를 지역·시간으로 찾아 예약하고, 산책 끝나면 사진이랑 경로를 받아봐요. 결제도 앱에서 하고요. 예산은 잘 모르겠고 최대한 빨리요.";
@@ -139,7 +145,57 @@ export default function TestPage() {
   const [tips, setTips] = useState<ReviewTips | null>(null);
   const [tipsLoading, setTipsLoading] = useState(false);
 
-  const busy = qLoading || scoreLoading || estLoading || simLoading;
+  // 공고문 재배치 미리보기 — 원문 워딩 그대로, 위치만 공고 양식으로
+  const [repost, setRepost] = useState<RepostResult | null>(null);
+  const [repostLoading, setRepostLoading] = useState(false);
+  const [repostError, setRepostError] = useState("");
+
+  // Mock 모드 — 기본 ON(API 안 침). 토글 상태도 저장해 새로고침 후 유지.
+  const [mockMode, setMockMode] = useState(true);
+
+  const busy = qLoading || scoreLoading || estLoading || simLoading || repostLoading;
+
+  // 마운트 시 마지막 결과 복원 (새로고침해도 안 사라지게)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const b = JSON.parse(raw) as {
+        text?: string;
+        questions?: AskQuestion[];
+        score?: ScoreResult;
+        estimate?: EstimateResult;
+        sims?: SimilarProject[];
+        tips?: ReviewTips;
+        repost?: RepostResult;
+        mockMode?: boolean;
+      };
+      if (typeof b.text === "string") setText(b.text);
+      if (b.questions) setQuestions(b.questions);
+      if (b.score) setScore(b.score);
+      if (b.estimate) setEstimate(b.estimate);
+      if (b.sims) setSims(b.sims);
+      if (b.tips) setTips(b.tips);
+      if (b.repost) setRepost(b.repost);
+      if (typeof b.mockMode === "boolean") setMockMode(b.mockMode);
+    } catch {
+      // 손상된 저장값 무시
+    }
+  }, []);
+
+  // 결과가 정착되면(로딩 중 아님) 스냅샷 저장 — 매번 API 안 쳐도 되게
+  useEffect(() => {
+    if (busy) return;
+    if (!questions && !score && !estimate && !sims && !repost) return;
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ text, questions, score, estimate, sims, tips, repost, mockMode }),
+      );
+    } catch {
+      // 저장 실패(용량 등)는 조용히 무시 — 화면 동작엔 영향 없음
+    }
+  }, [busy, text, questions, score, estimate, sims, tips, repost, mockMode]);
 
   const loadTips = (normalized: string) => {
     setTipsLoading(true);
@@ -161,7 +217,24 @@ export default function TestPage() {
     const body = text.trim();
     if (body.length < 3) return;
 
-    // 넷 다 같은 인풋에서 독립적으로 — 하나가 느려도 나머지는 먼저 뜬다
+    // Mock 모드 — API 안 침. 고정 mock 번들을 즉시 표시(입력과 무관하게 같은 결과).
+    if (mockMode) {
+      setQError("");
+      setScoreError("");
+      setEstError("");
+      setSimError("");
+      setRepostError("");
+      setText(MOCK_BUNDLE.text);
+      setQuestions(MOCK_BUNDLE.questions);
+      setScore(MOCK_BUNDLE.score);
+      setEstimate(MOCK_BUNDLE.estimate);
+      setSims(MOCK_BUNDLE.sims);
+      setTips(MOCK_BUNDLE.tips);
+      setRepost(MOCK_BUNDLE.repost);
+      return;
+    }
+
+    // 다섯 다 같은 인풋에서 독립적으로 — 하나가 느려도 나머지는 먼저 뜬다
     setQLoading(true);
     setQError("");
     setQuestions(null);
@@ -228,13 +301,29 @@ export default function TestPage() {
       })
       .catch((e: unknown) => setSimError(e instanceof Error ? e.message : "유사사례 검색 실패"))
       .finally(() => setSimLoading(false));
+
+    setRepostLoading(true);
+    setRepostError("");
+    setRepost(null);
+    fetch("/api/test-repost", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: body }),
+    })
+      .then(async (r) => {
+        const d = (await r.json()) as RepostResult & { error?: string };
+        if (!r.ok) throw new Error(d.error ?? "공고문 재배치 실패");
+        setRepost(d.sections ? d : null);
+      })
+      .catch((e: unknown) => setRepostError(e instanceof Error ? e.message : "공고문 재배치 실패"))
+      .finally(() => setRepostLoading(false));
   };
 
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>검수 스코어링 테스트</h1>
       <p className={styles.subtitle}>
-        러프한 고객 의뢰를 넣으면 견적·스코어링·유사사례를 한 번에. (프로토타입 · 저장 안 됨)
+        러프한 고객 의뢰를 넣으면 견적·스코어링·유사사례·공고문 재배치를 한 번에. (마지막 결과 자동 저장)
       </p>
 
       <div className={styles.inputWrap}>
@@ -251,7 +340,16 @@ export default function TestPage() {
           <button className={styles.runBtn} onClick={() => setText(SAMPLE)} disabled={busy} style={{ background: "var(--color-ink-muted-60)" }}>
             예시 넣기
           </button>
+          <label className={styles.mockToggle}>
+            <input type="checkbox" checked={mockMode} onChange={(e) => setMockMode(e.target.checked)} disabled={busy} />
+            Mock 모드 (API 호출 안 함)
+          </label>
         </div>
+        {mockMode && (
+          <p className={styles.mockHint}>
+            Mock 모드가 켜져 있어 입력과 무관하게 저장된 예시 결과를 보여줍니다. 실제로 호출하려면 체크를 해제하세요.
+          </p>
+        )}
       </div>
 
       {/* 고객에게 물어볼 질문 — 범위·견적을 위한 핵심 산출물. 스코어링과 독립. */}
@@ -272,6 +370,30 @@ export default function TestPage() {
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      {/* 공고문 미리보기 — 원문 워딩 그대로, 위치만 공고 양식으로 재배치 */}
+      <section className={`${styles.panel} ${styles.repostPanel}`}>
+        <div className={styles.panelHead}>
+          <span className={styles.panelTitle}>공고문 미리보기</span>
+          <span className={styles.panelHint}>원문 워딩 그대로 · 위치만 재배치</span>
+        </div>
+        {repostLoading && <p className={styles.muted}>재배치 중…</p>}
+        {repostError && <p className={styles.err}>{repostError}</p>}
+        {!repostLoading && !repostError && !repost && <p className={styles.muted}>분석을 실행하세요.</p>}
+        {repost && (
+          <div className={styles.repostDoc}>
+            {repost.sections.map((s) => {
+              const missing = s.body.trim() === REPOST_MISSING;
+              return (
+                <div key={s.heading} className={styles.repostSection}>
+                  <div className={styles.repostHeading}>[{s.heading}]</div>
+                  <p className={`${styles.repostBody} ${missing ? styles.repostMissing : ""}`}>{s.body}</p>
+                </div>
+              );
+            })}
+          </div>
         )}
       </section>
 

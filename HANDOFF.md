@@ -49,6 +49,11 @@
 - **AI 프롬프트(ⓒAI 필드)** — 리스크태그·이슈로그·미팅요약은 사용자 검토까지 보류(qna 요약·공고문 정규화는 승인·완료). **SCORING은 2026-07-22 사용자 지시로 착수**(`/test` 프로토타입, 위 참조) — 대기결정 #2 일부 해소.
 - **계약금액 0원 건 정체** — 운영팀 확인 중. 집계 시 0 제외 예정.
 - **정규화 미세 이슈(무해)** — 안 고른 선택옵션이 가끔 불릿으로 새어듦(temp 0인데도). 실신호가 지배해 매칭엔 영향 없음. 조이려면 프롬프트 강화 or 선택옵션 정규식 사전제거.
+- **홈 "지금 동기화" 버튼 — Vercel 배포본에서 403 에러 (미해결)**
+  - 현상: 홈에 "지금 동기화" 버튼 추가(`POST /api/admin/sync` → 서버가 n8n 웹훅 production URL로 POST).
+  - 로컬 dev: 정상 동작(n8n 실행됨).
+  - Vercel 배포본(production): `POST /api/admin/sync`가 **502** 반환. 원인은 호출한 n8n 웹훅이 **403** 반환.
+  - 관련 파일/env: [src/app/api/admin/sync/route.ts](./src/app/api/admin/sync/route.ts), [src/features/projects/SyncButton.tsx](./src/features/projects/SyncButton.tsx), `N8N_SYNC_WEBHOOK_URL`.
 
 ## 🔧 운영 스크립트
 
