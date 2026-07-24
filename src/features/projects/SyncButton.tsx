@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./SyncButton.module.css";
 
 type State = { kind: "idle" | "loading" | "err"; msg?: string };
@@ -26,21 +26,16 @@ const POLL_MAX = 20; // 3s × 20 = 최대 60초까지 완료 대기
 export default function SyncButton() {
   const [state, setState] = useState<State>({ kind: "idle" });
   const [lastRunAt, setLastRunAt] = useState<string | null>(null);
-  const alive = useRef(true);
 
-  useEffect(() => {
-    alive.current = true;
-    return () => {
-      alive.current = false;
-    };
-  }, []);
-
+  // cache:"no-store" 필수 — 없으면 브라우저가 이 GET 을 캐싱해 last_run_at 이 영원히 옛 값으로
+  // 보이고, 그러면 아래 폴링이 완료(시각 전진)를 못 잡아 스피너가 안 멈춘다.
   async function fetchLast(): Promise<string | null> {
     try {
-      const res = await fetch("/api/admin/sync");
+      const res = await fetch("/api/admin/sync", { cache: "no-store" });
       const data = (await res.json()) as { lastRunAt?: string | null };
-      if (alive.current) setLastRunAt(data.lastRunAt ?? null);
-      return data.lastRunAt ?? null;
+      const v = data.lastRunAt ?? null;
+      setLastRunAt(v);
+      return v;
     } catch {
       return null;
     }
@@ -62,18 +57,17 @@ export default function SyncButton() {
         setState({ kind: "err", msg: data.error ?? "실패" });
         return;
       }
+      // 완료(last_run_at 전진)될 때까지 폴링. 전진을 잡으면 즉시,
+      // 못 잡아도 60초 뒤엔 반드시 스피너를 멈춘다(무한 로딩 방지).
+      for (let i = 0; i < POLL_MAX; i++) {
+        await sleep(POLL_INTERVAL);
+        const latest = await fetchLast();
+        if (ms(latest) > before) break;
+      }
+      setState({ kind: "idle" });
     } catch {
       setState({ kind: "err", msg: "요청 실패" });
-      return;
     }
-    // 트리거 성공. 완료(last_run_at 전진)될 때까지 "동기화 중…" 유지하며 폴링.
-    for (let i = 0; i < POLL_MAX; i++) {
-      await sleep(POLL_INTERVAL);
-      if (!alive.current) return;
-      const latest = await fetchLast();
-      if (ms(latest) > before) break; // 완료 — 마지막 동기화 시각이 갱신됨
-    }
-    if (alive.current) setState({ kind: "idle" }); // 갱신된 "마지막 동기화 {시각}" 표시
   }
 
   const last = formatKst(lastRunAt);
