@@ -46,8 +46,10 @@ export async function POST(): Promise<Response> {
       signal: controller.signal,
     });
     if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      // 403 이 Cloudflare/WAF(HTML 챌린지)인지 n8n 자체(JSON)인지 본문으로 구분한다.
       return Response.json(
-        { error: `n8n 응답 ${res.status}` },
+        { error: `n8n 응답 ${res.status}`, detail: body.slice(0, 300) },
         { status: 502 },
       );
     }
