@@ -12,7 +12,11 @@
 ## ✅ 현재 완료·가동 중
 
 - **데이터 파이프라인**(Neon + n8n push): projects 6,032건, qna 16,717건, 미팅 녹취, 타임라인 이벤트. `CASELAB_DATA_SOURCE=postgres`.
-- **홈 "지금 동기화" 버튼 — 로컬 완료(스피너 무한로딩·시각 미갱신 수정)** (2026-07-24) — 버튼이 눌러도 계속 "동기화 중…"이고 마지막 동기화 시각이 안 갱신되던 원인은 **브라우저가 GET `/api/admin/sync` 응답을 캐싱**해 `last_run_at`이 옛 값 고정 → 폴링이 완료(시각 전진)를 못 잡음. 픽스: 클라이언트 `fetch(..., { cache: "no-store" })` + 서버 GET 응답에 `Cache-Control: no-store` 헤더 + GET 라우트 `force-dynamic`. 폴링 종료 로직도 정리해 최대 60초 뒤 스피너 반드시 멈춤. **로컬 dev 정상 확인.** 관련: [src/features/projects/SyncButton.tsx](./src/features/projects/SyncButton.tsx), [src/app/api/admin/sync/route.ts](./src/app/api/admin/sync/route.ts). ※ **Vercel 배포본은 아직 403 — 아래 블로커 참조.**
+- **홈 "지금 동기화" 버튼 — 완료(브라우저 직접 트리거)** (2026-07-27) — n8n 은 Cloudflare Access 뒤라 서버(Vercel)에서 웹훅을 치면 IP 기반으로 막혀 403(경로 무관, Service Token/Bypass 없이는 서버로는 불가). 그래서 **트리거를 "Access 에 신뢰된 사용자 브라우저"가 직접** 하도록 전환: 서버 GET `/api/admin/sync` 가 `lastRunAt` + `webhookUrl`(기존 `N8N_SYNC_WEBHOOK_URL`)을 내려주고, 브라우저가 그 URL 로 `mode:"no-cors"` POST. 새 env 불필요. 로컬·배포본 모두 **허용된(사내/신뢰) 기기에서 동작.**
+  - **완료 판정 주의:** 동기화 워크플로는 신규분이 있을 때만 `last_run_at` 을 올린다 → "시각 전진"을 완료 신호로 못 씀(신규분 없으면 성공해도 안 오름). 그래서 트리거 후 ≤24초만 시각 전진을 지켜보고, 오르면 새 시각 표시·안 오르면 "동기화 요청됨 · 반영 없으면 회사(사내) 네트워크에서 눌러주세요" 안내. **거짓 실패·무한 스피너 없음.**
+  - **캐싱 픽스:** 클라이언트 `fetch(..., {cache:"no-store"})` + 서버 GET `Cache-Control: no-store` + 라우트 `force-dynamic` (브라우저가 GET 을 캐싱해 `last_run_at` 이 옛 값 고정되던 문제).
+  - **한계:** no-cors 라 브라우저가 트리거 성공/Access 차단을 판별 못 함(그래서 "요청됨" 안내로 처리). 사외망(Access 미신뢰)에선 트리거가 조용히 무시됨 — 회사 네트워크 필요. 정확한 성공/차단 표시를 원하면 n8n 웹훅에 CORS 헤더 추가가 유일한 길.
+  - 관련: [src/features/projects/SyncButton.tsx](./src/features/projects/SyncButton.tsx), [src/app/api/admin/sync/route.ts](./src/app/api/admin/sync/route.ts). (n8n 웹훅 path 는 `wishket-sync-trigger` 로 변경돼 있음.)
 - **사전 미팅 녹취 파이프라인 유실 4건 수정 완료** (2026-07-23) — 특정 프로젝트(156571 등)가 상세에 안 뜨던 원인 4개를 순차 해소, 문서(`n8n/meetings_pipeline.md`·`meeting_project_ids.sql`)를 실제 9노드 워크플로에 맞춰 갱신: ①③ 본진조회를 `date_modified` 기준 → `meeting_meeting` JOIN(최근 60일 실제 미팅 유무)으로 교체 + `event_cursor_at/id` 반환, ⑤⑦ HTTP 노드 **Batching** 필수(안 켜면 STT 서버가 동시연결 일부를 `ECONNREFUSED` 거부 → 조용히 누락), ⑧ 단건 응답 배열 언랩(`Array.isArray`)·`return` 누락 수정·배치 500→**25**(Vercel 4.5MB 한도 `413` 회피). 커서(`meeting_transcripts`)는 표시용 — ③이 매번 60일 전량 재스캔·멱등 upsert라 유실 없음.
 - **목록 서버 페이지네이션 + 정밀검색(L1)** — trigram, 관련도 정렬. 모바일 대응 포함.
 - **타임라인 생애주기 마일스톤 시딩**, 모집/미팅 분리, "계약체결중" 라벨.
@@ -52,14 +56,7 @@
 - **AI 프롬프트(ⓒAI 필드)** — 리스크태그·이슈로그·미팅요약은 사용자 검토까지 보류(qna 요약·공고문 정규화는 승인·완료). **SCORING은 2026-07-22 사용자 지시로 착수**(`/test` 프로토타입, 위 참조) — 대기결정 #2 일부 해소.
 - **계약금액 0원 건 정체** — 운영팀 확인 중. 집계 시 0 제외 예정.
 - **정규화 미세 이슈(무해)** — 안 고른 선택옵션이 가끔 불릿으로 새어듦(temp 0인데도). 실신호가 지배해 매칭엔 영향 없음. 조이려면 프롬프트 강화 or 선택옵션 정규식 사전제거.
-- **홈 "지금 동기화" 버튼 — Vercel 배포본 403 (미해결)** (2026-07-24)
-  - 현상: 로컬은 정상(위 완료 항목). **Vercel 배포본에서 버튼 → `POST /api/admin/sync` → 서버가 n8n 웹훅 POST → Cloudflare Access 403(로그인 HTML) → 502.** env(`N8N_SYNC_WEBHOOK_URL`) 새 URL로 바꾸고 재배포까지 했는데도 403 지속.
-  - **확정된 원인:** n8n(`n8n.wishket-automation.com`)은 Cloudflare Access 뒤. Access가 **Vercel 데이터센터 IP(신뢰 안 됨)를 웹훅 경로와 무관하게 차단**한다. 로컬 dev·회사 기기는 Access 신뢰 대상이라 통과.
-  - **폐기된 가설:** "웹훅 path를 UUID→커스텀(`wishket-sync-trigger`)으로 바꾸면 Access 우회" — **틀림.** 검증에 쓴 외부 테스트 IP가 우연히 Access 화이트리스트라 어떤 경로든 200이 나와 착각한 것. Vercel 관점에선 경로 무관하게 막힘. (그래도 n8n 웹훅 path 자체는 현재 `wishket-sync-trigger`로 바뀌어 있음 — 되돌릴 필요 없음.)
-  - **남은 선택지 (택1):**
-    1. **브라우저 직접 트리거** — 서버(Vercel) 대신 사용자 브라우저(=Access 신뢰 기기)가 n8n 웹훅을 `mode:"no-cors"`로 직접 POST. 관리자 불필요. 서버 GET이 `N8N_SYNC_WEBHOOK_URL`을 클라이언트에 내려주고 브라우저가 그걸로 POST하면 새 env도 불필요. **단, Access가 IP 기반이면 사외망에선 실패.** (구현 착수 직전 사용자 중단 — 미구현)
-    2. **Cloudflare 관리자에게 요청** — Access Service Token 발급 후 Vercel에 `CF-Access-Client-Id/Secret` 헤더로 통과, 또는 웹훅 경로 Bypass 정책. 관리자가 따로라 요청 필요.
-  - 관련: [src/features/projects/SyncButton.tsx](./src/features/projects/SyncButton.tsx), [src/app/api/admin/sync/route.ts](./src/app/api/admin/sync/route.ts).
+- **임베딩 DB 외부 참조 — `embedding_ro` 발급 완료, owner URL 노출 처리 대기** (2026-07-27) — 다른 프로젝트가 유사사례 검색용으로 CaseLab Neon DB를 참조하려 함. 읽기전용 롤 `embedding_ro`(SELECT만, 쓰기·DDL 차단 검증 완료) 발급하고 핸드오프 문서([EMBEDDING_DB_HANDOFF.md](./EMBEDDING_DB_HANDOFF.md)) 작성 — 임베딩은 `text-embedding-3-large` + `dimensions:1536`(차원만 보고 3-small로 추측 금지), pgvector 코사인. **대기결정:** 사용자가 이미 저쪽에 `neondb_owner`(쓰기 가능) URL을 준 상태 → RO URL 로 교체 안내함. owner URL 이 통제 밖에 남았으면 `neondb_owner` 비번 로테이션 필요(하면 CaseLab `.env.local`·Vercel `DATABASE_URL`도 같이 갱신). 로테이션 여부 미결.
 
 ## 🔧 운영 스크립트
 
