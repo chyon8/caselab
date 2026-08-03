@@ -11,11 +11,28 @@ const NAV_ITEMS = [
   { label: "설정", href: "/settings" },
 ];
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
+interface SessionUser {
+  name: string;
+  email: string;
+}
+
+export default function AppShell({
+  user,
+  children,
+}: {
+  user: SessionUser | null;
+  children: React.ReactNode;
+}) {
   const app = useApp();
   const pathname = usePathname();
   const router = useRouter();
   const sc = app.sidebarCollapsed;
+
+  const logout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  };
 
   const isActive = (href: string) =>
     href === "/"
@@ -70,15 +87,25 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {!sc && <span>{app.darkMode ? "라이트 모드" : "다크 모드"}</span>}
         </button>
 
-        <div className={`${styles["user-row"]} ${sc ? styles.centered : ""}`}>
-          <div className={styles.avatar}>세민</div>
-          {!sc && (
-            <div>
-              <div className={styles["user-name"]}>김세민</div>
-              <div className={styles["user-role"]}>검수 컨설턴트</div>
-            </div>
-          )}
-        </div>
+        {user && (
+          <div className={`${styles["user-row"]} ${sc ? styles.centered : ""}`}>
+            <div className={styles.avatar}>{user.name.slice(-2)}</div>
+            {!sc && (
+              <div className={styles["user-meta"]}>
+                <div className={styles["user-name"]}>{user.name}</div>
+                <div className={styles["user-role"]}>{user.email}</div>
+              </div>
+            )}
+            <button
+              className={styles["logout-btn"]}
+              onClick={logout}
+              aria-label="로그아웃"
+              title={sc ? "로그아웃" : undefined}
+            >
+              {sc ? "⏻" : "로그아웃"}
+            </button>
+          </div>
+        )}
       </aside>
 
       <div className={styles.main}>

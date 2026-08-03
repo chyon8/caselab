@@ -93,3 +93,60 @@ IF  ③의 결과 건수 == 500  →  ② 로 루프
 - 어느 노드에서 실패하든 **커서가 전진하지 않으므로** 다음 주기에 같은 구간을 다시 가져온다.
 - upsert는 멱등이라 중복 실행해도 데이터가 겹치지 않는다.
 - n8n **Error Workflow**를 걸어 실패 시 Slack 알림만 받으면 충분하다.
+
+---
+
+# 부속 워크플로 — 지원수 리프레시
+
+위 워크플로는 `date_modified` 커서로 돈다. 그런데 **본진은 지원이 들어와도
+`project_project.date_modified`를 갱신하지 않는다.** 그래서 모집중인 프로젝트는 한 번
+동기화된 뒤 다시 조회되지 않고, `proposal_count`가 그 시점 값에 고정된다.
+
+> 2026-07-29 실측 — 모집 마감 전 65건 중 **36건이 모집 전환 시점 값 그대로**였고
+> 그중 16건이 화면에 `지원 0건`으로 표시됐다. 반대로 상태 전환 등으로 `date_modified`가
+> 갱신된 건은 정확하다 (계약·진행·완료 1,845건에 지원 0건이 하나도 없다).
+> → **망가진 건 "지금 모집 중인 건의 실시간 숫자"뿐이고, 종료된 건의 통계·유사사례는 멀쩡하다.**
+
+이걸 메우는 3노드짜리 별도 워크플로다. 커서를 쓰지도, 저장하지도 않는다.
+
+```
+① Schedule Trigger (30분)
+        ↓
+② HTTP POST 본진 /query  (proposal_counts_refresh.sql)   ← 모집중인 건 전량, id·지원수만
+        ↓
+③ HTTP POST CaseLab /api/sync/proposal-counts            ← 있는 행의 지원수만 덮어쓴다
+```
+
+## ② 본진 조회
+
+| 항목 | 값 |
+|---|---|
+| Method | `POST` |
+| URL | `http://wishket-api-server:8001/query` |
+| Body | SQL = [`proposal_counts_refresh.sql`](./proposal_counts_refresh.sql) **그대로** (커서 주입할 표현식 없음) |
+
+## ③ CaseLab 적재
+
+| 항목 | 값 |
+|---|---|
+| Method | `POST` |
+| URL | `https://<caselab>/api/sync/proposal-counts` |
+| Header | `X-CaseLab-Key: <CASELAB_SYNC_KEY>` |
+| Body | `{ "rows": <②의 결과 배열> }` |
+
+응답:
+```json
+{ "received": 286, "updated": 41 }
+```
+- `received` — 본진에서 넘어온 건수
+- `updated` — **실제로 지원수가 달라져 갱신된 건수** (같은 값이면 안 센다)
+
+## 주의
+
+- **`sync_state`를 건드리지 않는다.** 여기서 읽는 행의 `date_modified`는 projects 커서보다
+  과거라, 커서를 저장하면 증분 동기화가 뒤로 밀려 같은 구간을 반복 처리한다.
+- **INSERT하지 않는다.** id·지원수 두 컬럼뿐이라 새 행을 만들면 반쪽짜리 프로젝트가 생긴다.
+  아직 CaseLab에 없는 프로젝트는 projects 워크플로가 곧 온전히 적재한다.
+- `content_hash`를 안 건드리므로 **임베딩이 무효화되지 않는다** (재임베딩 비용 없음).
+- 실패해도 다음 주기에 전량 다시 읽으므로 재시도·백필 로직이 필요 없다.
+- `received`가 계속 500이면 대상이 한도(`MAX_BATCH`)에 닿은 것 — 페이지네이션을 붙여야 한다.

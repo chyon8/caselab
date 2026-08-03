@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import AppShell from "@/components/AppShell";
-import { dataSource } from "@/data/source";
-import { AppProvider } from "@/state/AppContext";
 import "./globals.css";
 
 const inter = Inter({
@@ -15,21 +12,14 @@ export const metadata: Metadata = {
   description: "위시켓 프로젝트 인텔리전스 대시보드",
 };
 
-export default async function RootLayout({
+// 루트는 껍데기만 — 앱 데이터(알림·리뷰)는 (app) 그룹 레이아웃에서 가져온다.
+// 로그인 전 화면(/login)에 프로젝트 데이터가 딸려 내려가지 않게 하기 위한 분리다.
+export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const [notifications, reviews] = await Promise.all([
-    dataSource.getNotifications(),
-    dataSource.getReviews(),
-  ]);
-
   return (
     <html lang="ko" className={inter.variable}>
-      <body>
-        <AppProvider notifications={notifications} initialReviews={reviews}>
-          <AppShell>{children}</AppShell>
-        </AppProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
