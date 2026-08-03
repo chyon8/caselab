@@ -1,6 +1,7 @@
 // 구글 리디렉션 수신 — 코드를 신원으로 바꾸고, 도메인을 확인한 뒤 세션 쿠키를 발급한다.
 
 import { NextResponse, type NextRequest } from "next/server";
+import { ALLOWED_EMAILS } from "@/lib/auth/allowed-emails";
 import {
   ALLOWED_DOMAIN,
   OAUTH_COOKIE,
@@ -39,6 +40,11 @@ export async function GET(req: NextRequest): Promise<Response> {
   if (!identity) return fail(req, "google");
   if (!identity.emailVerified || identity.hd !== ALLOWED_DOMAIN) {
     return fail(req, "domain");
+  }
+  // 목록에 대문자가 섞여 들어와도 통과하도록 양쪽을 소문자로 맞춰 본다.
+  const email = identity.email.toLowerCase();
+  if (!ALLOWED_EMAILS.some((allowed) => allowed.trim().toLowerCase() === email)) {
+    return fail(req, "allowlist");
   }
 
   const res = NextResponse.redirect(new URL(next || "/", req.url));
