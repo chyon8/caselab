@@ -128,6 +128,25 @@ function diffProject(before: ExistingRow, after: MappedProject): ChangeEvent[] {
   return changes;
 }
 
+/** 계약 이전 / 이후 단계 (완료(취소)는 계약 없이도 도달하므로 제외) */
+const PRE_CONTRACT: readonly string[] = ["검수", "모집"];
+const POST_CONTRACT: readonly string[] = ["계약", "진행", "완료(성공)"];
+
+/**
+ * 계약 체결 판정 — 도착 상태가 '계약'인지가 아니라 **계약 이전 단계에서 이후 단계로
+ * 넘어갔는지**를 본다. 계약 체결과 동시에 진행 시작일이 잡히면 mapStatus가 '계약'을
+ * 건너뛰고 바로 '진행'으로 판정하기 때문이다(mapping.ts §2 — 진행을 계약보다 먼저 본다).
+ * `after === "계약"`만 보던 시절 실측: 계약 39건 중 27건이 '모집 → 진행'이라 알림이 누락됐다.
+ * '계약 → 진행'은 이미 알린 건이므로 여기서 걸리지 않는다.
+ */
+function isContractSigned(c: ChangeEvent): boolean {
+  return (
+    c.field === "status" &&
+    PRE_CONTRACT.includes(String(c.before)) &&
+    POST_CONTRACT.includes(String(c.after))
+  );
+}
+
 /**
  * POST /api/sync/projects
  * body: { rows: RawProject[] }  — 본진 date_modified ASC, id ASC 순
@@ -235,7 +254,7 @@ export async function POST(req: Request): Promise<Response> {
           c.field === "status" ? `${c.before} → ${c.after}` : null,
           JSON.stringify({ field: c.field, before: c.before, after: c.after }),
         ]);
-        if (c.field === "status" && c.after === "계약") {
+        if (isContractSigned(c)) {
           contractNotices.push({ id: m.id, title: m.title, manager: m.inspection_manager });
         }
       }
