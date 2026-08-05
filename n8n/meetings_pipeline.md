@@ -143,10 +143,16 @@ return out;
 | Method | `GET` |
 | URL | `http://192.168.10.217:8000/api/meetings/` |
 | Query `id` | `={{ $json.id }}` |
-| Options | **Batching: Items per Batch 1 / Interval 200~500ms** |
+| Options | **Batching: Items per Batch 1 / Batch Interval 300ms** |
+| Settings | **Retry On Fail: on (Max Tries 3 / Wait Between Tries 1000ms)** |
 
 → 응답: `[{ id, project_id, partner_slug, summary, transcript, created_at, member_name, … }]`.
 **배열로 한 겹 감싸져 온다** — ⑧에서 벗긴다. `transcript` 는 마크다운 회의록(`# 녹취록 … ## 요약 … ## 전문`).
+
+> ⚠️ **Batching 을 빼면 매 실행 몇 건씩 조용히 사라진다.** 2026-08-05 실측: 단건 90건 중 6건이
+> `ECONNREFUSED 192.168.10.217:8000` 로 실패했는데 워크플로는 초록불이었다(⑦ On Error=Continue →
+> ⑧ 이 에러 항목을 "빈 녹취"로 오인해 버림). 목록(⑤)은 305건인데 에러 0 — 건수가 적은 ⑦ 이
+> 터진다는 건 동시 연결 수 문제라는 뜻이다. Batching + Retry 로 0 이 돼야 정상.
 
 ---
 
@@ -156,8 +162,11 @@ Mode: **Run Once for All Items**. CaseLab 이 저장하는 필드만 남긴다 �
 
 ```js
 const all = [];
+const failed = [];
 for (const item of $input.all()) {
   const raw = item.json;
+  // ⑦ HTTP 실패({id, error})를 빈 녹취와 구분한다 — 안 하면 아래 filter 가 조용히 삼킨다
+  if (raw && raw.error) { failed.push(raw.id ?? '?'); continue; }
   const m = Array.isArray(raw) ? raw[0] : raw;   // ⑦ 응답이 배열이라 첫 요소를 꺼낸다
   if (!m || (!m.transcript && !m.summary)) continue;   // 센티넬(id:0)·빈 녹취 제거
   all.push({
@@ -171,6 +180,9 @@ for (const item of $input.all()) {
     // member_name(매니저명)·duration_secs·project_title 은 의도적으로 제외 — PII·불필요
   });
 }
+
+// throw 는 하지 않는다 — 멀쩡한 나머지까지 적재가 막힌다. 실패분은 다음 재스캔에서 복구된다.
+if (failed.length) console.log(`⑦ 단건 조회 실패 ${failed.length}건: ${failed.join(',')}`);
 
 // ③은 date_created ASC → 마지막 행이 이번 스캔 워터마크. 녹취 0건이어도 커서는 전진시킨다.
 const scanRows = $('본진조회').first().json.data;
