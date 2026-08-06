@@ -536,15 +536,36 @@ WHERE m.project_id = {project_id}
 ORDER BY m.date_meeting DESC, m.date_created DESC;
 ```
 
-### 8-3. 녹취/통화 기록 API ⭐
+### 8-3. 녹취/통화 기록 API ⭐ (명세 갱신 2026-08-06)
 
 ```
-GET http://192.168.10.217:8000/api/calls/by-phone/?phone={전화번호}&limit=50&offset=0
+GET http://192.168.10.217:8000/api/calls/by-phone/
 ```
 
-`phone=00000000000&limit=1` 요청은 200 OK 확인됨.
+전화번호 **또는 매니저명** 기준으로 통화(phone) + 카카오톡(kakao) 로그를 통합 조회한다.
+엔드포인트 이름은 `by-phone`이지만 **번호 없이 매니저명만으로도 조회된다.**
 
-응답 형식:
+**요청 헤더:** `X-API-Key` — 서버에 `KAKAO_API_KEY`가 설정된 경우 필수 (구버전 문서엔 "인증 없음"으로 적혀 있었음, 2026-08-06 정정)
+
+| 파라미터 | 설명 |
+|---|---|
+| `phone` | 전화번호. **부분 일치**, 국제번호→국내번호 정규화. 8자리 미만이면 400 |
+| `member_name` | **매니저 이름, 정확 일치.** 번호를 몰라도 "내가 한 통화"를 찾을 수 있다 |
+| `limit` | 페이지당 결과 수 (기본 50, **최대 200**) |
+| `offset` | 페이지 오프셋 (기본 0) |
+| `channel` | `all`(기본) / `phone` / `kakao` |
+
+> `phone` 또는 `member_name` 중 **최소 하나 필수**. 둘 다 없으면 400.
+> 에러: 400(필수 파라미터 없음 / phone 8자리 미만 / limit·offset 정수 아님), 401(X-API-Key 불일치)
+
+**결과 객체 — `type="phone"`:** `id`, `channel`(`phone_landline`/`phone_mobile`), `type`, `phone`, `member_name`, `call_type`(`in`/`out`), `call_time_secs`, `summary`, `transcript`, `project_id`, `project_title`, `user_type`, `confidence`, `drive_url`, `created_at`
+
+**결과 객체 — `type="kakao"`:** `id`, `channel="kakao"`, `type`, `phone`(발신자), `sender_name`, `member_name`(수집기 사용자=source_id), `chat_name`, `message`, `project_id`, `project_title`, `sent_at`, `created_at`
+
+> 서버는 각 테이블에서 최대 `offset + limit`만 읽어 Python에서 merge sort → 슬라이싱.
+> 이메일(EmailLog) 채널은 **미포함**.
+
+응답 형식(phone 예시):
 ```json
 {
   "phone": "01044580216",
@@ -578,9 +599,11 @@ GET http://192.168.10.217:8000/api/calls/by-phone/?phone={전화번호}&limit=50
 - `summary`: 통화 요약
 - `drive_url`: Google Drive 원본 녹취 파일 링크
 
-**특정 프로젝트 ID 직접 조회 엔드포인트(`/api/calls/by-project/`)는 확인 안 됨.** 현재는 전화번호 기반 조회 → 응답의 `project_id`로 필터링.
+**특정 프로젝트 ID 직접 조회 엔드포인트(`/api/calls/by-project/`)는 확인 안 됨.** 번호 또는 매니저명으로 조회 → 응답의 `project_id`로 필터링.
 
-페이지네이션: `limit`(기본 50), `offset`. Rate Limit / 인증: 코드상 API Key/JWT 없음. 내부 IP(192.168.10.217) → 사내망/VPN 접근 통제 추정.
+Rate Limit 확인 안 됨. 내부 IP(192.168.10.217) → 사내망/VPN 접근 통제.
+
+> ⚠️ **CaseLab에서 브라우저로 직접 못 부른다.** CaseLab은 https(Vercel)인데 이 API는 http라 브라우저가 mixed content로 차단하고, `X-API-Key`도 노출된다. → **n8n 웹훅을 프록시로** 두고 브라우저가 그걸 부른다(CORS 헤더 필요). 검수통화 조회 기획은 NEXT_STEPS "검수통화 녹취 → 공고문 draft — 기획" 참조.
 
 ---
 
@@ -741,7 +764,7 @@ GET http://192.168.10.217:8000/api/calls/by-phone/?phone={전화번호}&limit=50
 | 대상 | 확인 내용 |
 |---|---|
 | wishket-db MCP | Hermes 내부 MCP로 read-only SELECT 접근 |
-| 통화 API | 코드상 API Key/JWT 없음. 내부망/VPN 기반 추정 |
+| 통화 API | **`X-API-Key` 헤더 필요**(서버에 `KAKAO_API_KEY` 설정 시). 내부망 접근 통제 병행 — 2026-08-06 갱신, §8-3 참조 |
 | 본진 외부 API | **확인 필요** |
 
 ### 데이터 규모 (read replica 확인)
