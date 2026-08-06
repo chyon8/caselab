@@ -208,6 +208,21 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+/* 해당없음 — 목록에는 남기되 점수에서 빠졌음을 흐리게 표시 */
+.sectionNa .sectionLabel {
+  color: var(--text-muted);
+}
+.naBadge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+.naHint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
 .bar {
   height: 5px;
   border-radius: 3px;
@@ -408,11 +423,32 @@
   padding-top: var(--space-md);
   border-top: 1px solid var(--color-hairline);
 }
+.tipsHeadRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
 .tipsHead {
   font-size: 13px;
   font-weight: 700;
   color: var(--color-ink);
-  margin-bottom: var(--space-sm);
+}
+.tipsBtn {
+  margin-left: auto;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: transparent;
+  border: 1px solid var(--color-primary);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.tipsBtn:disabled {
+  color: var(--text-faint);
+  border-color: var(--color-divider-soft);
+  cursor: not-allowed;
 }
 .tipGroup {
   margin-bottom: var(--space-sm);

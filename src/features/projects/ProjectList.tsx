@@ -97,6 +97,7 @@ export default function ProjectList({
     postingScope,
     postingResults,
     postingStats,
+    postingNormalized,
     postingReviewTips,
     postingReviewTipsError,
   } = app.listState;
@@ -141,7 +142,7 @@ export default function ProjectList({
     setSimLoading(true);
     setSimError("");
     // 이전 검색의 팁이 새 결과 옆에 남아 있으면 안 된다
-    app.setListState({ postingReviewTips: null, postingReviewTipsError: null });
+    app.setListState({ postingReviewTips: null, postingReviewTipsError: null, postingNormalized: null });
     try {
       const res = await fetch("/api/similar", {
         method: "POST",
@@ -155,17 +156,18 @@ export default function ProjectList({
         error?: string;
       };
       if (!res.ok) throw new Error(data.error ?? "검색 실패");
+      // 검수 팁은 여기서 자동 생성하지 않는다(검색마다 LLM을 치면 낭비) — 재료만 챙겨두고 버튼을 기다린다
       app.setListState({
         postingResults: data.results ?? [],
         postingStats: data.stats ?? null,
+        postingNormalized: data.normalized ?? null,
       });
-      // 카드를 먼저 그린 뒤 검수 팁을 이어서 받는다(await 하지 않아야 카드가 안 밀린다)
-      if (data.normalized) void loadReviewTips(data.normalized, postingScope);
     } catch (e) {
       setSimError(e instanceof Error ? e.message : "검색 중 문제가 발생했습니다.");
       app.setListState({
         postingResults: null,
         postingStats: null,
+        postingNormalized: null,
         postingReviewTips: null,
         postingReviewTipsError: null,
       });
@@ -174,14 +176,15 @@ export default function ProjectList({
     }
   };
 
-  /** 검수 팁을 뒤이어 받아 채운다. 실패해도 이미 그려진 카드·통계는 건드리지 않는다. */
-  const loadReviewTips = async (normalized: string, scope: string) => {
+  /** 검수 팁 — 버튼으로만 생성한다. 실패해도 이미 그려진 카드·통계는 건드리지 않는다. */
+  const loadReviewTips = async () => {
+    if (!postingNormalized) return;
     setTipsLoading(true);
     try {
       const res = await fetch("/api/review-tips", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ normalized, scope }),
+        body: JSON.stringify({ normalized: postingNormalized, scope: postingScope }),
       });
       const data = (await res.json()) as { reviewTips?: ReviewTips; error?: string };
       if (!res.ok) throw new Error(data.error ?? "검수 팁 생성 실패");
@@ -776,6 +779,15 @@ export default function ProjectList({
             )}
             {!simLoading && !tipsLoading && (postingReviewTips || postingReviewTipsError) && (
               <ReviewTipsPanel tips={postingReviewTips} error={postingReviewTipsError} />
+            )}
+            {/* 검수 팁은 필요할 때만 — 검색마다 자동 생성하면 매번 LLM 비용이 든다 */}
+            {!simLoading && !tipsLoading && postingNormalized && (
+              <button
+                className={styles["tips-btn"]}
+                onClick={() => void loadReviewTips()}
+              >
+                {postingReviewTips || postingReviewTipsError ? "검수 팁 다시 생성" : "검수 팁 생성"}
+              </button>
             )}
           </div>
         )}

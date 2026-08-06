@@ -21,7 +21,9 @@ interface ListState {
   postingResults: SimilarProject[] | null;
   /** 공고문 유사사례 집계 통계 — results와 같은 검색 응답에서 함께 옴 */
   postingStats: SimilarStats | null;
-  /** 검수 팁 — 유사 풀의 리스크·질문·키워드를 통합한 것. 같은 검색 응답에서 함께 옴 */
+  /** 검색 응답의 정규화 공고문 — 검수 팁 생성 재료. 팁은 버튼을 눌러야 만들므로 그때까지 들고 있는다 */
+  postingNormalized: string | null;
+  /** 검수 팁 — 유사 풀의 리스크·질문·키워드를 통합한 것. 버튼으로 생성(자동 생성 안 함) */
   postingReviewTips: ReviewTips | null;
   /** 검수 팁 생성 실패 사유(quota 초과 등) — 결과·통계는 정상인데 팁만 실패했을 때 채워짐 */
   postingReviewTipsError: string | null;
@@ -92,6 +94,7 @@ export function AppProvider({
     postingScope: "전체",
     postingResults: null,
     postingStats: null,
+    postingNormalized: null,
     postingReviewTips: null,
     postingReviewTipsError: null,
   });
@@ -142,6 +145,7 @@ export function AppProvider({
         postingScope: "전체",
         postingResults: null,
         postingStats: null,
+        postingNormalized: null,
         postingReviewTips: null,
         postingReviewTipsError: null,
       })),

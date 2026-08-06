@@ -5,7 +5,7 @@
 import type { SimilarProject, ReviewTips } from "@/data/types";
 import type { AskQuestion } from "@/lib/questions";
 import type { ScoreResult } from "@/lib/scoring";
-import { SECTIONS } from "@/lib/scoring";
+import { SECTIONS, assembleScore } from "@/lib/scoring";
 import type { EstimateResult, EstimateOption } from "@/lib/estimate";
 import { calcCost, type Level } from "@/lib/estimate-calc";
 import type { RepostResult } from "@/lib/repost";
@@ -22,10 +22,11 @@ const MOCK_QUESTIONS: AskQuestion[] = [
   { text: "iOS/Android 둘 다인가요, 아니면 한쪽 먼저인가요?", purpose: "범위" },
 ];
 
-// 12섹션 스코어 — SAMPLE이 러프해서 필수(admin·platform)가 비어 gate 실패
-const CONF: Record<string, { c: number; s: string }> = {
+// 12섹션 스코어 — SAMPLE이 러프해서 필수(features·platform)가 비어 gate 실패.
+// core_problem은 신규 서비스라 "현재 운영방식"이 없는 해당없음(na) 예시.
+const CONF: Record<string, { c: number; s: string; na?: true }> = {
   purpose: { c: 72, s: "반려동물 산책 매칭 앱(견주↔산책 도우미 예약). 방향은 명확." },
-  core_problem: { c: 30, s: "기존 운영방식·해결하려는 문제는 언급 없음." },
+  core_problem: { c: 0, s: "기존 서비스 없이 새로 만드는 건이라 현재 운영방식이 없음.", na: true },
   features: { c: 55, s: "지역·시간 검색, 예약, 산책 후 사진·경로 전달, 인앱 결제." },
   admin: { c: 0, s: "" },
   users: { c: 20, s: "견주/도우미 양측이 있으나 규모·타겟 미언급." },
@@ -38,27 +39,17 @@ const CONF: Record<string, { c: number; s: string }> = {
   deliverables: { c: 0, s: "" },
 };
 
-const GATE_THRESHOLD = 60;
-
+// 총점·게이트 산수는 실제 코드(assembleScore)로 — mock이 규칙을 따로 들고 있다가 어긋나지 않게
 function buildScore(): ScoreResult {
-  const sections = SECTIONS.map((sec) => ({
-    id: sec.id,
-    label: sec.label,
-    weight: sec.weight,
-    required: sec.required,
-    confidence: CONF[sec.id].c,
-    summary: CONF[sec.id].s,
-  }));
-  const total = Math.round(sections.reduce((sum, s) => sum + s.confidence * s.weight, 0) / 100);
-  const blocking = sections
-    .filter((s) => s.required && s.confidence < GATE_THRESHOLD)
-    .map((s) => s.label);
-  return {
-    sections,
+  return assembleScore({
+    sections: SECTIONS.map((sec) => ({
+      id: sec.id,
+      applicable: !CONF[sec.id].na,
+      confidence: CONF[sec.id].c,
+      summary: CONF[sec.id].s,
+    })),
     notes: ["'최대한 빨리' 표현 — 일정 압박 가능성. 킥오프 전 마감 합의 필요."],
-    total,
-    gate: { pass: blocking.length === 0, blocking },
-  };
+  });
 }
 
 // 견적 — 금액은 실제 calcCost로 결정적 계산(하드코딩 금액 대신)

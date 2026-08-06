@@ -29,9 +29,14 @@ export interface SectionScore {
   label: string;
   weight: number;
   required: boolean;
-  /** 0~100 */
+  /**
+   * 이 프로젝트에 애초에 해당되는 섹션인가. false = 해당없음(항목 자체가 존재하지 않음).
+   * "정보가 없다"(=confidence 낮음)와는 다르다. false면 총점·게이트에서 제외한다.
+   */
+  applicable: boolean;
+  /** 0~100. applicable=false면 0(총점에서 빠지므로 의미 없음) */
   confidence: number;
-  /** 인풋에서 이 섹션에 대해 파악된 내용 요약(원문 안 읽고 훑기용). 없으면 "" */
+  /** 인풋에서 이 섹션에 대해 파악된 내용 요약(원문 안 읽고 훑기용). 해당없음이면 그 판단 근거. 없으면 "" */
   summary: string;
 }
 
@@ -39,7 +44,7 @@ export interface ScoreResult {
   sections: SectionScore[];
   /** 12섹션 어디에도 안 걸리지만 놓치면 안 되는 것(마감 급함, 특수 제약 등) */
   notes: string[];
-  /** 가중 총점 0~100 */
+  /** 가중 총점 0~100. 해당없음 섹션을 뺀 나머지 가중치로 재정규화 — 해당없다고 점수가 깎이지 않는다 */
   total: number;
   gate: { pass: boolean; blocking: string[] };
 }
@@ -49,12 +54,21 @@ const PROMPT = `너는 위시켓 "검수 매니저"를 돕는 어시스턴트다
 "개발사가 추가 미팅 없이 견적을 낼 수 있는 공고문"을 쓰기에 얼마나 충분히 채워졌는지 평가한다.
 
 각 섹션마다:
-- confidence: 0~100 정수. 이 섹션을 공고에 쓸 수 있는 정도.
+- applicable: true/false. 이 섹션이 이 프로젝트에 **애초에 해당되는가**.
+  false = 프로젝트 성격상 그 항목 자체가 존재하지 않는 경우.
+    예) 완전 신규 서비스라 "현재 운영방식"이랄 게 없음
+    예) 운영자가 쓸 백오피스가 필요 없는 단발성 홍보 페이지 → 관리자 기능 해당없음
+    예) 사내 특정 팀만 쓰는 내부 툴이라 "타겟 사용자/규모"를 따지는 게 무의미
+  true = 해당은 되는데 인풋에 안 적혀 있는 경우. **이때는 confidence를 낮게 줄 뿐, false로 하지 마라.**
+  ★ 기본값은 true. "안 적혀 있다"는 false의 근거가 아니다. 인풋 내용상 "이 프로젝트엔 그게 없다"고
+    판단할 근거가 있을 때만 false. 애매하면 true.
+- confidence: 0~100 정수. 이 섹션을 공고에 쓸 수 있는 정도. (applicable=false면 무시되므로 0)
   0~20  = 거의 단서 없음("앱 만들어주세요" 수준)
   21~50 = 대략적 방향만, 핵심 결정 불명확
   51~80 = 웬만큼 파악됨, 일부 확인 필요
   81~100 = 공고에 바로 쓸 만큼 구체적
 - summary: 인풋에서 이 섹션에 대해 실제로 파악된 내용을 1~2줄로 요약. 없으면 "".
+  applicable=false면 왜 해당없다고 봤는지 한 줄로 적는다.
   ★ 인풋에 실제로 있는 내용만. 지어내지 마라. 이게 매니저가 원문을 안 읽고 훑는 근거다.
 
 12개 섹션(id: 설명):
@@ -73,16 +87,17 @@ const PROMPT = `너는 위시켓 "검수 매니저"를 돕는 어시스턴트다
 
 그리고 12섹션 어디에도 안 걸리지만 놓치면 안 되는 것(예: "6월 오픈 필수", 특수 규제, 이해관계자 언급)은 notes에 담는다.
 
-한국어. 아래 JSON으로만 답한다. sections는 반드시 위 12개 id를 모두 포함한다.
+한국어. 아래 JSON으로만 답한다. sections는 반드시 위 12개 id를 모두 포함한다(해당없음도 빼지 말고 applicable=false로).
 {
   "sections": [
-    { "id": "purpose", "confidence": 0, "summary": "..." }
+    { "id": "purpose", "applicable": true, "confidence": 0, "summary": "..." }
   ],
   "notes": ["..."]
 }`;
 
 interface RawSection {
   id?: string;
+  applicable?: boolean;
   confidence?: number;
   summary?: string;
 }
@@ -100,27 +115,36 @@ function clamp(n: unknown): number {
 }
 
 /** LLM 응답(판단)에 가중치를 붙이고 총점·게이트를 코드가 결정적으로 계산한다. */
-function assemble(raw: RawScore): ScoreResult {
+export function assembleScore(raw: RawScore): ScoreResult {
   const byId = new Map<string, RawSection>();
   for (const s of raw.sections ?? []) if (s.id) byId.set(s.id, s);
 
   const sections: SectionScore[] = SECTIONS.map((meta) => {
     const r = byId.get(meta.id);
+    // 값이 없으면 해당됨으로 본다 — 해당없음은 명시적 판단일 때만
+    const applicable = r?.applicable !== false;
     return {
       id: meta.id,
       label: meta.label,
       weight: meta.weight,
       required: meta.required,
-      confidence: clamp(r?.confidence),
+      applicable,
+      confidence: applicable ? clamp(r?.confidence) : 0,
       summary: typeof r?.summary === "string" ? r.summary.trim() : "",
     };
   });
 
-  // 가중 총점(0~100) — 가중치 합이 100이므로 Σ(confidence*weight)/100
-  const total = Math.round(sections.reduce((sum, s) => sum + s.confidence * s.weight, 0) / 100);
+  // 가중 총점(0~100) — 해당없음을 뺀 나머지 가중치로 재정규화(전부 해당되면 가중치 합 100 = 기존과 동일)
+  const scored = sections.filter((s) => s.applicable);
+  const weightSum = scored.reduce((sum, s) => sum + s.weight, 0);
+  const total =
+    weightSum === 0
+      ? 0
+      : Math.round(scored.reduce((sum, s) => sum + s.confidence * s.weight, 0) / weightSum);
 
+  // 해당없는 필수 섹션은 게이트를 막지 않는다(관리자 기능이 없는 프로젝트를 "정보 부족"으로 막던 문제)
   const blocking = sections
-    .filter((s) => s.required && s.confidence < GATE_THRESHOLD)
+    .filter((s) => s.required && s.applicable && s.confidence < GATE_THRESHOLD)
     .map((s) => s.label);
 
   const notes = (raw.notes ?? []).filter((n): n is string => typeof n === "string" && n.trim() !== "");
@@ -161,5 +185,5 @@ export async function scoreInput(text: string): Promise<ScoreResult> {
   const j = (await res.json()) as ChatResponse;
   const out = j.choices?.[0]?.message?.content;
   if (!out) throw new Error("스코어링 결과가 비어 있습니다.");
-  return assemble(JSON.parse(out) as RawScore);
+  return assembleScore(JSON.parse(out) as RawScore);
 }

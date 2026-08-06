@@ -141,9 +141,12 @@ export default function TestPage() {
   const [simLoading, setSimLoading] = useState(false);
   const [simError, setSimError] = useState("");
 
-  // 검수팁 — 유사사례 뒤에 이어서 받는다(카드보다 5초 넘게 늦으므로 별도 상태)
+  // 검수팁 — 자동 생성하지 않는다(매 분석마다 LLM 호출이 낭비). 버튼을 눌러야 생성.
+  // normalized(유사사례 검색이 만든 정규화 공고문)를 들고 있다가 그때 넘긴다.
   const [tips, setTips] = useState<ReviewTips | null>(null);
   const [tipsLoading, setTipsLoading] = useState(false);
+  const [tipsError, setTipsError] = useState("");
+  const [normalized, setNormalized] = useState<string | null>(null);
 
   // 공고문 재배치 미리보기 — 원문 워딩 그대로, 위치만 공고 양식으로
   const [repost, setRepost] = useState<RepostResult | null>(null);
@@ -167,6 +170,7 @@ export default function TestPage() {
         estimate?: EstimateResult;
         sims?: SimilarProject[];
         tips?: ReviewTips;
+        normalized?: string | null;
         repost?: RepostResult;
         mockMode?: boolean;
       };
@@ -176,6 +180,7 @@ export default function TestPage() {
       if (b.estimate) setEstimate(b.estimate);
       if (b.sims) setSims(b.sims);
       if (b.tips) setTips(b.tips);
+      if (b.normalized) setNormalized(b.normalized); // 새로고침 후에도 검수팁 버튼이 동작하도록
       if (b.repost) setRepost(b.repost);
       if (typeof b.mockMode === "boolean") setMockMode(b.mockMode);
     } catch {
@@ -190,15 +195,22 @@ export default function TestPage() {
     try {
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ text, questions, score, estimate, sims, tips, repost, mockMode }),
+        JSON.stringify({ text, questions, score, estimate, sims, tips, normalized, repost, mockMode }),
       );
     } catch {
       // 저장 실패(용량 등)는 조용히 무시 — 화면 동작엔 영향 없음
     }
-  }, [busy, text, questions, score, estimate, sims, tips, repost, mockMode]);
+  }, [busy, text, questions, score, estimate, sims, tips, normalized, repost, mockMode]);
 
-  const loadTips = (normalized: string) => {
+  /** 버튼으로만 호출된다. Mock 모드에선 API 대신 mock 팁. */
+  const loadTips = () => {
+    if (mockMode) {
+      setTips(MOCK_BUNDLE.tips);
+      return;
+    }
+    if (!normalized) return;
     setTipsLoading(true);
+    setTipsError("");
     fetch("/api/review-tips", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -206,10 +218,10 @@ export default function TestPage() {
     })
       .then(async (r) => {
         const d = (await r.json()) as { reviewTips?: ReviewTips; error?: string };
-        if (!r.ok) throw new Error(d.error ?? "검수팁 실패");
+        if (!r.ok) throw new Error(d.error ?? "검수팁 생성 실패");
         setTips(d.reviewTips ?? null);
       })
-      .catch(() => setTips(null))
+      .catch((e: unknown) => setTipsError(e instanceof Error ? e.message : "검수팁 생성 실패"))
       .finally(() => setTipsLoading(false));
   };
 
@@ -224,12 +236,13 @@ export default function TestPage() {
       setEstError("");
       setSimError("");
       setRepostError("");
+      setTipsError("");
       setText(MOCK_BUNDLE.text);
       setQuestions(MOCK_BUNDLE.questions);
       setScore(MOCK_BUNDLE.score);
       setEstimate(MOCK_BUNDLE.estimate);
       setSims(MOCK_BUNDLE.sims);
-      setTips(MOCK_BUNDLE.tips);
+      setTips(null); // 검수팁은 실제 흐름과 똑같이 버튼을 눌러야 나온다
       setRepost(MOCK_BUNDLE.repost);
       return;
     }
@@ -287,6 +300,8 @@ export default function TestPage() {
     setSimError("");
     setSims(null);
     setTips(null);
+    setTipsError("");
+    setNormalized(null);
     fetch("/api/similar", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -296,8 +311,8 @@ export default function TestPage() {
         const d = (await r.json()) as { results?: SimilarProject[]; normalized?: string; error?: string };
         if (!r.ok) throw new Error(d.error ?? "유사사례 검색 실패");
         setSims(d.results ?? []);
-        // 카드를 먼저 그린 뒤 검수팁을 이어서 받는다
-        if (d.normalized) loadTips(d.normalized);
+        // 검수팁은 여기서 자동 생성하지 않는다 — 재료(normalized)만 챙겨두고 버튼을 기다린다
+        setNormalized(d.normalized ?? null);
       })
       .catch((e: unknown) => setSimError(e instanceof Error ? e.message : "유사사례 검색 실패"))
       .finally(() => setSimLoading(false));
@@ -421,22 +436,33 @@ export default function TestPage() {
               {!score.gate.pass && (
                 <p className={styles.blocking}>필수 미달: {score.gate.blocking.join(", ")}</p>
               )}
+              {score.sections.some((s) => !s.applicable) && (
+                <p className={styles.naHint}>
+                  해당없음 {score.sections.filter((s) => !s.applicable).length}개는 총점·게이트에서 제외됨
+                </p>
+              )}
 
               {score.sections.map((s) => (
-                <div key={s.id} className={styles.section}>
+                <div key={s.id} className={`${styles.section} ${s.applicable ? "" : styles.sectionNa}`}>
                   <div className={styles.sectionHead}>
                     <span className={styles.sectionLabel}>{s.label}</span>
-                    {s.required && <span className={styles.reqDot}>필수</span>}
-                    <span className={styles.confBadge} style={{ color: barColor(s.confidence) }}>
-                      {s.confidence}
-                    </span>
+                    {s.required && s.applicable && <span className={styles.reqDot}>필수</span>}
+                    {s.applicable ? (
+                      <span className={styles.confBadge} style={{ color: barColor(s.confidence) }}>
+                        {s.confidence}
+                      </span>
+                    ) : (
+                      <span className={styles.naBadge}>해당없음</span>
+                    )}
                   </div>
-                  <div className={styles.bar}>
-                    <div
-                      className={styles.barFill}
-                      style={{ width: `${s.confidence}%`, background: barColor(s.confidence) }}
-                    />
-                  </div>
+                  {s.applicable && (
+                    <div className={styles.bar}>
+                      <div
+                        className={styles.barFill}
+                        style={{ width: `${s.confidence}%`, background: barColor(s.confidence) }}
+                      />
+                    </div>
+                  )}
                   {s.summary && <p className={styles.sectionSummary}>{s.summary}</p>}
                 </div>
               ))}
@@ -475,11 +501,24 @@ export default function TestPage() {
             </a>
           ))}
 
-          {/* 검수팁 — 유사 풀의 Q&A 요약을 통합(기존 /api/review-tips 재사용) */}
-          {(tipsLoading || tips) && (
+          {/* 검수팁 — 유사 풀의 Q&A 요약을 통합(기존 /api/review-tips 재사용). 버튼을 눌러야 생성. */}
+          {sims && sims.length > 0 && (
             <div className={styles.tips}>
-              <div className={styles.tipsHead}>검수팁</div>
+              <div className={styles.tipsHeadRow}>
+                <span className={styles.tipsHead}>검수팁</span>
+                <button
+                  className={styles.tipsBtn}
+                  onClick={loadTips}
+                  disabled={tipsLoading || (!mockMode && !normalized)}
+                >
+                  {tipsLoading ? "생성 중…" : tips ? "다시 생성" : "검수팁 생성"}
+                </button>
+              </div>
+              {tipsError && <p className={styles.err}>{tipsError}</p>}
               {tipsLoading && !tips && <p className={styles.muted}>유사사례에서 뽑는 중…</p>}
+              {!tipsLoading && !tips && !tipsError && (
+                <p className={styles.muted}>필요할 때만 생성합니다.</p>
+              )}
               {tips && (
                 <>
                   {tips.risks.length > 0 && (
