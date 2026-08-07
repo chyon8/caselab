@@ -17,6 +17,7 @@ import type { BriefResult } from "@/lib/brief";
 import type { DraftResult } from "@/lib/draft";
 import { formatManwon } from "@/lib/estimate-calc";
 import type { CallRecord } from "@/lib/calls";
+import type { SessionListItem, SessionRow } from "@/lib/review-session";
 import { scrubPii } from "@/lib/sync/pii";
 import { MOCK_BUNDLE, MOCK_CALLS } from "./mock";
 import styles from "./test.module.css";
@@ -49,6 +50,20 @@ function formatDuration(secs: number | null): string {
 function formatCallTime(raw: string | null): string {
   if (!raw) return "";
   return raw.length >= 16 ? raw.slice(5, 16) : raw;
+}
+
+/**
+ * 세션 저장 시각 — 통화 시각과 반대로 **파싱해야** 한다. 이건 진짜 TIMESTAMPTZ라 UTC("…Z")로
+ * 오고, 그대로 자르면 9시간 밀린 시각이 찍힌다.
+ */
+function formatSavedAt(raw: string): string {
+  return new Date(raw).toLocaleString("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 /**
@@ -271,6 +286,12 @@ export default function TestPage() {
   // 원문 상세보기 — 요약 2줄만으로는 어느 통화인지 못 가르는 경우가 있어 전문을 그대로 띄운다
   const [viewCall, setViewCall] = useState<CallRecord | null>(null);
 
+  // 검수 세션 — localStorage는 "지금 보던 화면"을 즉시 복원하는 용도로 그대로 두고,
+  // 영속 보관과 여러 건 오가기는 DB(review_session)가 맡는다. 한 건 = 한 행, 덮어쓰기.
+  const [sessionId, setSessionId] = useState<number | null>(null);
+  const [sessions, setSessions] = useState<SessionListItem[]>([]);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
   // Mock 모드 — 기본 ON(API 안 침). 토글 상태도 저장해 새로고침 후 유지.
   const [mockMode, setMockMode] = useState(true);
 
@@ -294,6 +315,7 @@ export default function TestPage() {
         normalized?: string | null;
         repost?: RepostResult;
         mockMode?: boolean;
+        sessionId?: number;
       };
       if (typeof b.text === "string") setText(b.text);
       setBrief(reviveBrief(b.brief));
@@ -306,6 +328,7 @@ export default function TestPage() {
       if (b.normalized) setNormalized(b.normalized); // 새로고침 후에도 검수팁 버튼이 동작하도록
       if (b.repost) setRepost(b.repost);
       if (typeof b.mockMode === "boolean") setMockMode(b.mockMode);
+      if (typeof b.sessionId === "number") setSessionId(b.sessionId);
     } catch {
       // 손상된 저장값 무시
     }
@@ -340,6 +363,7 @@ export default function TestPage() {
           normalized,
           repost,
           mockMode,
+          sessionId,
         }),
       );
     } catch {
@@ -347,7 +371,53 @@ export default function TestPage() {
     }
     // selectedCalls는 저장하지 않는다 — 통화 목록 자체를 저장하지 않으므로, 선택만 남기면
     // 새로고침 후 목록 없이 "N건 선택됨"만 뜨는 유령 상태가 된다. 선택은 조회 결과에 딸린 것.
-  }, [busy, text, brief, draft, questions, score, estimate, sims, tips, normalized, repost, mockMode]);
+  }, [busy, text, brief, draft, questions, score, estimate, sims, tips, normalized, repost, mockMode, sessionId]);
+
+  // DB 저장 — 타이핑 중에 매번 치지 않도록 1.5초 뒤에 한 번. Mock 모드는 저장하지 않는다
+  // (가짜 번들이 목록을 채우면 안 된다). 여긴 selectedCalls도 저장한다 — localStorage와 달리
+  // 목록을 다시 불러올 수 있어 유령 상태가 안 생기고, 어느 통화를 근거로 썼는지가 기록으로 남는다.
+  useEffect(() => {
+    if (busy || mockMode) return;
+    if (!brief && !questions && !score && !estimate && !sims && !repost && !draft) return;
+    const timer = setTimeout(() => {
+      setSaveState("saving");
+      fetch("/api/review-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: sessionId,
+          title: brief?.oneLiner || text.trim().slice(0, 60),
+          sourceText: text,
+          analysis: { brief, questions, score, estimate, sims, tips, normalized, repost },
+          draft,
+          calls: selectedCalls.map((c) => ({
+            id: c.id,
+            summary: c.summary,
+            created_at: c.created_at,
+            project_title: c.project_title,
+          })),
+        }),
+      })
+        .then(async (r) => {
+          const d = (await r.json()) as { id?: number; error?: string };
+          if (!r.ok || !d.id) throw new Error(d.error ?? "저장 실패");
+          setSessionId(d.id);
+          setSaveState("saved");
+        })
+        .catch(() => setSaveState("error"));
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [busy, mockMode, text, brief, draft, questions, score, estimate, sims, tips, normalized, repost, selectedCalls, sessionId]);
+
+  // 목록 새로고침 — 마운트 시, 그리고 새 행이 생겼을 때(sessionId 변경)
+  useEffect(() => {
+    fetch("/api/review-session", { cache: "no-store" })
+      .then(async (r) => {
+        const d = (await r.json()) as { sessions?: SessionListItem[] };
+        setSessions(d.sessions ?? []);
+      })
+      .catch(() => setSessions([]));
+  }, [sessionId]);
 
   /** 버튼으로만 호출된다. Mock 모드에선 API 대신 mock 팁. */
   const loadTips = () => {
@@ -441,6 +511,75 @@ export default function TestPage() {
     setSelectedCalls((prev) =>
       prev.some((c) => c.id === call.id) ? prev.filter((c) => c.id !== call.id) : [...prev, call],
     );
+  };
+
+  /** 화면을 비운다. 새 검수 시작과 세션 불러오기가 공유한다. */
+  const clearAll = () => {
+    setText("");
+    setBrief(null);
+    setDraft(null);
+    setQuestions(null);
+    setScore(null);
+    setEstimate(null);
+    setSims(null);
+    setTips(null);
+    setNormalized(null);
+    setRepost(null);
+    setCalls(null);
+    setSelectedCalls([]);
+    setSaveState("idle");
+  };
+
+  /** 새 검수 — 지금 세션을 닫고 빈 화면으로. 다음 저장은 새 행이 된다. */
+  const newReview = () => {
+    clearAll();
+    setSessionId(null);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // 지우기 실패는 무시 — 아래 상태 초기화만으로 화면은 비워진다
+    }
+  };
+
+  /** 저장된 검수 이어하기 — 통화 목록은 복원하지 않는다(원문을 저장 안 하므로 재조회해야 한다). */
+  const openSession = (id: number) => {
+    fetch(`/api/review-session/${id}`, { cache: "no-store" })
+      .then(async (r) => {
+        const d = (await r.json()) as { session?: SessionRow; error?: string };
+        if (!r.ok || !d.session) throw new Error(d.error ?? "불러오기 실패");
+        const a = (d.session.analysis ?? {}) as {
+          brief?: unknown;
+          questions?: AskQuestion[];
+          score?: ScoreResult;
+          estimate?: EstimateResult;
+          sims?: SimilarProject[];
+          tips?: ReviewTips;
+          normalized?: string | null;
+          repost?: RepostResult;
+        };
+        clearAll();
+        setText(d.session.source_text);
+        setBrief(reviveBrief(a.brief));
+        setDraft(reviveDraft(d.session.draft));
+        setQuestions(a.questions ?? null);
+        setScore(a.score ?? null);
+        setEstimate(a.estimate ?? null);
+        setSims(a.sims ?? null);
+        setTips(a.tips ?? null);
+        setNormalized(a.normalized ?? null);
+        setRepost(a.repost ?? null);
+        setSessionId(d.session.id);
+      })
+      .catch(() => setSaveState("error"));
+  };
+
+  const removeSession = (id: number) => {
+    fetch(`/api/review-session/${id}`, { method: "DELETE" })
+      .then(() => {
+        setSessions((prev) => prev.filter((s) => s.id !== id));
+        if (id === sessionId) newReview();
+      })
+      .catch(() => setSaveState("error"));
   };
 
   const run = () => {
@@ -576,6 +715,42 @@ export default function TestPage() {
       <p className={styles.subtitle}>
         러프한 고객 의뢰를 넣으면 견적·스코어링·유사사례·공고문 재배치를 한 번에. (마지막 결과 자동 저장)
       </p>
+
+      {/* 검수 세션 — 여러 건을 번갈아 진행해도 서로 안 덮어쓰게. Mock 모드 결과는 저장되지 않는다. */}
+      <div className={styles.sessionBar}>
+        <button type="button" className={styles.newReviewBtn} onClick={newReview}>
+          + 새 검수
+        </button>
+        {sessions.length > 0 && (
+          <select
+            className={styles.sessionSelect}
+            value={sessionId ?? ""}
+            onChange={(e) => e.target.value && openSession(Number(e.target.value))}
+          >
+            <option value="">저장된 검수 불러오기…</option>
+            {sessions.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.title || "(제목 없음)"} · {formatSavedAt(s.updated_at)}
+              </option>
+            ))}
+          </select>
+        )}
+        {sessionId && (
+          <button
+            type="button"
+            className={styles.sessionDelete}
+            onClick={() => removeSession(sessionId)}
+          >
+            삭제
+          </button>
+        )}
+        <span className={styles.saveState}>
+          {saveState === "saving" && "저장 중…"}
+          {saveState === "saved" && "저장됨"}
+          {saveState === "error" && "저장 실패"}
+          {mockMode && saveState === "idle" && "Mock 모드 — 저장 안 함"}
+        </span>
+      </div>
 
       <div className={styles.inputWrap}>
         <textarea

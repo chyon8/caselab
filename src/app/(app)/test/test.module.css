@@ -16,6 +16,48 @@
   margin-bottom: var(--space-lg);
 }
 
+/* ── 검수 세션 바 ── */
+.sessionBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+.newReviewBtn {
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-primary);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.sessionSelect {
+  min-width: 240px;
+  max-width: 100%;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-rule);
+  border-radius: 8px;
+}
+.sessionDelete {
+  padding: 7px 12px;
+  font-size: 13px;
+  color: var(--status-cancel-fg);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-rule);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.saveState {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
 .inputWrap {
   display: flex;
   flex-direction: column;
