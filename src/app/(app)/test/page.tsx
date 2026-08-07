@@ -13,6 +13,8 @@ import type { AskQuestion } from "@/lib/questions";
 import type { EstimateResult, EstimateOption } from "@/lib/estimate";
 import type { RepostResult } from "@/lib/repost";
 import { REPOST_MISSING } from "@/lib/repost";
+import type { BriefResult } from "@/lib/brief";
+import type { DraftResult } from "@/lib/draft";
 import { formatManwon } from "@/lib/estimate-calc";
 import type { CallRecord } from "@/lib/calls";
 import { scrubPii } from "@/lib/sync/pii";
@@ -89,6 +91,33 @@ async function fetchCalls(memberName: string, phone: string): Promise<CallRecord
       summary: scrubPii(c.summary),
       transcript: scrubPii(c.transcript),
     }));
+}
+
+/**
+ * 저장된 브리핑 복원용 검사.
+ * localStorage 번들에는 버전이 없어서, 필드를 바꾸면 옛 형태가 그대로 복원돼 렌더에서 터진다
+ * (실제로 terms → concepts 로 바꿨을 때 발생). 형태가 안 맞으면 복원하지 않고 버린다 —
+ * 어차피 다시 분석하면 채워지므로, 모양을 억지로 맞춰 반쪽짜리를 보여주는 것보다 낫다.
+ */
+function reviveBrief(b: unknown): BriefResult | null {
+  if (!b || typeof b !== "object") return null;
+  const v = b as Partial<BriefResult>;
+  if (!Array.isArray(v.points) || !Array.isArray(v.concepts) || !Array.isArray(v.wants)) {
+    return null;
+  }
+  return {
+    oneLiner: typeof v.oneLiner === "string" ? v.oneLiner : "",
+    points: v.points,
+    concepts: v.concepts,
+    wants: v.wants,
+  };
+}
+
+/** 저장된 draft 복원용 검사 — reviveBrief와 같은 이유(번들에 버전이 없다) */
+function reviveDraft(d: unknown): DraftResult | null {
+  if (!d || typeof d !== "object") return null;
+  const v = d as Partial<DraftResult>;
+  return Array.isArray(v.sections) ? { sections: v.sections } : null;
 }
 
 /** confidence → 막대 색 */
@@ -189,6 +218,16 @@ export default function TestPage() {
   const { user } = useApp();
   const [text, setText] = useState("");
 
+  // 공고문 draft — 의뢰 원문 + 고른 통화 녹취. 버튼으로만 생성(통화를 골라야 의미가 있다).
+  const [draft, setDraft] = useState<DraftResult | null>(null);
+  const [draftLoading, setDraftLoading] = useState(false);
+  const [draftError, setDraftError] = useState("");
+
+  // 브리핑 — 원문을 다 안 읽어도 파악되게. 근거 없는 항목은 brief.ts가 이미 버리고 온다.
+  const [brief, setBrief] = useState<BriefResult | null>(null);
+  const [briefLoading, setBriefLoading] = useState(false);
+  const [briefError, setBriefError] = useState("");
+
   const [questions, setQuestions] = useState<AskQuestion[] | null>(null);
   const [qLoading, setQLoading] = useState(false);
   const [qError, setQError] = useState("");
@@ -233,7 +272,8 @@ export default function TestPage() {
   // Mock 모드 — 기본 ON(API 안 침). 토글 상태도 저장해 새로고침 후 유지.
   const [mockMode, setMockMode] = useState(true);
 
-  const busy = qLoading || scoreLoading || estLoading || simLoading || repostLoading;
+  const busy =
+    qLoading || scoreLoading || estLoading || simLoading || repostLoading || briefLoading;
 
   // 마운트 시 마지막 결과 복원 (새로고침해도 안 사라지게)
   useEffect(() => {
@@ -242,6 +282,8 @@ export default function TestPage() {
       if (!raw) return;
       const b = JSON.parse(raw) as {
         text?: string;
+        brief?: unknown;
+        draft?: unknown;
         questions?: AskQuestion[];
         score?: ScoreResult;
         estimate?: EstimateResult;
@@ -249,10 +291,11 @@ export default function TestPage() {
         tips?: ReviewTips;
         normalized?: string | null;
         repost?: RepostResult;
-        selectedCalls?: CallRecord[];
         mockMode?: boolean;
       };
       if (typeof b.text === "string") setText(b.text);
+      setBrief(reviveBrief(b.brief));
+      setDraft(reviveDraft(b.draft));
       if (b.questions) setQuestions(b.questions);
       if (b.score) setScore(b.score);
       if (b.estimate) setEstimate(b.estimate);
@@ -260,7 +303,6 @@ export default function TestPage() {
       if (b.tips) setTips(b.tips);
       if (b.normalized) setNormalized(b.normalized); // 새로고침 후에도 검수팁 버튼이 동작하도록
       if (b.repost) setRepost(b.repost);
-      if (b.selectedCalls) setSelectedCalls(b.selectedCalls);
       if (typeof b.mockMode === "boolean") setMockMode(b.mockMode);
     } catch {
       // 손상된 저장값 무시
@@ -270,12 +312,14 @@ export default function TestPage() {
   // 결과가 정착되면(로딩 중 아님) 스냅샷 저장 — 매번 API 안 쳐도 되게
   useEffect(() => {
     if (busy) return;
-    if (!questions && !score && !estimate && !sims && !repost) return;
+    if (!brief && !questions && !score && !estimate && !sims && !repost && !draft) return;
     try {
       localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({
           text,
+          brief,
+          draft,
           questions,
           score,
           estimate,
@@ -283,14 +327,15 @@ export default function TestPage() {
           tips,
           normalized,
           repost,
-          selectedCalls,
           mockMode,
         }),
       );
     } catch {
       // 저장 실패(용량 등)는 조용히 무시 — 화면 동작엔 영향 없음
     }
-  }, [busy, text, questions, score, estimate, sims, tips, normalized, repost, selectedCalls, mockMode]);
+    // selectedCalls는 저장하지 않는다 — 통화 목록 자체를 저장하지 않으므로, 선택만 남기면
+    // 새로고침 후 목록 없이 "N건 선택됨"만 뜨는 유령 상태가 된다. 선택은 조회 결과에 딸린 것.
+  }, [busy, text, brief, draft, questions, score, estimate, sims, tips, normalized, repost, mockMode]);
 
   /** 버튼으로만 호출된다. Mock 모드에선 API 대신 mock 팁. */
   const loadTips = () => {
@@ -315,10 +360,48 @@ export default function TestPage() {
       .finally(() => setTipsLoading(false));
   };
 
+  /** "공고문 draft 생성" 버튼. 의뢰 원문 + 고른 통화 녹취를 합쳐 초안을 만든다. */
+  const loadDraft = () => {
+    setDraftError("");
+    if (mockMode) {
+      setDraft(MOCK_BUNDLE.draft);
+      return;
+    }
+    const body = text.trim();
+    if (body.length < 3) {
+      setDraftError("의뢰 원문을 먼저 입력하세요");
+      return;
+    }
+    setDraftLoading(true);
+    fetch("/api/test-draft", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: body,
+        // 통화 전체가 아니라 draft에 필요한 세 필드만 보낸다
+        calls: selectedCalls.map((c) => ({
+          summary: c.summary,
+          transcript: c.transcript,
+          created_at: c.created_at,
+        })),
+      }),
+    })
+      .then(async (r) => {
+        const d = (await r.json()) as DraftResult & { error?: string };
+        if (!r.ok) throw new Error(d.error ?? "공고문 draft 생성 실패");
+        setDraft(d.sections ? d : null);
+      })
+      .catch((e: unknown) =>
+        setDraftError(e instanceof Error ? e.message : "공고문 draft 생성 실패"),
+      )
+      .finally(() => setDraftLoading(false));
+  };
+
   /** "내 통화 불러오기" 버튼. Mock 모드에선 API 대신 mock 통화 목록. */
   const loadCalls = () => {
     setCallsError("");
     setCalls(null);
+    setSelectedCalls([]); // 새 조회 = 새 목록. 이전 목록에서 고른 건 남겨두면 안 된다
     if (mockMode) {
       setCalls(MOCK_CALLS);
       return;
@@ -354,6 +437,8 @@ export default function TestPage() {
 
     // Mock 모드 — API 안 침. 고정 mock 번들을 즉시 표시(입력과 무관하게 같은 결과).
     if (mockMode) {
+      setBriefError("");
+      setBrief(MOCK_BUNDLE.brief);
       setQError("");
       setScoreError("");
       setEstError("");
@@ -370,7 +455,23 @@ export default function TestPage() {
       return;
     }
 
-    // 다섯 다 같은 인풋에서 독립적으로 — 하나가 느려도 나머지는 먼저 뜬다
+    // 여섯 다 같은 인풋에서 독립적으로 — 하나가 느려도 나머지는 먼저 뜬다
+    setBriefLoading(true);
+    setBriefError("");
+    setBrief(null);
+    fetch("/api/test-brief", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: body }),
+    })
+      .then(async (r) => {
+        const d = (await r.json()) as BriefResult & { error?: string };
+        if (!r.ok) throw new Error(d.error ?? "브리핑 생성 실패");
+        setBrief(d);
+      })
+      .catch((e: unknown) => setBriefError(e instanceof Error ? e.message : "브리핑 생성 실패"))
+      .finally(() => setBriefLoading(false));
+
     setQLoading(true);
     setQError("");
     setQuestions(null);
@@ -489,6 +590,57 @@ export default function TestPage() {
           </p>
         )}
       </div>
+
+      {/* 브리핑 — 원문을 다 안 읽어도 파악되게. 질문 패널 바로 위에 둬서 "파악 → 물어볼 것" 순으로 읽힌다. */}
+      <section className={`${styles.panel} ${styles.briefPanel}`}>
+        <div className={styles.panelHead}>
+          <span className={styles.panelTitle}>프로젝트 브리핑</span>
+          <span className={styles.panelHint}>원문 안 읽어도 파악되게 · 상담 전 훑기용</span>
+        </div>
+        {briefLoading && <p className={styles.muted}>요약 중…</p>}
+        {briefError && <p className={styles.err}>{briefError}</p>}
+        {!briefLoading && !briefError && !brief && <p className={styles.muted}>분석을 실행하세요.</p>}
+        {brief && (
+          <>
+            {brief.oneLiner && <p className={styles.briefOneLiner}>{brief.oneLiner}</p>}
+            {brief.points.length > 0 && (
+              <ul className={styles.briefPoints}>
+                {brief.points.map((p, i) => (
+                  <li key={i}>{p}</li>
+                ))}
+              </ul>
+            )}
+            {brief.concepts.length > 0 && (
+              <div className={styles.briefBlock}>
+                <div className={styles.briefBlockTitle}>
+                  기술적으로 알아야 할 것
+                  <span className={styles.briefBlockNote}>기능 설명이 아니라 구현에 필요한 요소</span>
+                </div>
+                {brief.concepts.map((c, i) => (
+                  <p key={i} className={styles.briefTerm}>
+                    <span className={styles.briefTermName}>{c.term}</span>
+                    {c.plain}
+                  </p>
+                ))}
+              </div>
+            )}
+            {brief.wants.length > 0 && (
+              <div className={styles.briefBlock}>
+                <div className={styles.briefBlockTitle}>고객이 원하는 것</div>
+                <ul className={styles.briefWants}>
+                  {brief.wants.map((w, i) => (
+                    <li key={i}>
+                      {w.inferred && <span className={styles.briefGuess}>추측</span>}
+                      {w.text}
+                      <span className={styles.briefEvidence}>근거: “{w.evidence}”</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
+      </section>
 
       {/* 고객에게 물어볼 질문 — 범위·견적을 위한 핵심 산출물. 스코어링과 독립. */}
       <section className={`${styles.panel} ${styles.questionsPanel}`}>
@@ -763,6 +915,45 @@ export default function TestPage() {
         )}
         {selectedCalls.length > 0 && (
           <p className={styles.selectedHint}>{selectedCalls.length}건 선택됨</p>
+        )}
+      </section>
+
+      {/* 공고문 draft — 의뢰 원문 + 고른 녹취를 합쳐 초안. 위 "공고문 미리보기"(워딩 불변)와
+          같은 섹션 양식이라 둘을 나란히 두고 무엇이 다듬어졌는지 비교할 수 있다. */}
+      <section className={`${styles.panel} ${styles.callsPanel}`}>
+        <div className={styles.panelHead}>
+          <span className={styles.panelTitle}>공고문 draft</span>
+          <span className={styles.panelHint}>의뢰 원문 + 선택 녹취 · 워딩은 다듬되 없는 사실은 금지</span>
+        </div>
+        <div className={styles.callsForm}>
+          <button
+            className={styles.runBtn}
+            onClick={loadDraft}
+            disabled={draftLoading || (!mockMode && selectedCalls.length === 0)}
+          >
+            {draftLoading ? "작성 중…" : draft ? "다시 작성" : "공고문 draft 생성"}
+          </button>
+          <span className={styles.muted}>
+            {selectedCalls.length > 0
+              ? `선택한 통화 ${selectedCalls.length}건을 반영합니다`
+              : "위에서 통화를 선택하면 활성화됩니다"}
+          </span>
+        </div>
+        {draftError && <p className={styles.err}>{draftError}</p>}
+        {draft && (
+          <div className={styles.repostDoc}>
+            {draft.sections.map((s) => {
+              const missing = s.body.trim() === REPOST_MISSING;
+              return (
+                <div key={s.heading} className={styles.repostSection}>
+                  <div className={styles.repostHeading}>[{s.heading}]</div>
+                  <p className={`${styles.repostBody} ${missing ? styles.repostMissing : ""}`}>
+                    {s.body}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
         )}
       </section>
     </div>

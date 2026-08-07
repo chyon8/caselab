@@ -146,6 +146,83 @@
   margin-bottom: var(--space-md);
 }
 
+/* ── 프로젝트 브리핑 — 원문 안 읽어도 파악되게, 맨 위 ── */
+.briefPanel {
+  margin-bottom: var(--space-lg);
+  background: var(--color-canvas);
+}
+.briefOneLiner {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink);
+  line-height: 1.5;
+  margin-bottom: var(--space-sm);
+}
+.briefPoints {
+  margin: 0;
+  padding-left: 18px;
+}
+.briefPoints li {
+  font-size: 13.5px;
+  color: var(--color-ink);
+  line-height: 1.65;
+  margin-bottom: 4px;
+}
+.briefBlock {
+  margin-top: var(--space-md);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-divider-soft);
+}
+.briefBlockTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: var(--space-xs);
+}
+.briefBlockNote {
+  margin-left: 6px;
+  font-weight: 500;
+  color: var(--text-faint);
+}
+.briefTerm {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  color: var(--text-body-soft);
+  line-height: 1.55;
+}
+.briefTermName {
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-right: 6px;
+}
+.briefWants {
+  margin: 0;
+  padding-left: 18px;
+}
+.briefWants li {
+  font-size: 13px;
+  color: var(--color-ink);
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+/* 추측 — 원문에 직접 쓰이지 않고 추론한 항목임을 눈에 띄게 */
+.briefGuess {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 6px;
+  margin-right: 5px;
+  color: var(--status-progress-fg);
+  background: var(--status-progress-bg);
+}
+.briefEvidence {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  line-height: 1.5;
+}
+
 /* 고객에게 물어볼 질문 — 범위·견적을 위한 핵심 산출물, 상단에 크게 */
 .questionsPanel {
   margin-bottom: var(--space-lg);

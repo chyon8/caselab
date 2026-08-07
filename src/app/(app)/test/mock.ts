@@ -9,6 +9,10 @@ import { SECTIONS, assembleScore } from "@/lib/scoring";
 import type { EstimateResult, EstimateOption } from "@/lib/estimate";
 import { calcCost, type Level } from "@/lib/estimate-calc";
 import type { RepostResult } from "@/lib/repost";
+import type { BriefResult } from "@/lib/brief";
+import { assembleBrief } from "@/lib/brief";
+import type { DraftResult } from "@/lib/draft";
+import { assembleDraft } from "@/lib/draft";
 import type { CallRecord } from "@/lib/calls";
 import { MOCK_PROJECTS } from "@/data/mock-data";
 
@@ -191,6 +195,55 @@ const MOCK_REPOST: RepostResult = {
   ],
 };
 
+// 브리핑 — 근거 대조(assembleBrief)를 실제로 통과시킨다. mock이 규칙을 우회하면
+// "원문에 없는 인용은 버린다"는 규칙이 화면에서만 지켜지는 것처럼 보이게 되므로.
+function buildBrief(): BriefResult {
+  return assembleBrief(
+    {
+      oneLiner: "견주와 산책 도우미를 지역·시간으로 연결하는 반려동물 산책 매칭 앱",
+      points: [
+        "견주가 조건(지역·시간)으로 도우미를 찾아 예약하는 양방향 매칭 서비스",
+        "산책 종료 후 사진·이동 경로를 견주에게 전달 — 위치 추적 기능이 필요",
+        "결제를 앱 안에서 처리 (PG 연동 필요)",
+        "예산 미정, 일정은 '최대한 빨리'로만 언급 — 둘 다 확정 필요",
+      ],
+      // 고객이 말하지 않은 것들이 일부러 섞여 있다 — concepts는 근거 대조를 안 하는 항목이고,
+      // "언급 안 된 것을 꺼내오는" 게 존재 이유다.
+      concepts: [
+        {
+          term: "실시간 위치 추적 (GPS)",
+          plain: "산책 경로를 지도에 그리려면 앱이 백그라운드에서 계속 위치를 받아야 한다. 배터리 소모·정확도·백그라운드 위치 권한 정책이 따라붙어 공수가 크게 갈리는 지점.",
+        },
+        {
+          term: "PG 연동과 정산 구조",
+          plain: "인앱 결제는 PG사 연동이 필요하고, 받은 돈을 도우미에게 나눠주는 방식(에스크로/직불/월정산)에 따라 개발량이 크게 달라진다. 고객은 아직 정산 얘기를 안 했다.",
+        },
+        {
+          term: "푸시 알림",
+          plain: "예약 수락·산책 시작/종료를 알리려면 필요하다. 고객이 언급하진 않았지만 이 유형에선 거의 필수로 따라오는 기능.",
+        },
+        {
+          term: "앱스토어 심사",
+          plain: "iOS/Android 출시는 심사 기간이 별도로 붙는다. '최대한 빨리'라는 일정 요구와 직접 충돌할 수 있는 요소.",
+        },
+      ],
+      wants: [
+        {
+          text: "견주가 조건에 맞는 산책 도우미를 직접 찾아 예약할 수 있게 하는 것",
+          evidence: "견주가 산책 도우미를 지역·시간으로 찾아 예약하고",
+          inferred: false,
+        },
+        {
+          text: "맡긴 산책이 제대로 됐는지 확인시켜 주는 것 — 견주가 현장에 없어 생기는 불안을 덜려는 목적으로 보인다",
+          evidence: "산책 끝나면 사진이랑 경로를 받아봐요",
+          inferred: true,
+        },
+      ],
+    },
+    MOCK_TEXT,
+  );
+}
+
 // "통화 녹취 불러오기" mock — 실제로는 n8n 웹훅에서 온다. 필드·형식은 CallRecord와 동일
 // (created_at은 실제 API처럼 타임존 없는 "YYYY-MM-DD HH:MM:SS" 문자열).
 export const MOCK_CALLS: CallRecord[] = [
@@ -221,8 +274,45 @@ export const MOCK_CALLS: CallRecord[] = [
   },
 ];
 
+// 공고문 draft — MOCK_TEXT + MOCK_CALLS 두 통화에서 확정된 내용이 반영된 상태.
+// (통화에서 "관리자 페이지는 필요 없다", "3개월 내 iOS 우선", "월 1회 정산"이 나왔다)
+const MOCK_DRAFT: DraftResult = assembleDraft({
+  sections: [
+    { heading: "추천 공고문 제목", body: "반려동물 산책 도우미 매칭 앱 개발" },
+    { heading: "프로젝트 키워드", body: "O2O 매칭, 예약, 인앱 결제, 위치 기록, iOS" },
+    {
+      heading: "프로젝트 개요",
+      body: "견주와 산책 도우미를 지역·시간 조건으로 연결하는 반려동물 산책 매칭 앱을 개발합니다.",
+    },
+    { heading: "프로젝트 배경 및 목표", body: MISSING },
+    {
+      heading: "과업 범위",
+      body:
+        "1. 수행 범위\n" +
+        "- 지역·시간 조건 기반 산책 도우미 검색 및 예약\n" +
+        "- 산책 종료 후 사진 및 이동 경로 전달\n" +
+        "- 앱 내 결제 기능\n" +
+        "- 도우미 정산 (월 1회 일괄 지급)\n" +
+        "2. 제외 범위\n" +
+        "- 관리자 페이지 (클라이언트가 자체 관리 예정)",
+    },
+    { heading: "기술/제조 스택", body: MISSING },
+    { heading: "클라이언트 준비 사항", body: MISSING },
+    {
+      heading: "주요 일정",
+      body: "오픈 목표: 3개월 이내\niOS 우선 출시 후 Android 순차 진행",
+    },
+    { heading: "개발 기간", body: MISSING },
+    { heading: "지원 자격 및 우대 사항", body: MISSING },
+    { heading: "산출물", body: MISSING },
+    { heading: "계약 관련 특이 사항", body: "예산 미정 — 협의 필요" },
+  ],
+});
+
 export interface TestBundle {
   text: string;
+  brief: BriefResult;
+  draft: DraftResult;
   questions: AskQuestion[];
   score: ScoreResult;
   estimate: EstimateResult;
@@ -233,6 +323,8 @@ export interface TestBundle {
 
 export const MOCK_BUNDLE: TestBundle = {
   text: MOCK_TEXT,
+  brief: buildBrief(),
+  draft: MOCK_DRAFT,
   questions: MOCK_QUESTIONS,
   score: buildScore(),
   estimate: buildEstimate(),
