@@ -167,7 +167,7 @@ export async function briefInput(text: string): Promise<BriefResult> {
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: PROMPT },
-        { role: "user", content: `고객 의뢰 인풋:\n"""\n${text.slice(0, 12000)}\n"""` },
+        { role: "user", content: `고객 의뢰 인풋:\n"""\n${text}\n"""` },
       ],
     }),
   });

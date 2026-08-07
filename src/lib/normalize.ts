@@ -116,7 +116,7 @@ export async function normalizePosting(raw: string): Promise<string> {
       temperature: 0,
       messages: [
         { role: "system", content: PROMPT },
-        { role: "user", content: `원문:\n"""\n${raw.slice(0, 12000)}\n"""` },
+        { role: "user", content: `원문:\n"""\n${raw}\n"""` },
       ],
     }),
   });

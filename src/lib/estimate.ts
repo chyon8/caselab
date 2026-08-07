@@ -139,7 +139,7 @@ export async function estimateInput(text: string): Promise<EstimateResult> {
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: PROMPT },
-        { role: "user", content: `고객 요구사항:\n"""\n${text.slice(0, 12000)}\n"""` },
+        { role: "user", content: `고객 요구사항:\n"""\n${text}\n"""` },
       ],
     }),
   });

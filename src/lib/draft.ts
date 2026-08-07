@@ -22,8 +22,10 @@ export interface DraftResult {
   sections: RepostSection[];
 }
 
-/** 통화 한 건이 프롬프트에 차지할 수 있는 최대 길이 — 10분 통화면 수천 자라 그대로 넣으면 비용·정확도가 나빠진다 */
-const CALL_CHARS = 4000;
+// 인풋은 자르지 않는다 — 의뢰 원문도 녹취도 **전량** 넣는다(사용자 결정, 2026-08-07).
+// 원래 녹취에 4,000자 상한이 있었는데, 7분 통화가 4,965자로 나와 뒤 20%(산출물·인수인계 논의)가
+// 잘려나가고 있었다. 검수 통화는 10분을 넘기도 해서 상한을 두면 결정적인 대목이 조용히 사라진다.
+// 비용보다 누락이 비싸다.
 
 const PROMPT = `너는 20년 경력의 **수석 IT/하드웨어 제조 컨설턴트**다.
 재료 두 가지를 받아 위시켓 공고 양식으로 **개발사가 바로 견적을 낼 수 있는 공고문 초안**을 쓴다.
@@ -141,7 +143,7 @@ function callsBlock(calls: DraftCall[]): string {
       const when = c.created_at ? ` (${c.created_at})` : "";
       const parts = [`--- 통화 ${i + 1}${when} ---`];
       if (c.summary) parts.push(`[요약] ${c.summary}`);
-      if (c.transcript) parts.push(`[녹취] ${c.transcript.slice(0, CALL_CHARS)}`);
+      if (c.transcript) parts.push(`[녹취] ${c.transcript}`);
       return parts.join("\n");
     })
     .join("\n\n");
@@ -153,7 +155,7 @@ export async function draftPosting(text: string, calls: DraftCall[]): Promise<Dr
   if (!key) throw new Error("OPENAI_API_KEY가 설정되지 않았습니다.");
 
   const material =
-    `① 고객 의뢰 원문:\n"""\n${text.slice(0, 12000)}\n"""\n\n` +
+    `① 고객 의뢰 원문:\n"""\n${text}\n"""\n\n` +
     (calls.length > 0
       ? `② 검수 통화 녹취 (${calls.length}건, 시간순):\n"""\n${callsBlock(calls)}\n"""`
       : "② 통화 녹취: 없음");

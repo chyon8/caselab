@@ -161,7 +161,7 @@ export async function mergeReviewTips(pool: PoolQna[], posting: string): Promise
         {
           role: "user",
           content:
-            `=== 지금 검수 중인 공고 ===\n${posting.slice(0, 3000)}\n\n` +
+            `=== 지금 검수 중인 공고 ===\n${posting}\n\n` +
             `=== 의미상 유사했던 과거 프로젝트 ${useful.length}건 ===\n${body}`,
         },
       ],
