@@ -9,6 +9,7 @@ import { SECTIONS, assembleScore } from "@/lib/scoring";
 import type { EstimateResult, EstimateOption } from "@/lib/estimate";
 import { calcCost, type Level } from "@/lib/estimate-calc";
 import type { RepostResult } from "@/lib/repost";
+import type { CallRecord } from "@/lib/calls";
 import { MOCK_PROJECTS } from "@/data/mock-data";
 
 export const MOCK_TEXT =
@@ -189,6 +190,36 @@ const MOCK_REPOST: RepostResult = {
     { heading: "계약 관련 특이 사항", body: "예산은 잘 모르겠고" },
   ],
 };
+
+// "통화 녹취 불러오기" mock — 실제로는 n8n 웹훅에서 온다. 필드·형식은 CallRecord와 동일
+// (created_at은 실제 API처럼 타임존 없는 "YYYY-MM-DD HH:MM:SS" 문자열).
+export const MOCK_CALLS: CallRecord[] = [
+  {
+    id: 9001,
+    project_id: 155123,
+    project_title: "반려동물 산책 매칭 앱",
+    call_type: "out",
+    call_time_secs: 612,
+    summary:
+      "결제는 인앱으로, 도우미 정산은 월 1회 일괄 지급으로 확정. 관리자 페이지는 필요 없다고 명시.",
+    transcript:
+      "매니저: 안녕하세요, 결제 방식 관련해서 여쭤보려고 연락드렸습니다. 고객: 네, 결제는 앱 안에서 바로 처리되면 좋겠고요, 도우미 쪽 정산은 매달 한 번에 몰아서 주는 걸로 하려고요. 매니저: 관리자 페이지 쪽은 별도로 필요하신가요? 고객: 아 그건 필요 없어요, 저희가 직접 엑셀로 관리할 거라서요.",
+    drive_url: null,
+    created_at: "2026-08-05 14:20:00",
+  },
+  {
+    id: 9002,
+    project_id: 155123,
+    project_title: "반려동물 산책 매칭 앱",
+    call_type: "in",
+    call_time_secs: 240,
+    summary: "오픈 목표는 3개월 내, iOS 우선 출시 후 Android 순차 진행으로 확인.",
+    transcript:
+      "매니저: 일정은 어느 정도로 보고 계신가요? 고객: 3개월 안에는 열고 싶어요. 처음엔 아이폰 앱만 먼저 내고, 안드로이드는 그 다음에 만들어도 될 것 같아요.",
+    drive_url: null,
+    created_at: "2026-08-05 14:45:00",
+  },
+];
 
 export interface TestBundle {
   text: string;

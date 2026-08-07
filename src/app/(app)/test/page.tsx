@@ -6,6 +6,7 @@
 // Mock 모드(기본 ON): API를 아예 안 치고 고정 mock 번들을 즉시 표시(UI 반복 작업용). 토글로 실제 호출.
 
 import { useState, useEffect } from "react";
+import { useApp } from "@/state/AppContext";
 import type { SimilarProject, ReviewTips } from "@/data/types";
 import type { ScoreResult } from "@/lib/scoring";
 import type { AskQuestion } from "@/lib/questions";
@@ -13,7 +14,9 @@ import type { EstimateResult, EstimateOption } from "@/lib/estimate";
 import type { RepostResult } from "@/lib/repost";
 import { REPOST_MISSING } from "@/lib/repost";
 import { formatManwon } from "@/lib/estimate-calc";
-import { MOCK_BUNDLE } from "./mock";
+import type { CallRecord } from "@/lib/calls";
+import { scrubPii } from "@/lib/sync/pii";
+import { MOCK_BUNDLE, MOCK_CALLS } from "./mock";
 import styles from "./test.module.css";
 
 const STORAGE_KEY = "caselab-test-last";
@@ -27,6 +30,66 @@ const PURPOSE_CLASS: Record<AskQuestion["purpose"], string> = {
   견적: styles.qQuote,
   둘다: styles.qBoth,
 };
+
+/** 통화 길이(초) → "10분 12초" */
+function formatDuration(secs: number | null): string {
+  if (secs === null) return "";
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return m > 0 ? `${m}분 ${s}초` : `${s}초`;
+}
+
+/**
+ * "2026-04-07 13:55:33" → "04-07 13:55".
+ * Date로 파싱하지 않는다 — 타임존 표기가 없는 KST 문자열이라 파싱하면 브라우저 로컬 타임존으로
+ * 해석돼 표시가 밀릴 수 있다. 온 그대로 자른다.
+ */
+function formatCallTime(raw: string | null): string {
+  if (!raw) return "";
+  return raw.length >= 16 ? raw.slice(5, 16) : raw;
+}
+
+/**
+ * n8n 프록시 웹훅으로 통화 조회. 명세: n8n/calls_proxy_pipeline.md, DATA_SCHEMA §8-3.
+ *
+ * GET + 쿼리스트링으로 보낸다 — CORS "단순 요청"이라 프리플라이트(OPTIONS)가 없다.
+ * POST + application/json 이면 브라우저가 OPTIONS 를 먼저 보내는데, n8n Webhook 노드가 그걸
+ * 안 받으면 조회 자체가 실패한다. 세팅에서 가장 흔히 깨지는 지점이라 아예 피한다.
+ */
+async function fetchCalls(memberName: string, phone: string): Promise<CallRecord[]> {
+  const cfgRes = await fetch("/api/admin/calls-webhook", { cache: "no-store" });
+  const cfg = (await cfgRes.json()) as { webhookUrl?: string | null };
+  if (!cfg.webhookUrl) throw new Error("웹훅 URL 미설정 (N8N_CALLS_WEBHOOK_URL)");
+
+  const url = new URL(cfg.webhookUrl);
+  if (memberName) url.searchParams.set("member_name", memberName);
+  if (phone) url.searchParams.set("phone", phone);
+  url.searchParams.set("limit", "50"); // API 기본 50 / 최대 200
+
+  let res: Response;
+  try {
+    res = await fetch(url, { cache: "no-store" });
+  } catch {
+    // 브라우저는 CORS 차단·사외망·n8n 다운을 구분해주지 않는다(전부 같은 TypeError).
+    throw new Error(
+      "통화 조회 실패 — 회사(사내) 네트워크인지, n8n 웹훅 응답에 CORS 헤더가 있는지 확인하세요",
+    );
+  }
+  if (!res.ok) throw new Error(`통화 조회 실패 (${res.status})`);
+
+  const data = (await res.json()) as { results?: CallRecord[] };
+  return (data.results ?? [])
+    // 요약·녹취가 둘 다 없는 껍데기 행 제외 (기존 데이터의 35.7%가 이랬음)
+    .filter((c) => c.summary || c.transcript)
+    // 최신순 — API 정렬 방향에 기대지 않는다
+    .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""))
+    // 화면에 뿌리기 전 연락처 제거 (원문 속 전화·이메일)
+    .map((c) => ({
+      ...c,
+      summary: scrubPii(c.summary),
+      transcript: scrubPii(c.transcript),
+    }));
+}
 
 /** confidence → 막대 색 */
 function barColor(c: number): string {
@@ -123,6 +186,7 @@ function OptionCard({ option }: { option: EstimateOption }) {
 }
 
 export default function TestPage() {
+  const { user } = useApp();
   const [text, setText] = useState("");
 
   const [questions, setQuestions] = useState<AskQuestion[] | null>(null);
@@ -153,6 +217,19 @@ export default function TestPage() {
   const [repostLoading, setRepostLoading] = useState(false);
   const [repostError, setRepostError] = useState("");
 
+  // 통화 녹취 불러오기 — 조회 결과는 저장하지 않는다(선택한 것만 아래에 보관).
+  // 기본 member_name은 로그인 세션 이름(구글 표시 이름) — 통화 API 스펙과 실제로 맞는지는 미확인(calls_proxy_pipeline.md 참조).
+  const [memberName, setMemberName] = useState(user?.name ?? "");
+  const [phone, setPhone] = useState("");
+  // 이름·번호는 API에서 AND로 걸린다 → 둘을 동시에 노출하면 "번호로만 찾기"를 하려고 이름을 매번
+  // 지워야 한다. 애초에 택일이므로 모드로 가른다(안 쓰는 쪽은 아예 안 보내고 안 보인다).
+  const [lookupBy, setLookupBy] = useState<"name" | "phone">("name");
+  const [calls, setCalls] = useState<CallRecord[] | null>(null);
+  const [callsLoading, setCallsLoading] = useState(false);
+  const [callsError, setCallsError] = useState("");
+  // 선택된 통화만 보관(원문에는 아직 합치지 않음 — 공고문 draft 생성은 다음 단계)
+  const [selectedCalls, setSelectedCalls] = useState<CallRecord[]>([]);
+
   // Mock 모드 — 기본 ON(API 안 침). 토글 상태도 저장해 새로고침 후 유지.
   const [mockMode, setMockMode] = useState(true);
 
@@ -172,6 +249,7 @@ export default function TestPage() {
         tips?: ReviewTips;
         normalized?: string | null;
         repost?: RepostResult;
+        selectedCalls?: CallRecord[];
         mockMode?: boolean;
       };
       if (typeof b.text === "string") setText(b.text);
@@ -182,6 +260,7 @@ export default function TestPage() {
       if (b.tips) setTips(b.tips);
       if (b.normalized) setNormalized(b.normalized); // 새로고침 후에도 검수팁 버튼이 동작하도록
       if (b.repost) setRepost(b.repost);
+      if (b.selectedCalls) setSelectedCalls(b.selectedCalls);
       if (typeof b.mockMode === "boolean") setMockMode(b.mockMode);
     } catch {
       // 손상된 저장값 무시
@@ -195,12 +274,23 @@ export default function TestPage() {
     try {
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ text, questions, score, estimate, sims, tips, normalized, repost, mockMode }),
+        JSON.stringify({
+          text,
+          questions,
+          score,
+          estimate,
+          sims,
+          tips,
+          normalized,
+          repost,
+          selectedCalls,
+          mockMode,
+        }),
       );
     } catch {
       // 저장 실패(용량 등)는 조용히 무시 — 화면 동작엔 영향 없음
     }
-  }, [busy, text, questions, score, estimate, sims, tips, normalized, repost, mockMode]);
+  }, [busy, text, questions, score, estimate, sims, tips, normalized, repost, selectedCalls, mockMode]);
 
   /** 버튼으로만 호출된다. Mock 모드에선 API 대신 mock 팁. */
   const loadTips = () => {
@@ -223,6 +313,39 @@ export default function TestPage() {
       })
       .catch((e: unknown) => setTipsError(e instanceof Error ? e.message : "검수팁 생성 실패"))
       .finally(() => setTipsLoading(false));
+  };
+
+  /** "내 통화 불러오기" 버튼. Mock 모드에선 API 대신 mock 통화 목록. */
+  const loadCalls = () => {
+    setCallsError("");
+    setCalls(null);
+    if (mockMode) {
+      setCalls(MOCK_CALLS);
+      return;
+    }
+    // 고른 모드의 값만 보낸다 — 반대쪽 값이 섞이면 API가 AND로 걸어 조용히 0건이 된다
+    const name = lookupBy === "name" ? memberName.trim() : "";
+    const digits = lookupBy === "phone" ? phone.replace(/\D/g, "") : ""; // 하이픈 등 제거
+    // API 제약(DATA_SCHEMA §8-3)을 미리 걸러 400 대신 알아들을 수 있는 메시지를 낸다
+    if (lookupBy === "name" && !name) {
+      setCallsError("매니저 이름을 입력하세요");
+      return;
+    }
+    if (lookupBy === "phone" && digits.length < 8) {
+      setCallsError("전화번호는 8자리 이상 입력하세요 (부분 입력 가능)");
+      return;
+    }
+    setCallsLoading(true);
+    fetchCalls(name, digits)
+      .then((rows) => setCalls(rows))
+      .catch((e: unknown) => setCallsError(e instanceof Error ? e.message : "통화 조회 실패"))
+      .finally(() => setCallsLoading(false));
+  };
+
+  const toggleCallSelect = (call: CallRecord) => {
+    setSelectedCalls((prev) =>
+      prev.some((c) => c.id === call.id) ? prev.filter((c) => c.id !== call.id) : [...prev, call],
+    );
   };
 
   const run = () => {
@@ -565,6 +688,83 @@ export default function TestPage() {
           )}
         </section>
       </div>
+
+      {/* 통화 녹취 불러오기 — 고객과 통화 후 내 최근 통화를 조회·다중선택. 아직 원문에 합치지 않는다(draft 생성은 다음 단계). */}
+      <section className={`${styles.panel} ${styles.callsPanel}`}>
+        <div className={styles.panelHead}>
+          <span className={styles.panelTitle}>통화 녹취 불러오기</span>
+          <span className={styles.panelHint}>고객과 통화 후 · 선택한 녹취만 보관</span>
+        </div>
+        <div className={styles.callsForm}>
+          <div className={styles.lookupToggle}>
+            <button
+              type="button"
+              className={lookupBy === "name" ? styles.lookupOn : styles.lookupOff}
+              onClick={() => setLookupBy("name")}
+              disabled={callsLoading}
+            >
+              이름으로
+            </button>
+            <button
+              type="button"
+              className={lookupBy === "phone" ? styles.lookupOn : styles.lookupOff}
+              onClick={() => setLookupBy("phone")}
+              disabled={callsLoading}
+            >
+              번호로
+            </button>
+          </div>
+          {lookupBy === "name" ? (
+            <input
+              className={styles.callsInput}
+              placeholder="매니저 이름 (남의 통화를 찾으려면 그 사람 이름)"
+              value={memberName}
+              onChange={(e) => setMemberName(e.target.value)}
+              disabled={callsLoading}
+            />
+          ) : (
+            <input
+              className={styles.callsInput}
+              placeholder="고객 전화번호 (부분 입력 가능)"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={callsLoading}
+            />
+          )}
+          <button className={styles.runBtn} onClick={loadCalls} disabled={callsLoading}>
+            {callsLoading ? "조회 중…" : "통화 불러오기"}
+          </button>
+        </div>
+        {callsError && <p className={styles.err}>{callsError}</p>}
+        {!callsLoading && !callsError && !calls && (
+          <p className={styles.muted}>버튼을 눌러 최근 통화를 조회하세요.</p>
+        )}
+        {calls && calls.length === 0 && <p className={styles.muted}>조회된 통화가 없습니다.</p>}
+        {calls && calls.length > 0 && (
+          <div className={styles.callList}>
+            {calls.map((c) => (
+              <label key={c.id} className={styles.callRow}>
+                <input
+                  type="checkbox"
+                  checked={selectedCalls.some((s) => s.id === c.id)}
+                  onChange={() => toggleCallSelect(c)}
+                />
+                <div className={styles.callBody}>
+                  <div className={styles.callMeta}>
+                    {c.project_title && <span className={styles.callProject}>{c.project_title}</span>}
+                    <span>{formatCallTime(c.created_at)}</span>
+                    <span>{formatDuration(c.call_time_secs)}</span>
+                  </div>
+                  {c.summary && <p className={styles.callSummary}>{c.summary}</p>}
+                </div>
+              </label>
+            ))}
+          </div>
+        )}
+        {selectedCalls.length > 0 && (
+          <p className={styles.selectedHint}>{selectedCalls.length}건 선택됨</p>
+        )}
+      </section>
     </div>
   );
 }

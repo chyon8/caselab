@@ -30,6 +30,7 @@ interface ListState {
 }
 
 interface AppContextValue {
+  user: { name: string; email: string } | null;
   darkMode: boolean;
   toggleDarkMode: () => void;
   sidebarCollapsed: boolean;
@@ -57,10 +58,12 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({
+  user,
   notifications,
   initialReviews,
   children,
 }: {
+  user: { name: string; email: string } | null;
   notifications: AppNotification[];
   initialReviews: Record<string, CaseReview>;
   children: React.ReactNode;
@@ -109,6 +112,7 @@ export function AppProvider({
   }, [darkMode]);
 
   const value: AppContextValue = {
+    user,
     darkMode,
     toggleDarkMode: () => setDarkMode((v) => !v),
     sidebarCollapsed,

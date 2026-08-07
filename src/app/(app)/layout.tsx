@@ -16,7 +16,11 @@ export default async function AppLayout({
   ]);
 
   return (
-    <AppProvider notifications={notifications} initialReviews={reviews}>
+    <AppProvider
+      user={session && { name: session.name, email: session.email }}
+      notifications={notifications}
+      initialReviews={reviews}
+    >
       <AppShell user={session && { name: session.name, email: session.email }}>
         {children}
       </AppShell>
