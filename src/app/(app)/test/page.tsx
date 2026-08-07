@@ -102,14 +102,14 @@ async function fetchCalls(memberName: string, phone: string): Promise<CallRecord
 function reviveBrief(b: unknown): BriefResult | null {
   if (!b || typeof b !== "object") return null;
   const v = b as Partial<BriefResult>;
-  if (!Array.isArray(v.points) || !Array.isArray(v.concepts) || !Array.isArray(v.wants)) {
+  if (!Array.isArray(v.points) || !Array.isArray(v.concepts) || !Array.isArray(v.terms)) {
     return null;
   }
   return {
     oneLiner: typeof v.oneLiner === "string" ? v.oneLiner : "",
     points: v.points,
+    terms: v.terms,
     concepts: v.concepts,
-    wants: v.wants,
   };
 }
 
@@ -268,6 +268,8 @@ export default function TestPage() {
   const [callsError, setCallsError] = useState("");
   // 선택된 통화만 보관(원문에는 아직 합치지 않음 — 공고문 draft 생성은 다음 단계)
   const [selectedCalls, setSelectedCalls] = useState<CallRecord[]>([]);
+  // 원문 상세보기 — 요약 2줄만으로는 어느 통화인지 못 가르는 경우가 있어 전문을 그대로 띄운다
+  const [viewCall, setViewCall] = useState<CallRecord | null>(null);
 
   // Mock 모드 — 기본 ON(API 안 침). 토글 상태도 저장해 새로고침 후 유지.
   const [mockMode, setMockMode] = useState(true);
@@ -308,6 +310,16 @@ export default function TestPage() {
       // 손상된 저장값 무시
     }
   }, []);
+
+  // 원문 모달 Esc 닫기
+  useEffect(() => {
+    if (!viewCall) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setViewCall(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [viewCall]);
 
   // 결과가 정착되면(로딩 중 아님) 스냅샷 저장 — 매번 API 안 쳐도 되게
   useEffect(() => {
@@ -610,6 +622,20 @@ export default function TestPage() {
                 ))}
               </ul>
             )}
+            {brief.terms.length > 0 && (
+              <div className={styles.briefBlock}>
+                <div className={styles.briefBlockTitle}>
+                  용어·개념
+                  <span className={styles.briefBlockNote}>고객이 쓴 말 중 알아둬야 할 것</span>
+                </div>
+                {brief.terms.map((c, i) => (
+                  <p key={i} className={styles.briefTerm}>
+                    <span className={styles.briefTermName}>{c.term}</span>
+                    {c.plain}
+                  </p>
+                ))}
+              </div>
+            )}
             {brief.concepts.length > 0 && (
               <div className={styles.briefBlock}>
                 <div className={styles.briefBlockTitle}>
@@ -622,20 +648,6 @@ export default function TestPage() {
                     {c.plain}
                   </p>
                 ))}
-              </div>
-            )}
-            {brief.wants.length > 0 && (
-              <div className={styles.briefBlock}>
-                <div className={styles.briefBlockTitle}>고객이 원하는 것</div>
-                <ul className={styles.briefWants}>
-                  {brief.wants.map((w, i) => (
-                    <li key={i}>
-                      {w.inferred && <span className={styles.briefGuess}>추측</span>}
-                      {w.text}
-                      <span className={styles.briefEvidence}>근거: “{w.evidence}”</span>
-                    </li>
-                  ))}
-                </ul>
               </div>
             )}
           </>
@@ -908,6 +920,19 @@ export default function TestPage() {
                     <span>{formatDuration(c.call_time_secs)}</span>
                   </div>
                   {c.summary && <p className={styles.callSummary}>{c.summary}</p>}
+                  {c.transcript && (
+                    <button
+                      type="button"
+                      className={styles.callDetailBtn}
+                      // label 안이라 클릭이 체크박스로 전달된다 — 상세보기는 선택과 분리
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setViewCall(c);
+                      }}
+                    >
+                      원문 보기
+                    </button>
+                  )}
                 </div>
               </label>
             ))}
@@ -956,6 +981,36 @@ export default function TestPage() {
           </div>
         )}
       </section>
+
+      {/* 통화 원문 모달 — 조회 결과에 이미 들어있는 transcript 를 그대로 보여줄 뿐, 따로 안 불러온다 */}
+      {viewCall && (
+        <div className={styles.modalScrim} onClick={() => setViewCall(null)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHead}>
+              <div>
+                <div className={styles.modalTitle}>{viewCall.project_title ?? "통화 녹취"}</div>
+                <div className={styles.callMeta}>
+                  <span>{formatCallTime(viewCall.created_at)}</span>
+                  <span>{formatDuration(viewCall.call_time_secs)}</span>
+                </div>
+              </div>
+              <button type="button" className={styles.modalClose} onClick={() => setViewCall(null)}>
+                닫기
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              {viewCall.summary && (
+                <>
+                  <div className={styles.modalLabel}>요약</div>
+                  <p className={styles.modalSummary}>{viewCall.summary}</p>
+                </>
+              )}
+              <div className={styles.modalLabel}>전문</div>
+              <pre className={styles.modalTranscript}>{viewCall.transcript}</pre>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

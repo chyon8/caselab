@@ -17,6 +17,7 @@
   --color-surface-tile-3: #252527;
   --color-surface-black: #000000;
   --color-chip-translucent: rgba(210, 210, 215, 0.64);
+  --color-scrim: rgba(0, 0, 0, 0.4);
 
   /* --- Text --- */
   --color-ink: #1d1d1f;

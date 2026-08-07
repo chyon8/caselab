@@ -188,7 +188,6 @@ const MOCK_REPOST: RepostResult = {
     { heading: "기술/제조 스택", body: MISSING },
     { heading: "클라이언트 준비 사항", body: MISSING },
     { heading: "주요 일정", body: "최대한 빨리요." },
-    { heading: "개발 기간", body: MISSING },
     { heading: "지원 자격 및 우대 사항", body: MISSING },
     { heading: "산출물", body: MISSING },
     { heading: "계약 관련 특이 사항", body: "예산은 잘 모르겠고" },
@@ -207,7 +206,18 @@ function buildBrief(): BriefResult {
         "결제를 앱 안에서 처리 (PG 연동 필요)",
         "예산 미정, 일정은 '최대한 빨리'로만 언급 — 둘 다 확정 필요",
       ],
-      // 고객이 말하지 않은 것들이 일부러 섞여 있다 — concepts는 근거 대조를 안 하는 항목이고,
+      // 고객이 쓴 말만 올라온다 — assembleBrief가 인풋에 없는 용어는 버린다.
+      terms: [
+        {
+          term: "견주",
+          plain: "반려동물 주인. 이 서비스의 수요자 쪽이고, 도우미와 역할·화면이 완전히 갈리는 양방향 앱이라는 뜻이다.",
+        },
+        {
+          term: "경로",
+          plain: "산책 중 이동한 길. 사진과 달리 지도 위에 그려야 해서, 위치를 계속 기록·저장하는 구조가 필요해진다.",
+        },
+      ],
+      // 고객이 말하지 않은 것들이 일부러 섞여 있다 — concepts는 인풋에 없는 말만 통과하는 항목이고,
       // "언급 안 된 것을 꺼내오는" 게 존재 이유다.
       concepts: [
         {
@@ -225,18 +235,6 @@ function buildBrief(): BriefResult {
         {
           term: "앱스토어 심사",
           plain: "iOS/Android 출시는 심사 기간이 별도로 붙는다. '최대한 빨리'라는 일정 요구와 직접 충돌할 수 있는 요소.",
-        },
-      ],
-      wants: [
-        {
-          text: "견주가 조건에 맞는 산책 도우미를 직접 찾아 예약할 수 있게 하는 것",
-          evidence: "견주가 산책 도우미를 지역·시간으로 찾아 예약하고",
-          inferred: false,
-        },
-        {
-          text: "맡긴 산책이 제대로 됐는지 확인시켜 주는 것 — 견주가 현장에 없어 생기는 불안을 덜려는 목적으로 보인다",
-          evidence: "산책 끝나면 사진이랑 경로를 받아봐요",
-          inferred: true,
         },
       ],
     },
@@ -302,7 +300,6 @@ const MOCK_DRAFT: DraftResult = assembleDraft({
       heading: "주요 일정",
       body: "오픈 목표: 3개월 이내\niOS 우선 출시 후 Android 순차 진행",
     },
-    { heading: "개발 기간", body: MISSING },
     { heading: "지원 자격 및 우대 사항", body: MISSING },
     { heading: "산출물", body: MISSING },
     { heading: "계약 관련 특이 사항", body: "예산 미정 — 협의 필요" },

@@ -195,33 +195,6 @@
   color: var(--color-primary);
   margin-right: 6px;
 }
-.briefWants {
-  margin: 0;
-  padding-left: 18px;
-}
-.briefWants li {
-  font-size: 13px;
-  color: var(--color-ink);
-  line-height: 1.6;
-  margin-bottom: 6px;
-}
-/* 추측 — 원문에 직접 쓰이지 않고 추론한 항목임을 눈에 띄게 */
-.briefGuess {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 1px 7px;
-  border-radius: 6px;
-  margin-right: 5px;
-  color: var(--status-progress-fg);
-  background: var(--status-progress-bg);
-}
-.briefEvidence {
-  display: block;
-  font-size: 11.5px;
-  color: var(--text-faint);
-  line-height: 1.5;
-}
 
 /* 고객에게 물어볼 질문 — 범위·견적을 위한 핵심 산출물, 상단에 크게 */
 .questionsPanel {
@@ -701,8 +674,87 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
+.callDetailBtn {
+  margin-top: 6px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--rounded-pill);
+  cursor: pointer;
+}
 .selectedHint {
   margin-top: var(--space-sm);
   font-size: 12px;
   color: var(--text-faint);
+}
+
+/* ── 통화 원문 모달 ── */
+.modalScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  background: var(--color-scrim);
+}
+.modal {
+  display: flex;
+  flex-direction: column;
+  width: min(760px, 100%);
+  max-height: 84vh;
+  padding: var(--space-lg);
+  background: var(--color-canvas);
+  border-radius: 14px;
+}
+.modalHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+.modalTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin-bottom: 2px;
+}
+.modalClose {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-rule);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.modalBody {
+  overflow-y: auto;
+}
+.modalLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.modalSummary {
+  margin: 0 0 var(--space-md);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-body-soft);
+}
+.modalTranscript {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--color-ink);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
