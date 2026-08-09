@@ -285,15 +285,26 @@ export interface ReportStats {
   /** 아직 모집 중 — 계약률 계산에서 제외 */
   pending: number;
   contractRate: number;
-  /** 취소가 터진 단계 분포 */
-  cancelByStage: Breakdown[];
+  /**
+   * 이 구간에서 아직 결판 안 난 비율(%).
+   * 최근 구간을 보면 이 값이 커진다 — 계약률이 표본의 일부만 반영한다는 경고에 쓴다.
+   */
+  pendingRate: number;
+  /** 이 구간에 실제로 담긴 모집 전환일 범위 (ISO). 화면 캡션을 하드코딩하지 않으려고 DB에서 받는다 */
+  coverage: { from: string | null; to: string | null };
+  /** 계약금액 중앙값(원). 0원 건 제외 — "전형적인 건"이 얼마인지 */
+  contractMedian: number | null;
+  /** 계약금액 평균(원). 0원 건 제외 — 중앙값과 크게 벌어지면 소수 대형 건이 평균을 끌어올린다는 신호 */
+  contractMean: number | null;
+  /** 계약금액 구간별 분포(계약까지 간 건, 0원 제외) — rate는 이 구간의 구성비 */
+  contractByAmount: Breakdown[];
   byBudget: Breakdown[];
   byScope: Breakdown[];
   byProposals: Breakdown[];
-  /** 단계별 소요일 중앙값 */
-  medianDays: { inspection: number; recruiting: number; progress: number };
-  /** 모집 예산 대비 실제 계약금액 */
-  budgetDelta: { increased: number; same: number; decreased: number };
+  /** 단계별 소요일 중앙값. cancelled = 모집 → 취소 (결과가 반대인 건을 따로 본다) */
+  medianDays: { inspection: number; recruiting: number; progress: number; cancelled: number };
+  /** 모집 예산 대비 실제 계약금액. zeroExcluded = 계약금액 0원이라 뺀 건수 */
+  budgetDelta: { increased: number; same: number; decreased: number; zeroExcluded: number };
 }
 
 /** 리포트의 한 줄 — "1억+ : 결판 186건 중 계약률 14.5%" */
@@ -303,6 +314,8 @@ export interface Breakdown {
   decided: number;
   /** % */
   rate: number;
+  /** 표본이 적어 비율이 우연에 흔들리는 구간 — 화면에서 흐리게 + 배지 */
+  lowSample?: boolean;
 }
 
 export interface AppNotification {

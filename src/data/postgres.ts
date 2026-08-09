@@ -356,8 +356,15 @@ function toProjectFull(
 const DECIDED = `(stage >= 3 AND status <> '완료(취소)') OR status = '완료(취소)'`;
 const WON = `stage >= 3 AND status <> '완료(취소)'`;
 
-/** 표본이 이보다 적은 구간은 리포트에 싣지 않는다 — 비율이 우연에 흔들린다 */
-const MIN_SAMPLE = 100;
+/**
+ * 표본이 이보다 적은 구간은 리포트에 싣지 않는다 — 비율이 우연에 흔들린다.
+ * 100에서 30으로 낮췄다: 기간을 3개월로 좁히면 100 컷에 예산 상위 구간이 통째로 사라져
+ * 필터를 켤수록 리포트가 비어버린다(실측 — 최근 6개월 1억 이상은 결판 38건).
+ * 숨기는 대신 SOFT_SAMPLE 미만은 화면에서 "표본 적음"으로 표시해 못 믿을 수치라고 말한다.
+ */
+const MIN_SAMPLE = 30;
+/** 이 아래는 숨기진 않되 신뢰할 수 없다고 표시한다 */
+const SOFT_SAMPLE = 100;
 
 /** 유사사례 집계 통계 — 코사인 유사도 상위 N건을 표본으로 삼는다(카드로 보여주는 5~8건보다 크게) */
 const SIMILAR_STATS_POOL = 30;
@@ -513,13 +520,15 @@ interface BreakdownRow {
   rate: string | null;
 }
 
-function toBreakdown(rows: BreakdownRow[]): Breakdown[] {
+/** soft를 주면 표본이 그보다 적은 행에 lowSample 플래그를 단다 (리포트 전용 — 유사사례 통계는 안 쓴다) */
+function toBreakdown(rows: BreakdownRow[], soft?: number): Breakdown[] {
   return rows
     .filter((r) => r.label !== null)
     .map((r) => ({
       label: r.label as string,
       decided: Number(r.decided),
       rate: Number(r.rate ?? 0),
+      ...(soft !== undefined && Number(r.decided) < soft ? { lowSample: true } : {}),
     }));
 }
 
@@ -599,104 +608,162 @@ function toSimilarStats(row: StatsRow): SimilarStats {
 }
 
 export class PostgresDataSource implements DataSource {
-  async getReportStats(): Promise<ReportStats> {
-    const live = `FROM projects WHERE deleted_at IS NULL AND hidden = false`;
+  /**
+   * periodDays를 주면 **모집 전환일(recruit_started_at) 기준 최근 N일**로 자른다.
+   * 목록 필터(ProjectQuery.periodDays)와 같은 기준 — 두 화면이 다른 날짜를 쓰면 건수가 안 맞는다.
+   * 값은 호출부에서 프리셋 화이트리스트로 검증해서 오지만, SQL에 직접 박히므로 여기서 한 번 더 막는다.
+   */
+  async getReportStats(periodDays?: number | null): Promise<ReportStats> {
+    const days = Number.isInteger(periodDays) && (periodDays as number) > 0 ? periodDays : null;
+    const window = days ? `AND recruit_started_at >= now() - interval '${days} days'` : "";
+    const live = `FROM projects WHERE deleted_at IS NULL AND hidden = false ${window}`;
 
-    const [totals] = await query<{
-      total: string;
-      contracted: string;
-      cancelled: string;
-      pending: string;
-    }>(
-      `SELECT count(*) AS total,
-              count(*) FILTER (WHERE ${WON})                                AS contracted,
-              count(*) FILTER (WHERE status = '완료(취소)')                  AS cancelled,
-              count(*) FILTER (WHERE stage < 3 AND status <> '완료(취소)')   AS pending
+    const [
+      [totals],
+      contractByAmount,
+      byBudget,
+      byScope,
+      byProposals,
+      [dayRows],
+      [delta],
+    ] = await Promise.all([
+      query<{
+        total: string;
+        contracted: string;
+        cancelled: string;
+        pending: string;
+        contract_median: string | null;
+        contract_mean: string | null;
+        from_at: string | null;
+        to_at: string | null;
+      }>(
+        `SELECT count(*) AS total,
+                count(*) FILTER (WHERE ${WON})                                AS contracted,
+                count(*) FILTER (WHERE status = '완료(취소)')                  AS cancelled,
+                count(*) FILTER (WHERE stage < 3 AND status <> '완료(취소)')   AS pending,
+                percentile_cont(0.5) WITHIN GROUP (
+                  ORDER BY contract_amount) FILTER (WHERE contract_amount > 0) AS contract_median,
+                avg(contract_amount) FILTER (WHERE contract_amount > 0)       AS contract_mean,
+                min(recruit_started_at) AS from_at,
+                max(recruit_started_at) AS to_at
+           ${live}`,
+      ),
+
+      // 계약까지 간 건의 계약금액 구간별 분포(구성비). 0원(미기재)은 제외 — budgetDelta와 같은 이유.
+      query<BreakdownRow>(
+        `SELECT CASE WHEN contract_amount <  5000000  THEN '500만 이하'
+                     WHEN contract_amount < 10000000  THEN '500~1,000만'
+                     WHEN contract_amount < 20000000  THEN '1,000~2,000만'
+                     WHEN contract_amount < 50000000  THEN '2,000~5,000만'
+                     ELSE '5,000만 이상' END AS label,
+                count(*) AS decided,
+                round(100.0 * count(*) / sum(count(*)) OVER (), 1) AS rate
+           ${live} AND contract_amount > 0
+          GROUP BY 1 ORDER BY min(contract_amount)`,
+      ),
+
+      // budget_monthly(기간제 = 월 단가)는 총액이 아니라 월 단가라 예산 구간에 섞이면 안 된다.
+      // 현재 데이터는 전건 false지만, 들어오기 시작하면 조용히 저예산 구간을 오염시킨다.
+      query<BreakdownRow>(
+        `SELECT CASE WHEN budget <  10000000 THEN '1천만 미만'
+                     WHEN budget <  30000000 THEN '1~3천만'
+                     WHEN budget <  50000000 THEN '3~5천만'
+                     WHEN budget < 100000000 THEN '5천~1억'
+                     ELSE '1억 이상' END AS label,
+                count(*) FILTER (WHERE ${DECIDED}) AS decided,
+                round(100.0 * count(*) FILTER (WHERE ${WON})
+                      / NULLIF(count(*) FILTER (WHERE ${DECIDED}), 0), 1) AS rate
+           ${live} AND budget IS NOT NULL AND budget_monthly = false
+          GROUP BY 1 HAVING count(*) FILTER (WHERE ${DECIDED}) >= ${MIN_SAMPLE}
+          ORDER BY min(budget)`,
+      ),
+
+      query<BreakdownRow>(
+        `SELECT dev_scope AS label,
+                count(*) FILTER (WHERE ${DECIDED}) AS decided,
+                round(100.0 * count(*) FILTER (WHERE ${WON})
+                      / NULLIF(count(*) FILTER (WHERE ${DECIDED}), 0), 1) AS rate
+           ${live} AND dev_scope IS NOT NULL
+          GROUP BY 1 HAVING count(*) FILTER (WHERE ${DECIDED}) >= ${MIN_SAMPLE}
+          ORDER BY 3 DESC`,
+      ),
+
+      query<BreakdownRow>(
+        `SELECT CASE WHEN proposal_count = 0            THEN '0건'
+                     WHEN proposal_count BETWEEN 1 AND 4   THEN '1~4건'
+                     WHEN proposal_count BETWEEN 5 AND 9   THEN '5~9건'
+                     WHEN proposal_count BETWEEN 10 AND 19 THEN '10~19건'
+                     ELSE '20건 이상' END AS label,
+                count(*) FILTER (WHERE ${DECIDED}) AS decided,
+                round(100.0 * count(*) FILTER (WHERE ${WON})
+                      / NULLIF(count(*) FILTER (WHERE ${DECIDED}), 0), 1) AS rate
+           ${live} AND proposal_count IS NOT NULL
+          GROUP BY 1 HAVING count(*) FILTER (WHERE ${DECIDED}) >= ${MIN_SAMPLE}
+          ORDER BY min(proposal_count)`,
+      ),
+
+      // 취소까지 걸린 기간을 같이 뽑는다 — 앞 3개는 전부 "계약까지 간 건"의 시간이라
+      // 이것만 보면 깨진 건이 얼마나 오래 매달려 있었는지가 리포트에서 통째로 빠진다.
+      query<{ inspection: string; recruiting: string; progress: string; cancelled: string }>(
+        `SELECT
+           percentile_cont(0.5) WITHIN GROUP (ORDER BY EXTRACT(DAY FROM recruit_started_at - submitted_at))       AS inspection,
+           percentile_cont(0.5) WITHIN GROUP (ORDER BY EXTRACT(DAY FROM progress_started_at - recruit_started_at)) AS recruiting,
+           percentile_cont(0.5) WITHIN GROUP (ORDER BY EXTRACT(DAY FROM completed_at - progress_started_at))       AS progress,
+           percentile_cont(0.5) WITHIN GROUP (ORDER BY EXTRACT(DAY FROM cancelled_at - recruit_started_at))        AS cancelled
          ${live}`,
-    );
+      ),
 
-    const cancelByStage = await query<BreakdownRow>(
-      `SELECT cancel_stage AS label, count(*) AS decided,
-              round(100.0 * count(*) / sum(count(*)) OVER (), 1) AS rate
-         ${live} AND status = '완료(취소)' AND cancel_stage IS NOT NULL
-        GROUP BY 1 ORDER BY 2 DESC`,
-    );
+      // 계약금액 0원(운영팀 확인 중, 실측 104건)은 "예산보다 작음"이 아니라 미기재다.
+      // 넣으면 감액 건이 612 → 716으로 17% 부풀려진다.
+      query<{ increased: string; same: string; decreased: string; zero_excluded: string }>(
+        `SELECT count(*) FILTER (WHERE contract_amount > budget AND contract_amount > 0) AS increased,
+                count(*) FILTER (WHERE contract_amount = budget AND contract_amount > 0) AS same,
+                count(*) FILTER (WHERE contract_amount < budget AND contract_amount > 0) AS decreased,
+                count(*) FILTER (WHERE contract_amount = 0)                              AS zero_excluded
+           ${live} AND contract_amount IS NOT NULL AND budget > 0`,
+      ),
+    ]);
 
-    const byBudget = await query<BreakdownRow>(
-      `SELECT CASE WHEN budget <  10000000 THEN '1천만 미만'
-                   WHEN budget <  30000000 THEN '1~3천만'
-                   WHEN budget <  50000000 THEN '3~5천만'
-                   WHEN budget < 100000000 THEN '5천~1억'
-                   ELSE '1억 이상' END AS label,
-              count(*) FILTER (WHERE ${DECIDED}) AS decided,
-              round(100.0 * count(*) FILTER (WHERE ${WON})
-                    / NULLIF(count(*) FILTER (WHERE ${DECIDED}), 0), 1) AS rate
-         ${live} AND budget IS NOT NULL
-        GROUP BY 1 HAVING count(*) FILTER (WHERE ${DECIDED}) >= ${MIN_SAMPLE}
-        ORDER BY min(budget)`,
-    );
-
-    const byScope = await query<BreakdownRow>(
-      `SELECT dev_scope AS label,
-              count(*) FILTER (WHERE ${DECIDED}) AS decided,
-              round(100.0 * count(*) FILTER (WHERE ${WON})
-                    / NULLIF(count(*) FILTER (WHERE ${DECIDED}), 0), 1) AS rate
-         ${live} AND dev_scope IS NOT NULL
-        GROUP BY 1 HAVING count(*) FILTER (WHERE ${DECIDED}) >= ${MIN_SAMPLE}
-        ORDER BY 3 DESC`,
-    );
-
-    const byProposals = await query<BreakdownRow>(
-      `SELECT CASE WHEN proposal_count = 0            THEN '0건'
-                   WHEN proposal_count BETWEEN 1 AND 4   THEN '1~4건'
-                   WHEN proposal_count BETWEEN 5 AND 9   THEN '5~9건'
-                   WHEN proposal_count BETWEEN 10 AND 19 THEN '10~19건'
-                   ELSE '20건 이상' END AS label,
-              count(*) FILTER (WHERE ${DECIDED}) AS decided,
-              round(100.0 * count(*) FILTER (WHERE ${WON})
-                    / NULLIF(count(*) FILTER (WHERE ${DECIDED}), 0), 1) AS rate
-         ${live} AND proposal_count IS NOT NULL
-        GROUP BY 1 ORDER BY min(proposal_count)`,
-    );
-
-    const [days] = await query<{ inspection: string; recruiting: string; progress: string }>(
-      `SELECT
-         percentile_cont(0.5) WITHIN GROUP (ORDER BY EXTRACT(DAY FROM recruit_started_at - submitted_at))       AS inspection,
-         percentile_cont(0.5) WITHIN GROUP (ORDER BY EXTRACT(DAY FROM progress_started_at - recruit_started_at)) AS recruiting,
-         percentile_cont(0.5) WITHIN GROUP (ORDER BY EXTRACT(DAY FROM completed_at - progress_started_at))       AS progress
-       ${live}`,
-    );
-
-    const [delta] = await query<{ increased: string; same: string; decreased: string }>(
-      `SELECT count(*) FILTER (WHERE contract_amount > budget) AS increased,
-              count(*) FILTER (WHERE contract_amount = budget) AS same,
-              count(*) FILTER (WHERE contract_amount < budget) AS decreased
-         ${live} AND contract_amount IS NOT NULL AND budget > 0`,
-    );
-
-    const decided = Number(totals.contracted) + Number(totals.cancelled);
+    const contracted = Number(totals.contracted);
+    const pending = Number(totals.pending);
+    const total = Number(totals.total);
+    const decided = contracted + Number(totals.cancelled);
 
     return {
-      total: Number(totals.total),
-      contracted: Number(totals.contracted),
+      total,
+      contracted,
       cancelled: Number(totals.cancelled),
-      pending: Number(totals.pending),
-      contractRate: decided ? Math.round((Number(totals.contracted) / decided) * 1000) / 10 : 0,
-      cancelByStage: toBreakdown(cancelByStage),
-      byBudget: toBreakdown(byBudget),
-      byScope: toBreakdown(byScope),
-      byProposals: toBreakdown(byProposals),
+      pending,
+      contractRate: decided ? Math.round((contracted / decided) * 1000) / 10 : 0,
+      pendingRate: total ? Math.round((pending / total) * 1000) / 10 : 0,
+      coverage: { from: totals.from_at ?? null, to: totals.to_at ?? null },
+      contractMedian: totals.contract_median === null ? null : Number(totals.contract_median),
+      contractMean:
+        totals.contract_mean === null ? null : Math.round(Number(totals.contract_mean)),
+      contractByAmount: toBreakdown(contractByAmount, SOFT_SAMPLE),
+      byBudget: toBreakdown(byBudget, SOFT_SAMPLE),
+      byScope: toBreakdown(byScope, SOFT_SAMPLE),
+      byProposals: toBreakdown(byProposals, SOFT_SAMPLE),
       medianDays: {
-        inspection: Math.round(Number(days?.inspection ?? 0)),
-        recruiting: Math.round(Number(days?.recruiting ?? 0)),
-        progress: Math.round(Number(days?.progress ?? 0)),
+        inspection: Math.round(Number(dayRows?.inspection ?? 0)),
+        recruiting: Math.round(Number(dayRows?.recruiting ?? 0)),
+        progress: Math.round(Number(dayRows?.progress ?? 0)),
+        cancelled: Math.round(Number(dayRows?.cancelled ?? 0)),
       },
       budgetDelta: {
         increased: Number(delta?.increased ?? 0),
         same: Number(delta?.same ?? 0),
         decreased: Number(delta?.decreased ?? 0),
+        zeroExcluded: Number(delta?.zero_excluded ?? 0),
       },
     };
+  }
+
+  async getLastSyncAt(): Promise<string | null> {
+    const rows = await query<{ last_run_at: string | null }>(
+      "SELECT MAX(last_run_at) AS last_run_at FROM sync_state",
+    );
+    return rows[0]?.last_run_at ?? null;
   }
 
   async getProjects(params: ProjectQuery): Promise<ProjectPage> {

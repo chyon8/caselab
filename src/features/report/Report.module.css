@@ -13,6 +13,37 @@
   color: var(--page-text);
 }
 
+/* 기간 프리셋 — 링크 4개. 클라이언트 상태 없이 URL만으로 동작한다(공유·새로고침 유지) */
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 24px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: var(--rounded-pill);
+  background: var(--panel-bg);
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.tab:hover {
+  color: var(--page-text);
+}
+
+.tab-on {
+  background: var(--color-primary);
+  color: var(--color-body-on-dark);
+  font-weight: 600;
+}
+
+.tab-on:hover {
+  color: var(--color-body-on-dark);
+}
+
 .section-head {
   border-top: 1px solid var(--header-rule);
   padding-top: 18px;
@@ -77,6 +108,34 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* %가 계약률인지 구성비인지 알려주는 열 제목 */
+.bar-head {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-weight: 500;
+  margin-bottom: -6px;
+}
+
+.bar-head .bar-count {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-faint);
+}
+
+/* 표본이 적은 구간 — 숨기는 대신 못 믿을 수치라고 말한다 */
+.bar-row-weak .bar-label,
+.bar-row-weak .bar-count {
+  color: var(--text-faint);
+}
+
+.bar-row-weak .bar-fill {
+  opacity: 0.45;
+}
+
+.weak {
+  color: var(--status-progress-fg);
+}
+
 /* 섹션 제목 아래 해설 — 숫자가 무슨 뜻인지 말해준다 */
 .note {
   font-size: 14px;
@@ -84,6 +143,28 @@
   color: var(--text-muted);
   max-width: 720px;
   margin: 0 0 20px;
+}
+
+/* 데이터에서 계산한 한 줄 요약 — 손으로 쓴 결론과 달리 기간을 바꿔도 안 틀린다 */
+.finding {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--page-text);
+  font-weight: 500;
+  max-width: 720px;
+  margin: 0 0 20px;
+}
+
+/* 미결(모집 중) 비율이 높은 구간 경고 — 계약률이 표본의 일부만 반영한다 */
+.warn {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--status-progress-fg);
+  background: var(--status-progress-bg);
+  border-radius: var(--rounded-md);
+  padding: 12px 16px;
+  max-width: 720px;
+  margin: 0 0 24px;
 }
 
 .stat-grid {

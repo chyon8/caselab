@@ -23,12 +23,16 @@ const EMPTY_STATS: ReportStats = {
   cancelled: 0,
   pending: 0,
   contractRate: 0,
-  cancelByStage: [],
+  pendingRate: 0,
+  coverage: { from: null, to: null },
+  contractMedian: null,
+  contractMean: null,
+  contractByAmount: [],
   byBudget: [],
   byScope: [],
   byProposals: [],
-  medianDays: { inspection: 0, recruiting: 0, progress: 0 },
-  budgetDelta: { increased: 0, same: 0, decreased: 0 },
+  medianDays: { inspection: 0, recruiting: 0, progress: 0, cancelled: 0 },
+  budgetDelta: { increased: 0, same: 0, decreased: 0, zeroExcluded: 0 },
 };
 
 /** Mock은 임베딩이 없어 유사사례 통계도 만들지 않는다 */
@@ -67,7 +71,10 @@ export interface DataSource {
   /** 검수 팁 — 즉석 임베딩한 벡터로 유사 풀의 qna 요약(리스크·질문·키워드)을 가져온다.
    *  scope를 주면 같은 dev_scope 사례로 풀을 소프트 부스트한다 */
   searchSimilarQnaPool(vector: number[], limit?: number, scope?: string): Promise<PoolQna[]>;
-  getReportStats(): Promise<ReportStats>;
+  /** periodDays = 모집 전환일 기준 최근 N일. null/undefined면 기간 전체 */
+  getReportStats(periodDays?: number | null): Promise<ReportStats>;
+  /** 마지막 동기화 시각(ISO) — 리포트가 "언제 기준 데이터인지" 밝히는 데 쓴다 */
+  getLastSyncAt(): Promise<string | null>;
   getNotifications(): Promise<AppNotification[]>;
   getReviews(): Promise<Record<string, CaseReview>>;
   saveReview(projectId: string, review: CaseReview): Promise<void>;
@@ -149,6 +156,10 @@ class MockDataSource implements DataSource {
 
   async getReportStats(): Promise<ReportStats> {
     return EMPTY_STATS;
+  }
+
+  async getLastSyncAt(): Promise<string | null> {
+    return null;
   }
 
   async getNotifications(): Promise<AppNotification[]> {
