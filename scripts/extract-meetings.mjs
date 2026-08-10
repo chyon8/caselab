@@ -1,19 +1,19 @@
-// 사전 미팅 녹취(매니저·클라이언트·개발사 3자) → 검수용 고정 스키마 추출. gpt-4o-mini, JSON 강제.
-// ⚠️ scripts/extract-meetings.mjs에 백필용 병렬 사본이 있다 — 프롬프트를 고치면 양쪽을 맞춰야 한다.
+// 사전 미팅 녹취 → 검수용 고정 스키마 추출 배치 → meetings.ai_extract
+// 사용: node scripts/extract-meetings.mjs [처리할 미팅 수, 기본 20]
+// 이미 추출된 미팅은 건너뛴다(멱등). 원본(meetings.transcript)은 건드리지 않는다.
+// ⚠️ 프롬프트는 src/lib/meeting-extract.ts와 같아야 한다 — 한쪽만 고치면 결과가 갈라진다.
+import { neon } from "@neondatabase/serverless";
+import fs from "fs";
 
-import type { MeetingExtract } from "@/data/types";
-
-export const MEETING_MODEL = "gpt-4o-mini";
-
-/**
- * 한 번에 넣을 녹취 길이 상한. 실데이터(134건) 중앙값이 28,400자라 대부분 1청크로 끝나고,
- * 최장 165,441자짜리만 3청크가 된다. gpt-4o-mini 컨텍스트(128k 토큰) 아래로 여유를 둔 값 —
- * 자르지 않고 전량을 반영하기 위한 분할이다.
- */
+const env = fs.readFileSync(new URL("../.env.local", import.meta.url), "utf8");
+const DB = env.match(/DATABASE_URL=(.*)/)[1].trim();
+const KEY = env.match(/OPENAI_API_KEY=(.*)/)[1].trim();
+const LIMIT = parseInt(process.argv[2] ?? "20", 10);
+const MODEL = "gpt-4o-mini";
+const CONCURRENCY = 4;
 const CHUNK_CHARS = 60_000;
-
-/** 껍데기 녹취(제목·머리말만 있고 발화가 없는 건) 컷 — LLM을 칠 가치가 없다 */
-export const MIN_TRANSCRIPT_CHARS = 500;
+const MIN_TRANSCRIPT_CHARS = 500;
+const sql = neon(DB);
 
 const SYSTEM = `너는 위시켓 프로젝트 "검수 매니저"를 돕는 어시스턴트다.
 모집 단계에서 진행된 사전 미팅 녹취(3자 대화)를 받아,
@@ -70,24 +70,12 @@ const MERGE_SYSTEM = `긴 미팅 녹취를 앞에서부터 나눠 추출한 결�
 
 입력과 같은 JSON 스키마로만 답한다. 한국어로. 각 배열의 개수 상한도 그대로 지킨다.`;
 
-interface RawExtract {
-  decisions?: string[];
-  technical_notes?: string[];
-  risk_signals?: string[];
-  open_issues?: string[];
-  follow_ups?: string[];
-}
-
-async function callJson(system: string, user: string): Promise<RawExtract> {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) throw new Error("OPENAI_API_KEY가 설정되지 않았습니다.");
-
+async function callJson(system, user) {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${KEY}` },
     body: JSON.stringify({
-      model: MEETING_MODEL,
-      store: true,
+      model: MODEL,
       temperature: 0.2,
       response_format: { type: "json_object" },
       messages: [
@@ -96,19 +84,17 @@ async function callJson(system: string, user: string): Promise<RawExtract> {
       ],
     }),
   });
-  if (!res.ok) throw new Error(`미팅 추출 요청 실패: ${res.status}`);
-
-  const j = (await res.json()) as { choices?: { message: { content: string } }[] };
-  if (!j.choices?.[0]) throw new Error(JSON.stringify(j).slice(0, 300));
-  return JSON.parse(j.choices[0].message.content) as RawExtract;
+  const j = await res.json();
+  if (!j.choices) throw new Error(JSON.stringify(j).slice(0, 300));
+  return JSON.parse(j.choices[0].message.content);
 }
 
 /** 줄 경계로만 자른다 — 발화 한 줄이 두 조각에 걸치면 양쪽 다 문맥을 잃는다 */
-function chunkTranscript(transcript: string): string[] {
-  if (transcript.length <= CHUNK_CHARS) return [transcript];
-  const chunks: string[] = [];
+function chunkTranscript(t) {
+  if (t.length <= CHUNK_CHARS) return [t];
+  const chunks = [];
   let cur = "";
-  for (const line of transcript.split("\n")) {
+  for (const line of t.split("\n")) {
     if (cur.length + line.length + 1 > CHUNK_CHARS && cur) {
       chunks.push(cur);
       cur = "";
@@ -119,87 +105,97 @@ function chunkTranscript(transcript: string): string[] {
   return chunks;
 }
 
-/**
- * 프롬프트에 쓴 형식 예시. gpt-4o-mini가 이걸 그대로 결과에 실어 보내는 걸 실측했다
- * (2026-08-10, 의료기기 홈페이지 건의 "기술 쟁점" 1번이 아래 문장 그대로였다).
- * "예시를 베끼지 마라"는 프롬프트 문구는 LLM이 안 지키면 그만이라 코드가 걷어낸다.
- */
+// 프롬프트 예시를 그대로 베껴 내는 걸 실측했다(2026-08-10) — 코드가 걷어낸다. lib과 같은 값.
 const PROMPT_EXAMPLES = [
   "결제 연동에 대해 논의함",
   "정기결제는 PG사 심사에 2~3주 걸려 오픈 일정에 영향 — 파트너가 1차엔 단건결제만 붙이자고 제안",
 ];
+const ROLES = ["클라이언트", "파트너", "매니저", "고객사", "개발사"];
+const norm = (s) => s.replace(/[\s·—–\-,."'()]/g, "");
 
-const norm = (s: string): string => s.replace(/[\s·—–\-,."'()]/g, "");
-
-/** 예시를 베낀 항목 제거 — 부분 인용도 잡히도록 포함관계로 본다 */
-function dropExampleEchoes(items: string[]): string[] {
+function dropExampleEchoes(items) {
   const examples = PROMPT_EXAMPLES.map(norm);
-  return items.filter((it) => {
+  return (items ?? []).filter((it) => {
     const n = norm(it);
     return n.length >= 8 && !examples.some((ex) => n.includes(ex) || ex.includes(n));
   });
 }
 
-/** 후속조치 주체 — 이 셋이 아니면 사람 실명일 가능성이 높다 */
-const ROLES = ["클라이언트", "파트너", "매니저", "고객사", "개발사"];
-
-/**
- * 후속조치의 주체가 역할이 아니면 실명으로 보고 지운다. 녹취 원문의 이름은 scrubPii가 못 잡는
- * 알려진 한계인데(2026-07-13), 우리가 새로 만드는 필드까지 이름을 실어 나를 이유는 없다.
- * 실측: "최진: 정리된 요구 사항을 바탕으로 …"(위시켓 매니저 실명)가 그대로 나왔다.
- */
-function scrubFollowUpSubject(s: string): string {
+/** 주체가 역할이 아니면 실명으로 보고 지운다 (녹취 속 이름을 새 필드로 옮기지 않기 위해) */
+function scrubFollowUpSubject(s) {
   const m = s.match(/^([^:：]{1,24})[:：]\s*(.+)$/);
   if (!m) return s;
   return ROLES.some((r) => m[1].includes(r)) ? s : `담당자: ${m[2]}`;
 }
 
-function toExtract(o: RawExtract, sourceLen: number): MeetingExtract {
+async function extract(m) {
+  const head =
+    `프로젝트: ${m.title}\n` +
+    `개발사: ${m.partner_slug || "(미상)"}\n` +
+    (m.summary ? `미팅 개요: ${m.summary}\n` : "");
+  const chunks = chunkTranscript(m.transcript);
+
+  let o;
+  if (chunks.length === 1) {
+    o = await callJson(SYSTEM, `${head}\n=== 미팅 녹취 ===\n${chunks[0]}`);
+  } else {
+    const parts = [];
+    for (let i = 0; i < chunks.length; i++) {
+      parts.push(
+        await callJson(
+          SYSTEM,
+          `${head}\n(이 녹취는 긴 미팅을 순서대로 나눈 ${i + 1}/${chunks.length} 조각이다. 이 조각에 실제로 나온 것만 뽑는다.)\n\n=== 미팅 녹취 ===\n${chunks[i]}`,
+        ),
+      );
+    }
+    o = await callJson(
+      MERGE_SYSTEM,
+      `${head}\n=== 조각별 추출 결과 (${parts.length}개, 미팅 진행 순서) ===\n` +
+        parts.map((p, i) => `[조각 ${i + 1}]\n${JSON.stringify(p, null, 1)}`).join("\n\n"),
+    );
+  }
+
   return {
-    decisions: dropExampleEchoes(o.decisions ?? []),
-    technicalNotes: dropExampleEchoes(o.technical_notes ?? []),
-    riskSignals: dropExampleEchoes(o.risk_signals ?? []),
-    openIssues: dropExampleEchoes(o.open_issues ?? []),
-    followUps: dropExampleEchoes(o.follow_ups ?? []).map(scrubFollowUpSubject),
-    sourceLen,
+    decisions: dropExampleEchoes(o.decisions),
+    technicalNotes: dropExampleEchoes(o.technical_notes),
+    riskSignals: dropExampleEchoes(o.risk_signals),
+    openIssues: dropExampleEchoes(o.open_issues),
+    followUps: dropExampleEchoes(o.follow_ups).map(scrubFollowUpSubject),
+    sourceLen: m.transcript.length,
   };
 }
 
-export interface MeetingInput {
-  /** 프로젝트 제목 — 이 미팅이 무슨 건인지 알아야 관련성을 판단한다 */
-  projectTitle: string;
-  partnerSlug: string | null;
-  /** 통화 API가 준 서술형 요약. 짧아서(평균 226자) 프레임 잡는 용도로 같이 넣는다 */
-  summary: string | null;
-  transcript: string;
-}
+// 대상: 아직 추출 없음 + 녹취가 껍데기가 아님 + 녹취가 갱신돼 길이가 달라진 건(재추출)
+const rows = await sql.query(
+  `SELECT m.id, m.partner_slug, m.summary, m.transcript, p.title
+     FROM meetings m
+     JOIN projects p ON p.id = m.project_id
+    WHERE m.transcript IS NOT NULL AND length(m.transcript) >= $2
+      AND (m.ai_extract IS NULL
+           OR (m.ai_extract ? 'sourceLen'
+               AND (m.ai_extract->>'sourceLen')::int <> length(m.transcript)))
+    ORDER BY m.created_at DESC
+    LIMIT $1`,
+  [LIMIT, MIN_TRANSCRIPT_CHARS],
+);
 
-export async function extractMeeting(m: MeetingInput): Promise<MeetingExtract> {
-  const head =
-    `프로젝트: ${m.projectTitle}\n` +
-    `개발사: ${m.partnerSlug ?? "(미상)"}\n` +
-    (m.summary ? `미팅 개요: ${m.summary}\n` : "");
-
-  const chunks = chunkTranscript(m.transcript);
-
-  if (chunks.length === 1) {
-    return toExtract(await callJson(SYSTEM, `${head}\n=== 미팅 녹취 ===\n${chunks[0]}`), m.transcript.length);
+console.log(`대상 ${rows.length}건 (모델 ${MODEL}, 동시성 ${CONCURRENCY})`);
+let done = 0,
+  fail = 0,
+  cursor = 0;
+async function worker() {
+  while (cursor < rows.length) {
+    const m = rows[cursor++];
+    try {
+      const x = await extract(m);
+      await sql.query(`UPDATE meetings SET ai_extract = $2 WHERE id = $1`, [m.id, JSON.stringify(x)]);
+      done++;
+    } catch (e) {
+      fail++;
+      console.error(`[meeting ${m.id}] ${e.message}`);
+    }
+    if ((done + fail) % 10 === 0) console.log(`  진행 ${done + fail}/${rows.length}`);
   }
-
-  // 긴 미팅 — 조각별로 뽑고 합친다. 조각 순서를 알려줘야 "뒤가 앞을 이긴다"를 병합에서 적용할 수 있다.
-  const parts: RawExtract[] = [];
-  for (let i = 0; i < chunks.length; i++) {
-    parts.push(
-      await callJson(
-        SYSTEM,
-        `${head}\n(이 녹취는 긴 미팅을 순서대로 나눈 ${i + 1}/${chunks.length} 조각이다. 이 조각에 실제로 나온 것만 뽑는다.)\n\n=== 미팅 녹취 ===\n${chunks[i]}`,
-      ),
-    );
-  }
-  const merged = await callJson(
-    MERGE_SYSTEM,
-    `${head}\n=== 조각별 추출 결과 (${parts.length}개, 미팅 진행 순서) ===\n` +
-      parts.map((p, i) => `[조각 ${i + 1}]\n${JSON.stringify(p, null, 1)}`).join("\n\n"),
-  );
-  return toExtract(merged, m.transcript.length);
 }
+await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+console.log(`완료: 성공 ${done} / 실패 ${fail}`);

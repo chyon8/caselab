@@ -1,18 +1,26 @@
 // 신규 유입분 자동 파생 생성 — cron(/api/cron/refresh)과 수동 버튼(/api/refresh-now)이 공유하는 본체.
 //   1) 원본 Q&A는 있는데 요약이 없는 프로젝트 → qna_summary 추출
 //   2) embedding이 없는 프로젝트 → 공고문 임베딩
+//   3) 추출이 없는 사전 미팅 녹취 → meetings.ai_extract
 // 백필(대량 재추출)은 scripts/*.mjs 수동 실행 몫. 이건 신규 소량만 소화한다.
 // 시간예산 안에 다 못 끝내도 다음 실행에서 이어진다(대상 쿼리가 IS NULL/변화감지라 자동 재개).
 
 import { query } from "@/lib/db";
 import { embedText } from "@/lib/embed";
+import {
+  extractMeeting,
+  MIN_TRANSCRIPT_CHARS,
+  type MeetingInput,
+} from "@/lib/meeting-extract";
 import { extractQnaSummary, QNA_MODEL, type QnaThread } from "@/lib/qna-extract";
-import type { QnaSummary } from "@/data/types";
+import type { MeetingExtract, QnaSummary } from "@/data/types";
 
 const BUDGET_MS = 50_000; // 60s 함수 한도 아래로 여유를 두고 새 작업 착수를 멈춘다
 const QNA_LIMIT = 40; // 한 실행당 최대 요약 프로젝트 수
 const QNA_CONCURRENCY = 4;
 const EMBED_LIMIT = 60; // 한 실행당 최대 임베딩 프로젝트 수
+// 미팅 녹취는 건당 3만자라 qna보다 한참 무겁다 — 한 실행당 소량만, 나머지는 다음 실행에서.
+const MEETING_LIMIT = 6;
 
 interface QnaTarget {
   project_id: string;
@@ -26,9 +34,18 @@ interface EmbedTarget {
   posting_raw: string;
 }
 
+interface MeetingRow {
+  id: string;
+  partner_slug: string | null;
+  summary: string | null;
+  transcript: string;
+  title: string;
+}
+
 export interface RefreshResult {
   qna: { targets: number; done: number; fail: number };
   embed: { done: number; fail: number };
+  meeting: { targets: number; done: number; fail: number };
 }
 
 export async function runRefresh(): Promise<RefreshResult> {
@@ -108,8 +125,45 @@ export async function runRefresh(): Promise<RefreshResult> {
     }
   }
 
+  // 3) 사전 미팅 녹취 추출 — 대상 조건은 scripts/extract-meetings.mjs와 같다.
+  //    껍데기 녹취(500자 미만)는 제외하고, 녹취가 갱신돼 길이가 달라진 건은 다시 뽑는다.
+  const meetTargets =
+    Date.now() < deadline
+      ? await query<MeetingRow>(
+          `SELECT m.id, m.partner_slug, m.summary, m.transcript, p.title
+             FROM meetings m
+             JOIN projects p ON p.id = m.project_id
+            WHERE m.transcript IS NOT NULL AND length(m.transcript) >= $2
+              AND (m.ai_extract IS NULL
+                   OR (m.ai_extract ? 'sourceLen'
+                       AND (m.ai_extract->>'sourceLen')::int <> length(m.transcript)))
+            ORDER BY m.created_at DESC
+            LIMIT $1`,
+          [MEETING_LIMIT, MIN_TRANSCRIPT_CHARS],
+        )
+      : [];
+
+  let meetDone = 0;
+  let meetFail = 0;
+  for (const m of meetTargets) {
+    if (Date.now() >= deadline) break;
+    try {
+      const x: MeetingExtract = await extractMeeting({
+        projectTitle: m.title,
+        partnerSlug: m.partner_slug,
+        summary: m.summary,
+        transcript: m.transcript,
+      } satisfies MeetingInput);
+      await query(`UPDATE meetings SET ai_extract = $2 WHERE id = $1`, [m.id, JSON.stringify(x)]);
+      meetDone++;
+    } catch {
+      meetFail++;
+    }
+  }
+
   return {
     qna: { targets: qnaTargets.length, done: qnaDone, fail: qnaFail },
     embed: { done: embDone, fail: embFail },
+    meeting: { targets: meetTargets.length, done: meetDone, fail: meetFail },
   };
 }
