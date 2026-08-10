@@ -47,8 +47,14 @@ WHERE
   --   normal(일반)·notice(공지) 만 가져온다 — 약 12.9만 건
   --   제외: 지피지기(요청), meeting/sys(시스템 생성, 미팅은 meeting_meeting 이 원천),
   --         checklist/recruit(프로젝트당 1개 자동 생성 템플릿)
-  AND n.note_type = 'memo'
-  AND n.flag IN ('normal', 'notice')
+  -- review_memo = 검수 단계 메모. note_type='memo' 만 받던 때는 이게 통째로 빠져서,
+  -- 노트가 있는 648개 프로젝트 중 검수 매니저 본인 글이 있는 건 123개(19%)뿐이었다 (2026-08-10 실측).
+  -- flag 화이트리스트를 review_memo 에는 걸지 않는다 — 어떤 flag 가 붙는지 확인 전이라,
+  -- 걸었다가 조용히 0건이 되는 쪽이 더 나쁘다. 실물 보고 필요하면 그때 좁힌다.
+  AND (
+       (n.note_type = 'memo' AND n.flag IN ('normal', 'notice'))
+    OR  n.note_type = 'review_memo'
+  )
 
   -- ⚠️ 화이트리스트만으로는 부족하다. 시스템이 자동 생성한 문구도 note_type='memo', flag='normal'
   --    로 써넣기 때문에 위 조건을 그대로 통과한다. 실측(2026-08-10, 첫 200건): 125건 = 63% 가 아래 4종.
