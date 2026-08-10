@@ -8,6 +8,7 @@ interface RefreshResult {
   qna: { targets: number; done: number; fail: number };
   embed: { done: number; fail: number };
   meeting: { targets: number; done: number; fail: number };
+  note: { targets: number; done: number; fail: number };
 }
 
 const NOTIFICATION_TOGGLES = [
@@ -82,7 +83,7 @@ export default function Settings() {
         <div className={styles["slack-row"]}>
           <div className={styles["slack-id"]}>
             <div>
-              <div className={styles["slack-name"]}>Q&A 요약 · 공고문 임베딩 · 미팅 추출</div>
+              <div className={styles["slack-name"]}>Q&A 요약 · 공고문 임베딩 · 미팅 · 노트 추출</div>
               <div className={styles["slack-status"]}>
                 평소엔 하루 3회(09:30·13:00·17:00) 자동 갱신 — 신규 유입분만
               </div>
@@ -100,9 +101,13 @@ export default function Settings() {
         {refreshResult && !refreshError && (
           <div className={styles["refresh-result"]}>
             Q&A 요약 {refreshResult.qna.done}건 · 임베딩 {refreshResult.embed.done}건 · 미팅 추출{" "}
-            {refreshResult.meeting.done}건 갱신됨
-            {refreshResult.qna.fail + refreshResult.embed.fail + refreshResult.meeting.fail > 0 &&
-              ` (실패 ${refreshResult.qna.fail + refreshResult.embed.fail + refreshResult.meeting.fail}건)`}
+            {refreshResult.meeting.done}건 · 노트 추출 {refreshResult.note.done}건 갱신됨
+            {refreshResult.qna.fail +
+              refreshResult.embed.fail +
+              refreshResult.meeting.fail +
+              refreshResult.note.fail >
+              0 &&
+              ` (실패 ${refreshResult.qna.fail + refreshResult.embed.fail + refreshResult.meeting.fail + refreshResult.note.fail}건)`}
           </div>
         )}
       </div>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import { CHECK_ITEMS } from "@/data/mock-data";
-import type { CallRecord, IssueType, MeetingExtract, Project, ProjectFull, SimilarProject, SimilarStats } from "@/data/types";
+import type { CallRecord, IssueType, ManagenoteExtract, ManagerNote, MeetingExtract, Project, ProjectFull, SimilarProject, SimilarStats } from "@/data/types";
 import { useApp } from "@/state/AppContext";
 import SimilarStatsPanel from "./SimilarStatsPanel";
 import st from "./status.module.css";
@@ -154,6 +154,85 @@ function MeetingExtractBlock({ x }: { x: MeetingExtract }) {
           </ul>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * 매니저 내부 노트 AI 추출 — "핸드오프 후 무슨 일이 있었나".
+ * 노트의 60~70%가 미팅 일정 조율·발송 문구라 버린 개수(noiseDropped)를 같이 밝힌다.
+ */
+function NoteExtractPanel({ x, notes }: { x?: ManagenoteExtract; notes: ManagerNote[] }) {
+  const [open, setOpen] = useState(false);
+  const groups: [string, string[]][] = x
+    ? [
+    ["🏁 결과 · 그 이유", x.outcome],
+    ["📋 공고에 없던 클라이언트 조건", x.clientRequirements],
+    ["🔄 과업 · 금액 변경", x.scopeChanges],
+    ["🤝 파트너 평가", x.partnerFeedback],
+    ["⚠️ 리스크", x.riskSignals],
+      ["💡 그 밖에 알아둘 것", x.otherNotes],
+      ]
+    : [];
+  const filled = groups.filter(([, items]) => items.length > 0);
+  return (
+    <div className={styles["qsum"]}>
+      <div className={styles["section-head"]}>
+        <span className={styles["section-title"]}>매니저 노트 요약</span>
+        <span className={styles["section-sub"]}>
+          {" "}
+          {x
+            ? `— 내부 노트 ${x.sourceCount}건 중 ${x.noiseDropped}건(일정 조율·발송 문구) 제외 · AI 정리`
+            : `— 내부 노트 ${notes.length}건`}
+        </span>
+      </div>
+      {!x ? (
+        <div className={styles["qsum-empty"]}>
+          <div className={styles["qsum-empty-title"]}>⏳ AI 정리 동기화 대기 중</div>
+          <div className={styles["qsum-empty-desc"]}>
+            원문 {notes.length}건은 아래에서 볼 수 있습니다.
+          </div>
+        </div>
+      ) : filled.length === 0 ? (
+        <div className={styles["qsum-empty"]}>
+          <div className={styles["qsum-empty-title"]}>ℹ️ 특이사항 없음</div>
+          <div className={styles["qsum-empty-desc"]}>
+            일정 조율·연락 기록만 있어 검수에서 짚을 결정·변경·리스크가 없습니다.
+          </div>
+        </div>
+      ) : (
+        filled.map(([label, items]) => (
+          <div key={label} className={styles["qsum-group"]}>
+            <div className={styles["qsum-label"]}>{label}</div>
+            <ul className={styles["qsum-list"]}>
+              {items.map((t, i) => (
+                <li key={i}>{t}</li>
+              ))}
+            </ul>
+          </div>
+        ))
+      )}
+      <button className={styles["transcript-btn"]} onClick={() => setOpen((v) => !v)}>
+        {open ? `원문 ${notes.length}건 접기 ↑` : `원문 ${notes.length}건 보기 ↓`}
+      </button>
+      {open && (
+        <div className={styles["note-raw"]}>
+          {notes.map((n, i) => (
+            <div key={i} className={styles["note-row"]}>
+              <div className={styles["note-meta"]}>
+                <span
+                  className={`${styles["note-kind"]} ${n.kind === "공지" ? styles.notice : ""}`}
+                >
+                  {n.kind}
+                </span>
+                <span className={styles["note-date"]}>{n.at}</span>
+                {n.by && <span className={styles["note-by"]}>{n.by}</span>}
+              </div>
+              <div className={styles["note-body"]}>{n.body}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -544,6 +623,8 @@ export default function ProjectDetail({
           </div>
         </>
       )}
+
+      {p.notes.length > 0 && <NoteExtractPanel x={p.noteExtract} notes={p.notes} />}
 
       <div className={styles["section-head"]}>
         <span className={styles["section-title"]}>사전 미팅 이슈 로그</span>

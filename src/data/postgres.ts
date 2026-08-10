@@ -20,6 +20,8 @@ import type {
   IssueLogEntry,
   KanbanColumn,
   KanbanStatus,
+  ManagenoteExtract,
+  ManagerNote,
   MeetingExtract,
   Posting,
   Project,
@@ -90,6 +92,7 @@ interface ProjectRow {
   issue_log?: IssueLogEntry[] | null;
   posting_structured?: Posting | null;
   qna_summary?: QnaSummary | null;
+  note_extract?: ManagenoteExtract | null;
 }
 
 /** json_agg로 묶여 오므로 날짜는 Date가 아니라 ISO 문자열이다 */
@@ -147,7 +150,7 @@ const LIST_COLUMNS = `
 /** 상세용 — 목록 컬럼 + 공고 원문 + 무거운 AI JSONB */
 const DETAIL_COLUMNS = `
   ${LIST_COLUMNS}, p.posting_raw,
-  ai.issue_log, ai.posting_structured, ai.qna_summary
+  ai.issue_log, ai.posting_structured, ai.qna_summary, ai.note_extract
 `;
 
 /** AI 공고문 구조화 전(프롬프트 검토 대기)에는 원문을 배경 자리에 그대로 노출한다 (§3) */
@@ -275,6 +278,16 @@ function lifecycleEvents(row: ProjectRow): { at: number; ev: TimelineEvent }[] {
   return out;
 }
 
+/** 매니저 내부 노트 원문 — title 컬럼이 '일반'/'공지'(flag) 자리다 */
+function toNote(r: TimelineRow): ManagerNote {
+  return {
+    at: formatMonthDay(r.event_at),
+    kind: r.title ?? "일반",
+    by: r.meta?.by ?? "",
+    body: r.body ?? "",
+  };
+}
+
 function toQna(r: TimelineRow): QnaItem {
   return {
     q: r.title ?? "",
@@ -334,6 +347,7 @@ function toProjectFull(
     calls: CallRecord[];
     meetings: CallRecord[];
     qna: QnaItem[];
+    notes: ManagerNote[];
     timeline: TimelineEvent[];
   },
 ): ProjectFull {
@@ -348,6 +362,8 @@ function toProjectFull(
     issueLog: row.issue_log ?? [],
     qna: detail.qna,
     qnaSummary: row.qna_summary ?? undefined,
+    notes: detail.notes,
+    noteExtract: row.note_extract ?? undefined,
     timeline: detail.timeline,
   };
 }
@@ -880,12 +896,15 @@ export class PostgresDataSource implements DataSource {
       calls: calls.map(toCallRecord),
       meetings: meetings.map(toMeetingRecord),
       qna: events.filter((e) => e.source === "qna").map(toQna),
+      notes: events.filter((e) => e.source === "managenote").map(toNote),
       // 생애주기 마일스톤(날짜 컬럼 합성) + 실제 이벤트를 시간순 병합.
       // source='status'는 합성 마일스톤과 중복이라 뺀다('change' 값 변경은 유지).
       timeline: [
         ...lifecycleEvents(row),
         ...events
-          .filter((e) => e.source !== "qna" && e.source !== "status")
+          // managenote는 생애주기의 사건이 아니라 "그 사이에 매니저가 뭘 했나"다. 72%가
+          // 일정 조율·발송 기록이라 타임라인에 섞으면 마일스톤이 파묻힌다(qna와 같은 이유로 제외).
+          .filter((e) => e.source !== "qna" && e.source !== "status" && e.source !== "managenote")
           .map((e) => ({ at: new Date(e.event_at).getTime(), ev: toTimelineEvent(e) })),
       ]
         .sort((a, b) => a.at - b.at)

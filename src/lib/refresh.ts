@@ -2,6 +2,7 @@
 //   1) 원본 Q&A는 있는데 요약이 없는 프로젝트 → qna_summary 추출
 //   2) embedding이 없는 프로젝트 → 공고문 임베딩
 //   3) 추출이 없는 사전 미팅 녹취 → meetings.ai_extract
+//   4) 추출이 없거나 노트 수가 바뀐 프로젝트 → ai_insights.note_extract
 // 백필(대량 재추출)은 scripts/*.mjs 수동 실행 몫. 이건 신규 소량만 소화한다.
 // 시간예산 안에 다 못 끝내도 다음 실행에서 이어진다(대상 쿼리가 IS NULL/변화감지라 자동 재개).
 
@@ -12,8 +13,9 @@ import {
   MIN_TRANSCRIPT_CHARS,
   type MeetingInput,
 } from "@/lib/meeting-extract";
+import { extractManagenotes, NOTE_MODEL, type NoteItem } from "@/lib/managenote-extract";
 import { extractQnaSummary, QNA_MODEL, type QnaThread } from "@/lib/qna-extract";
-import type { MeetingExtract, QnaSummary } from "@/data/types";
+import type { ManagenoteExtract, MeetingExtract, QnaSummary } from "@/data/types";
 
 const BUDGET_MS = 50_000; // 60s 함수 한도 아래로 여유를 두고 새 작업 착수를 멈춘다
 const QNA_LIMIT = 40; // 한 실행당 최대 요약 프로젝트 수
@@ -21,6 +23,9 @@ const QNA_CONCURRENCY = 4;
 const EMBED_LIMIT = 60; // 한 실행당 최대 임베딩 프로젝트 수
 // 미팅 녹취는 건당 3만자라 qna보다 한참 무겁다 — 한 실행당 소량만, 나머지는 다음 실행에서.
 const MEETING_LIMIT = 6;
+// 노트는 건당 100~150자라 프로젝트 하나를 통째로 넣어도 가볍다 — qna와 같은 규모로 돈다.
+const NOTE_LIMIT = 30;
+const NOTE_CONCURRENCY = 4;
 
 interface QnaTarget {
   project_id: string;
@@ -32,6 +37,12 @@ interface EmbedTarget {
   id: string;
   title: string;
   posting_raw: string;
+}
+
+interface NoteTarget {
+  project_id: string;
+  title: string;
+  notes: NoteItem[];
 }
 
 interface MeetingRow {
@@ -46,6 +57,7 @@ export interface RefreshResult {
   qna: { targets: number; done: number; fail: number };
   embed: { done: number; fail: number };
   meeting: { targets: number; done: number; fail: number };
+  note: { targets: number; done: number; fail: number };
 }
 
 export async function runRefresh(): Promise<RefreshResult> {
@@ -161,9 +173,61 @@ export async function runRefresh(): Promise<RefreshResult> {
     }
   }
 
+  // 4) 매니저 노트 추출 — 대상 조건은 scripts/extract-managenotes.mjs와 같다.
+  //    노트 수가 늘면 다시 뽑는다(qna의 sourceCount 변화 감지와 같은 방식).
+  const noteTargets =
+    Date.now() < deadline
+      ? await query<NoteTarget>(
+          `SELECT g.project_id, g.title, g.notes
+             FROM (
+               SELECT t.project_id, p.title, count(*)::int AS cnt,
+                      json_agg(json_build_object(
+                        'at',   to_char(t.event_at, 'MM-DD'),
+                        'kind', t.title,
+                        'by',   t.meta->>'by',
+                        'body', t.body
+                      ) ORDER BY t.event_at) AS notes
+                 FROM timeline_events t
+                 JOIN projects p ON p.id = t.project_id
+                WHERE t.source = 'managenote' AND t.body IS NOT NULL AND length(t.body) > 0
+                  AND p.deleted_at IS NULL AND p.hidden = false
+                GROUP BY t.project_id, p.title
+             ) g
+             LEFT JOIN ai_insights ai ON ai.project_id = g.project_id
+            WHERE ai.note_extract IS NULL
+               OR (ai.note_extract->>'sourceCount')::int <> g.cnt
+            LIMIT $1`,
+          [NOTE_LIMIT],
+        )
+      : [];
+
+  let noteDone = 0;
+  let noteFail = 0;
+  let noteNext = 0;
+  async function noteWorker(): Promise<void> {
+    while (noteNext < noteTargets.length && Date.now() < deadline) {
+      const r = noteTargets[noteNext++];
+      try {
+        const x: ManagenoteExtract = await extractManagenotes(r.title, r.notes);
+        await query(
+          `INSERT INTO ai_insights (project_id, note_extract, model, generated_at)
+           VALUES ($1, $2, $3, now())
+           ON CONFLICT (project_id) DO UPDATE
+             SET note_extract = EXCLUDED.note_extract, model = EXCLUDED.model, generated_at = now()`,
+          [r.project_id, JSON.stringify(x), NOTE_MODEL],
+        );
+        noteDone++;
+      } catch {
+        noteFail++;
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: NOTE_CONCURRENCY }, noteWorker));
+
   return {
     qna: { targets: qnaTargets.length, done: qnaDone, fail: qnaFail },
     embed: { done: embDone, fail: embFail },
     meeting: { targets: meetTargets.length, done: meetDone, fail: meetFail },
+    note: { targets: noteTargets.length, done: noteDone, fail: noteFail },
   };
 }

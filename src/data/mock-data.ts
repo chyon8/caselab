@@ -19,6 +19,7 @@ export const MOCK_PROJECTS: ProjectFull[] = [
     daysAgo: 0,
     contractAmount: null,
     contractPeriod: null,
+    notes: [],
     issueLog: [],
     intake: {
       posting: {
@@ -189,6 +190,7 @@ export const MOCK_PROJECTS: ProjectFull[] = [
         ],
       },
     },
+    notes: [],
     issueLog: [
       { type: "이슈", date: "05-19", src: "후보미팅 1차 — 개발사 A", text: "개발사 후보 3곳 중 2곳이 OCR·LLM 결합 프로젝트 경험 없음" },
       { type: "합의", date: "05-19", src: "후보미팅 1차 — 개발사 A", text: "검증 PoC 2주 선행 진행으로 합의" },
@@ -308,6 +310,7 @@ export const MOCK_PROJECTS: ProjectFull[] = [
         ],
       },
     },
+    notes: [],
     issueLog: [
       { type: "법무·보안", date: "06-26", src: "사전 미팅 1차 — 개발사 E", text: "의료법상 병원 상담·예약 정보의 개인정보 처리 위탁 범위 — 법무 검토가 계약 전에 선행되어야 한다는 의견" },
     ],
@@ -392,6 +395,7 @@ export const MOCK_PROJECTS: ProjectFull[] = [
         ],
       },
     },
+    notes: [],
     issueLog: [
       { type: "예산 언급", date: "04-24", src: "후보미팅 1차 — 개발사 C", text: "지도 API 호출량이 견적 산정 기준을 초과할 가능성" },
       { type: "합의", date: "04-24", src: "후보미팅 1차 — 개발사 C", text: "타일 캐싱 도입을 전제로 견적 합의" },
@@ -492,6 +496,7 @@ export const MOCK_PROJECTS: ProjectFull[] = [
         ],
       },
     },
+    notes: [],
     issueLog: [
       { type: "이슈", date: "05-20", src: "후보미팅 1차 — 개발사 D", text: "견적 대비 요구 범위(스킨 전면 개편 + 상세페이지 3종) 과다" },
       { type: "일정", date: "05-20", src: "후보미팅 1차 — 개발사 D", text: "클라이언트 내부 결재 라인 변경으로 요구사항 확정 2주 지연 예고" },
@@ -590,6 +595,7 @@ export const MOCK_PROJECTS: ProjectFull[] = [
         ],
       },
     },
+    notes: [],
     issueLog: [
       { type: "이슈", date: "03-04", src: "후보미팅 1차 — 개발사 B", text: "벤딩 장비(YBC) 데이터 포맷 문서 부재 확인" },
       { type: "합의", date: "03-04", src: "후보미팅 1차 — 개발사 B", text: "현장 엔지니어 인터뷰로 보완하기로 합의" },
@@ -663,6 +669,7 @@ export const MOCK_PROJECTS: ProjectFull[] = [
         ],
       },
     },
+    notes: [],
     issueLog: [
       { type: "이슈", date: "2025-07", src: "사전 미팅 — 개발사 F", text: "해외 플랫폼 리스팅 API 정책 변경 가능성" },
       { type: "과업 범위", date: "2025-07", src: "사전 미팅 — 개발사 F", text: "리스팅 대상 플랫폼 3종 → 2종으로 축소" },
@@ -736,6 +743,7 @@ export const MOCK_PROJECTS: ProjectFull[] = [
         ],
       },
     },
+    notes: [],
     issueLog: [
       { type: "이슈", date: "2024-07", src: "사전 미팅 — 개발사 G", text: "리포트 양식이 학원 지점별로 상이 — 표준 양식 확정 없이는 견적 범위 초과 우려 제기" },
     ],

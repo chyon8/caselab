@@ -113,6 +113,40 @@ export interface QnaSummary {
   sourceCount?: number;
 }
 
+/**
+ * 매니저 내부 노트를 프로젝트 단위로 추출한 결과 — "핸드오프 후 무슨 일이 있었나".
+ *
+ * 노트 1건은 평균 131자짜리 단편이라 혼자서는 뜻이 안 통한다. 시간순으로 묶어야
+ * "왜 취소됐나 / 무엇이 바뀌었나"가 나오므로 추출 단위가 프로젝트다.
+ * 실물의 60~70%는 미팅 일정 조율·발송 문구 원문이라 noiseDropped로 세어 버린다.
+ */
+export interface ManagenoteExtract {
+  /** 계약·취소·보류 결정과 그 이유 */
+  outcome: string[];
+  /** 통화·미팅에서 드러난, 공고에는 없던 클라이언트 조건 */
+  clientRequirements: string[];
+  /** 금액·과업·일정이 바뀐 것 (전후 포함) */
+  scopeChanges: string[];
+  /** 파트너 평가·점수·탈락 사유 */
+  partnerFeedback: string[];
+  riskSignals: string[];
+  /** 위 다섯 어디에도 안 맞지만 알아둘 것. 집계는 안 되고 읽기용이다 */
+  otherNotes: string[];
+  noiseDropped: number;
+  /** 추출 시점의 노트 수. 이후 늘면 재추출 대상이 된다 (qna_summary의 sourceCount와 같은 역할) */
+  sourceCount: number;
+}
+
+/** 매니저 내부 노트 원문 한 건 — 요약 아래 접힌 섹션에서만 쓴다 */
+export interface ManagerNote {
+  /** 'M-D' */
+  at: string;
+  /** '일반' | '공지' */
+  kind: string;
+  by: string;
+  body: string;
+}
+
 export interface TimelineEvent {
   stage: string;
   date: string;
@@ -226,6 +260,10 @@ export interface ProjectFull extends Project {
   qna: QnaItem[];
   /** 개발사 Q&A AI 요약 — 아직 추출 전이면 undefined */
   qnaSummary?: QnaSummary;
+  /** 매니저 내부 노트 AI 추출 — 아직 추출 전이면 undefined */
+  noteExtract?: ManagenoteExtract;
+  /** 매니저 내부 노트 원문(시간순). 타임라인에는 넣지 않는다 — 72%가 일정 조율·발송 기록이다 */
+  notes: ManagerNote[];
   timeline: TimelineEvent[];
 }
 

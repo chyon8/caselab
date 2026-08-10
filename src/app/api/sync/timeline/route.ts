@@ -22,6 +22,29 @@ interface RawTimelineEvent {
 const SERVER_ONLY = new Set(["status", "change"]);
 
 /**
+ * meta를 jsonb 객체로 저장한다.
+ *
+ * 본진 SQL의 `JSON_OBJECT(...)`는 n8n MySQL 노드를 거치며 **JSON 문자열**로 도착한다.
+ * 그걸 그대로 JSON.stringify 하면 문자열을 한 번 더 감싸서 jsonb에 `"{\"by\":…}"` 라는
+ * **문자열 타입 값**이 들어간다 — `meta->>'by'`가 항상 null이 되고 `meta.by`도 undefined다.
+ * (2026-08-10 발견. qna 18,494건·meeting 9,685건이 이 상태였고, 그래서 Q&A "비공개" 배지가
+ *  한 번도 뜨지 않았다 — 실제로는 92%가 비공개다. 기존 행은 015 마이그레이션이 푼다.)
+ */
+function metaJson(meta: unknown): string | null {
+  if (meta === null || meta === undefined) return null;
+  if (typeof meta !== "string") return JSON.stringify(meta);
+  if (meta.trim() === "") return null;
+  // 이미 JSON 텍스트면 그대로 넘긴다(다시 감싸지 않는다). JSON이 아닌 문자열은 감싸야
+  // jsonb가 파싱 에러를 내지 않는다 — 한 건 때문에 배치 전체가 500 나고 커서가 멈추면 안 된다.
+  try {
+    JSON.parse(meta);
+    return meta;
+  } catch {
+    return JSON.stringify(meta);
+  }
+}
+
+/**
  * POST /api/sync/timeline
  * body: { rows: RawTimelineEvent[] } — 한 배치는 한 source로 통일 (커서가 source별이므로)
  *
@@ -92,7 +115,7 @@ export async function POST(req: Request): Promise<Response> {
       // 매니저 노트·미팅 메모에는 고객 연락처가 자주 박혀 있다 — 저장 전 스크럽
       scrubPii(r.title ?? null),
       scrubPii(r.body ?? null),
-      r.meta ? JSON.stringify(r.meta) : null,
+      metaJson(r.meta),
     ]);
 
     await query(
