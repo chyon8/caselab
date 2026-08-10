@@ -20,6 +20,7 @@ import type {
   IssueLogEntry,
   KanbanColumn,
   KanbanStatus,
+  MeetingExtract,
   Posting,
   Project,
   ProjectFull,
@@ -123,6 +124,7 @@ interface MeetingRow {
   summary: string | null;
   transcript: string | null;
   match_reason: string | null;
+  ai_extract: MeetingExtract | null;
   created_at: string | null;
 }
 
@@ -214,6 +216,7 @@ function toMeetingRecord(m: MeetingRow): CallRecord {
     // 미팅 전문은 마크다운 회의록이라 구조화 lines가 0줄이다 — 원문을 그대로 넘겨 렌더한다.
     transcript: m.transcript ?? null,
     matchReason: m.match_reason ?? null,
+    ...(m.ai_extract ? { aiExtract: m.ai_extract } : {}),
   };
 }
 
@@ -858,7 +861,7 @@ export class PostgresDataSource implements DataSource {
             FROM (SELECT call_type, summary, transcript, user_type, confidence, created_at
                     FROM calls WHERE project_id = p.id) c) AS calls,
          (SELECT json_agg(mt ORDER BY mt.created_at)
-            FROM (SELECT partner_slug, summary, transcript, match_reason, created_at
+            FROM (SELECT partner_slug, summary, transcript, match_reason, ai_extract, created_at
                     FROM meetings WHERE project_id = p.id) mt) AS meetings
          FROM projects p
          LEFT JOIN ai_insights ai ON ai.project_id = p.id

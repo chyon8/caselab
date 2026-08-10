@@ -44,14 +44,11 @@
   border: 1px solid var(--color-rule);
   border-radius: 8px;
 }
-.sessionDelete {
-  padding: 7px 12px;
+.historyLink {
   font-size: 13px;
-  color: var(--status-cancel-fg);
-  background: var(--color-canvas);
-  border: 1px solid var(--color-rule);
-  border-radius: 8px;
-  cursor: pointer;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
 }
 .saveState {
   font-size: 12px;

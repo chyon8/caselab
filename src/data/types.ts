@@ -50,6 +50,27 @@ export interface CallRecord {
   confidence?: string | null;
   /** 미팅 전용 — 회의록이 이 프로젝트로 매칭된 AI 근거 (match_reason) */
   matchReason?: string | null;
+  /** 미팅 전용 — 녹취 AI 추출. 아직 추출 전이면 undefined */
+  aiExtract?: MeetingExtract;
+}
+
+/**
+ * 사전 미팅 녹취를 AI로 추출한 결과 — 통화 API가 주는 서술형 summary(평균 226자)가
+ * "무슨 프로젝트인가"엔 답해도 "무엇이 정해졌고 무엇이 남았나"엔 답하지 못해 따로 뽑는다.
+ * qna_summary와 같은 원칙(요약 아니라 고정 스키마 추출).
+ */
+export interface MeetingExtract {
+  /** 미팅에서 확정·합의된 사항. "검토해보겠다"류는 여기가 아니라 openIssues로 간다 */
+  decisions: string[];
+  /** 기술적 제약·실현가능성 지적·대안 제안 — 근거를 살린 서술형 */
+  technicalNotes: string[];
+  riskSignals: string[];
+  /** 아직 안 정해진 쟁점 / 다음에 확인할 것 */
+  openIssues: string[];
+  /** "주체: 할 일" 형식. 3자 미팅에만 있는 신호라 qna 요약엔 대응 필드가 없다 */
+  followUps: string[];
+  /** 추출 시점의 녹취 길이. 녹취가 갱신되면 길이가 달라져 재추출 대상이 된다 */
+  sourceLen?: number;
 }
 
 export interface IssueLogEntry {

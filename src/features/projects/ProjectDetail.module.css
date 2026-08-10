@@ -809,6 +809,23 @@
   color: var(--text-body-soft);
 }
 
+/* 미팅 녹취 AI 추출 — 항목 스타일은 Q&A 요약(.qsum-*)을 그대로 쓰고 구분선만 얹는다 */
+.meeting-extract {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--row-border);
+  margin-bottom: 18px;
+}
+
+.meeting-extract-pending {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--row-border);
+  margin-bottom: 18px;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
 /* 미팅↔프로젝트 매칭 근거 (AI) */
 .match-reason {
   margin-bottom: 18px;

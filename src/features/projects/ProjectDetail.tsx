@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import { CHECK_ITEMS } from "@/data/mock-data";
-import type { CallRecord, IssueType, Project, ProjectFull, SimilarProject, SimilarStats } from "@/data/types";
+import type { CallRecord, IssueType, MeetingExtract, Project, ProjectFull, SimilarProject, SimilarStats } from "@/data/types";
 import { useApp } from "@/state/AppContext";
 import SimilarStatsPanel from "./SimilarStatsPanel";
 import st from "./status.module.css";
@@ -11,6 +11,10 @@ import { STATUS_KEY, statusLabel } from "./status";
 import styles from "./ProjectDetail.module.css";
 
 const STAGES = ["검수", "모집", "계약체결중", "프로젝트 진행", "완료"];
+
+/** 껍데기 녹취 컷 — src/lib/meeting-extract.ts의 MIN_TRANSCRIPT_CHARS와 같은 값.
+ *  import 하면 추출 프롬프트가 통째로 클라이언트 번들에 실려서 값만 맞춰 둔다. */
+const MIN_TRANSCRIPT_CHARS = 500;
 
 const ISSUE_TAG_KEY: Record<IssueType, string> = {
   이슈: "issue",
@@ -123,6 +127,37 @@ function MeetingTranscript({ md }: { md: string }) {
   return <div className={styles["md-body"]}>{blocks}</div>;
 }
 
+/**
+ * 미팅 녹취 AI 추출 — "무엇이 정해졌고 무엇이 남았나". 통화 API가 주는 서술형 summary가
+ * 답하지 못하는 자리라, 확정 → 기술 → 리스크 → 미해결 → 후속조치 순으로 읽히게 둔다.
+ */
+function MeetingExtractBlock({ x }: { x: MeetingExtract }) {
+  const groups: [string, string[]][] = [
+    ["✅ 확정사항", x.decisions],
+    ["🔧 기술 쟁점 · 제약", x.technicalNotes],
+    ["⚠️ 리스크", x.riskSignals],
+    ["❓ 미해결 쟁점", x.openIssues],
+    ["📌 후속조치", x.followUps],
+  ];
+  const filled = groups.filter(([, items]) => items.length > 0);
+  // 추출은 돌았는데 건질 게 없던 미팅 — 빈 껍데기를 그리느니 API 요약만 남긴다
+  if (filled.length === 0) return null;
+  return (
+    <div className={styles["meeting-extract"]}>
+      {filled.map(([label, items]) => (
+        <div key={label} className={styles["qsum-group"]}>
+          <div className={styles["qsum-label"]}>{label}</div>
+          <ul className={styles["qsum-list"]}>
+            {items.map((t, i) => (
+              <li key={i}>{t}</li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** 사전 미팅 녹취록 카드 — 개발사별로 여러 건이라 카드마다 토글 상태가 독립이어야 한다. */
 function MeetingCard({ meeting }: { meeting: CallRecord }) {
   const [open, setOpen] = useState(false);
@@ -143,6 +178,15 @@ function MeetingCard({ meeting }: { meeting: CallRecord }) {
             </div>
           ))}
         </div>
+      )}
+      {meeting.aiExtract ? (
+        <MeetingExtractBlock x={meeting.aiExtract} />
+      ) : (
+        // 녹취는 있는데 추출이 없으면 = 크론이 아직 이 미팅을 안 돈 상태.
+        // 껍데기 녹취(500자 미만)는 애초에 추출 대상이 아니라 안내도 띄우지 않는다.
+        (meeting.transcript?.length ?? 0) >= MIN_TRANSCRIPT_CHARS && (
+          <div className={styles["meeting-extract-pending"]}>⏳ AI 추출 동기화 대기 중</div>
+        )
       )}
       {meeting.matchReason && (
         <div className={styles["match-reason"]}>

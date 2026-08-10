@@ -6,6 +6,7 @@
 // Mock 모드(기본 ON): API를 아예 안 치고 고정 mock 번들을 즉시 표시(UI 반복 작업용). 토글로 실제 호출.
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useApp } from "@/state/AppContext";
 import type { SimilarProject, ReviewTips } from "@/data/types";
 import type { ScoreResult } from "@/lib/scoring";
@@ -298,8 +299,16 @@ export default function TestPage() {
   const busy =
     qLoading || scoreLoading || estLoading || simLoading || repostLoading || briefLoading;
 
-  // 마운트 시 마지막 결과 복원 (새로고침해도 안 사라지게)
+  // 마운트 시 마지막 결과 복원 (새로고침해도 안 사라지게).
+  // 내역 페이지에서 "이어하기"로 온 경우(?session=N)는 그 세션이 우선 — localStorage 복원은 건너뛴다.
+  // useSearchParams 대신 location을 직접 읽는다(Suspense 경계를 요구하지 않아 단순하다).
   useEffect(() => {
+    const wanted = Number(new URLSearchParams(window.location.search).get("session"));
+    if (Number.isFinite(wanted) && wanted > 0) {
+      openSession(wanted);
+      window.history.replaceState(null, "", "/test"); // 새로고침 때마다 다시 불러오지 않게 정리
+      return;
+    }
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
@@ -386,7 +395,9 @@ export default function TestPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: sessionId,
-          title: brief?.oneLiner || text.trim().slice(0, 60),
+          // 브리핑이 아직 없으면 원문 앞부분으로 대신한다. 첨부파일 텍스트가 통째로 들어오는
+          // 경우가 있어 줄바꿈·연속 공백을 눌러야 목록에서 한 줄로 읽힌다.
+          title: brief?.oneLiner || text.trim().replace(/\s+/g, " ").slice(0, 60),
           sourceText: text,
           analysis: { brief, questions, score, estimate, sims, tips, normalized, repost },
           draft,
@@ -573,15 +584,6 @@ export default function TestPage() {
       .catch(() => setSaveState("error"));
   };
 
-  const removeSession = (id: number) => {
-    fetch(`/api/review-session/${id}`, { method: "DELETE" })
-      .then(() => {
-        setSessions((prev) => prev.filter((s) => s.id !== id));
-        if (id === sessionId) newReview();
-      })
-      .catch(() => setSaveState("error"));
-  };
-
   const run = () => {
     const body = text.trim();
     if (body.length < 3) return;
@@ -735,15 +737,9 @@ export default function TestPage() {
             ))}
           </select>
         )}
-        {sessionId && (
-          <button
-            type="button"
-            className={styles.sessionDelete}
-            onClick={() => removeSession(sessionId)}
-          >
-            삭제
-          </button>
-        )}
+        <Link href="/test/history" className={styles.historyLink}>
+          검수 내역
+        </Link>
         <span className={styles.saveState}>
           {saveState === "saving" && "저장 중…"}
           {saveState === "saved" && "저장됨"}

@@ -26,11 +26,18 @@ export interface SessionInput {
   calls: SessionCall[];
 }
 
-/** 목록 한 줄 */
+/** 목록 한 줄 — 내역 페이지에서 무엇이 든 세션인지 열어보지 않고 가늠할 수 있게 */
 export interface SessionListItem {
   id: number;
   title: string | null;
   updated_at: string;
+  created_at: string;
+  /** 근거로 고른 통화 건수 */
+  call_count: number;
+  /** 공고문 초안까지 나왔는지 */
+  has_draft: boolean;
+  /** 의뢰 원문 앞부분 */
+  preview: string;
 }
 
 export interface SessionRow extends SessionListItem {
@@ -83,14 +90,17 @@ export async function saveSession(email: string, input: SessionInput): Promise<n
 /** 내 세션 목록 — 최근 순 */
 export async function listSessions(email: string): Promise<SessionListItem[]> {
   const rows = await query<SessionListItem>(
-    `SELECT id, title, updated_at
+    `SELECT id, title, updated_at, created_at,
+            COALESCE(array_length(call_ids, 1), 0) AS call_count,
+            (draft IS NOT NULL)                    AS has_draft,
+            LEFT(source_text, 160)                 AS preview
        FROM review_session
       WHERE manager_email = $1
       ORDER BY updated_at DESC
-      LIMIT 50`,
+      LIMIT 100`,
     [email],
   );
-  return rows.map((r) => ({ ...r, id: Number(r.id) }));
+  return rows.map((r) => ({ ...r, id: Number(r.id), call_count: Number(r.call_count) }));
 }
 
 /** 세션 한 건 — 내 것만 */
