@@ -158,6 +158,65 @@ function MeetingExtractBlock({ x }: { x: MeetingExtract }) {
   );
 }
 
+/** 본진 노트는 HTML 이스케이프된 채로 저장돼 있다 — "<호박고구마2>"가 "&lt;호박고구마2&gt;"로 보인다 */
+const HTML_ENTITY: Record<string, string> = {
+  "&lt;": "<",
+  "&gt;": ">",
+  "&amp;": "&",
+  "&quot;": '"',
+  "&#39;": "'",
+  "&nbsp;": " ",
+};
+
+/** 매니저 노트 본문 정리 — 이스케이프 해제 + 과한 빈 줄 압축(실측 139건이 3연속 이상) */
+function cleanNote(text: string): string {
+  return text
+    .replace(/&(?:lt|gt|amp|quot|#39|nbsp);/g, (m) => HTML_ENTITY[m] ?? m)
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/** 평문 URL을 링크로. 노트의 9%에 위시켓 어드민·포트폴리오 링크가 들어있다 */
+function linkify(text: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  const re = /(https?:\/\/[^\s)]+)/g;
+  let last = 0;
+  let key = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) nodes.push(text.slice(last, m.index));
+    nodes.push(
+      <a key={key++} href={m[1]} target="_blank" rel="noreferrer">
+        {m[1].replace(/^https?:\/\/(www\.)?/, "")}
+      </a>,
+    );
+    last = re.lastIndex;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes;
+}
+
+/** 400자 넘는 노트는 접는다 — 11%가 여기 해당하고 최장이 6,314자(카톡 대화 원문)다 */
+const NOTE_CLAMP = 400;
+
+function NoteBody({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  const clean = cleanNote(text);
+  const long = clean.length > NOTE_CLAMP;
+  return (
+    <>
+      <div className={styles["note-body"]}>
+        {linkify(long && !open ? `${clean.slice(0, NOTE_CLAMP)}…` : clean)}
+      </div>
+      {long && (
+        <button className={styles["note-more"]} onClick={() => setOpen((v) => !v)}>
+          {open ? "접기 ↑" : `더보기 (${clean.length}자) ↓`}
+        </button>
+      )}
+    </>
+  );
+}
+
 /**
  * 매니저 내부 노트 AI 추출 — "핸드오프 후 무슨 일이 있었나".
  * 노트의 60~70%가 미팅 일정 조율·발송 문구라 버린 개수(noiseDropped)를 같이 밝힌다.
@@ -212,7 +271,10 @@ function NoteExtractPanel({ x, notes }: { x?: ManagenoteExtract; notes: ManagerN
           </div>
         ))
       )}
-      <button className={styles["transcript-btn"]} onClick={() => setOpen((v) => !v)}>
+      <button
+        className={`${styles["transcript-btn"]} ${styles["note-toggle"]}`}
+        onClick={() => setOpen((v) => !v)}
+      >
         {open ? `원문 ${notes.length}건 접기 ↑` : `원문 ${notes.length}건 보기 ↓`}
       </button>
       {open && (
@@ -220,15 +282,12 @@ function NoteExtractPanel({ x, notes }: { x?: ManagenoteExtract; notes: ManagerN
           {notes.map((n, i) => (
             <div key={i} className={styles["note-row"]}>
               <div className={styles["note-meta"]}>
-                <span
-                  className={`${styles["note-kind"]} ${n.kind === "공지" ? styles.notice : ""}`}
-                >
-                  {n.kind}
-                </span>
                 <span className={styles["note-date"]}>{n.at}</span>
                 {n.by && <span className={styles["note-by"]}>{n.by}</span>}
+                {/* '일반'이 92%라 배지로 달면 정보 없이 자리만 먹는다 — 공지만 표시 */}
+                {n.kind === "공지" && <span className={styles["note-kind"]}>공지</span>}
               </div>
-              <div className={styles["note-body"]}>{n.body}</div>
+              <NoteBody text={n.body} />
             </div>
           ))}
         </div>

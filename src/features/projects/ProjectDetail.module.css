@@ -585,48 +585,51 @@
 }
 
 /* ===== 매니저 노트 원문 (요약 아래 접힘) =====
-   기본은 접혀 있다 — 실측 807건 중 585건(72%)이 일정 조율·발송 문구라 펼쳐두면 화면을 잡아먹는다. */
+   기본은 접혀 있다 — 실측 72%가 일정 조율·발송 문구라 펼쳐두면 화면을 잡아먹는다.
+   노트 한 건 = 카드 하나. 구분선으로 나누면 긴 본문끼리 어디서 끊기는지 안 보인다. */
+.note-toggle {
+  margin-top: 20px;
+}
+
 .note-raw {
   margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid var(--row-border);
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
 
+/* .meeting-card와 같은 카드 문법 — 노트는 짧아서 패딩만 한 단계 줄인다 */
 .note-row {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--row-border);
-}
-
-.note-row:last-child {
-  border-bottom: none;
+  border: 1px solid var(--card-border);
+  border-radius: var(--rounded-lg);
+  background: var(--card-bg);
+  padding: 16px 18px;
 }
 
 .note-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 5px;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
+/* 공지(flag=notice)만 배지를 단다 — '일반'이 92%라 달아봐야 정보가 없다 */
 .note-kind {
   font-size: 11px;
   font-weight: 600;
-  color: var(--text-muted);
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
   border-radius: var(--rounded-pill);
   padding: 2px 9px;
 }
 
-/* 공지(flag=notice)는 매니저가 의도적으로 눈에 띄게 남긴 것 — 색으로 구분한다 */
-.note-kind.notice {
-  color: var(--color-primary);
-  border-color: var(--color-primary);
+.note-date {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
-.note-date,
 .note-by {
   font-size: 12px;
   color: var(--text-faint);
@@ -635,10 +638,27 @@
 /* 노트는 매니저가 줄바꿈으로 구조를 잡아 쓴다 — 접어버리면 뜻이 흐려진다 */
 .note-body {
   font-size: 13.5px;
-  line-height: 1.6;
+  line-height: 1.65;
   color: var(--text-body-soft);
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.note-body a {
+  color: var(--color-primary);
+  word-break: break-all;
+}
+
+.note-more {
+  margin-top: 10px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
 }
 
 /* ===== 유사 프로젝트 (L2) ===== */
@@ -1365,6 +1385,15 @@
   /* 미팅 녹취 */
   .meeting-card {
     padding: 14px;
+  }
+
+  /* 매니저 노트 원문 카드 */
+  .note-row {
+    padding: 13px 14px;
+  }
+
+  .note-raw {
+    gap: 8px;
   }
 
   .t-row {
