@@ -3,6 +3,8 @@
 //   2) embedding이 없는 프로젝트 → 공고문 임베딩
 //   3) 추출이 없는 사전 미팅 녹취 → meetings.ai_extract
 //   4) 추출이 없거나 노트 수가 바뀐 프로젝트 → ai_insights.note_extract
+//   5) 리스크 문장은 있는데 태그가 없는 프로젝트 → ai_insights.risk_tags
+//   6) 임베딩은 있는데 클러스터 배정이 없는 프로젝트 → projects.cluster_id (LLM 없음, SQL 한 방)
 // 백필(대량 재추출)은 scripts/*.mjs 수동 실행 몫. 이건 신규 소량만 소화한다.
 // 시간예산 안에 다 못 끝내도 다음 실행에서 이어진다(대상 쿼리가 IS NULL/변화감지라 자동 재개).
 
@@ -15,6 +17,7 @@ import {
 } from "@/lib/meeting-extract";
 import { extractManagenotes, NOTE_MODEL, type NoteItem } from "@/lib/managenote-extract";
 import { extractQnaSummary, QNA_MODEL, type QnaThread } from "@/lib/qna-extract";
+import { tagRiskSignals } from "@/lib/risk-tags";
 import type { ManagenoteExtract, MeetingExtract, QnaSummary } from "@/data/types";
 
 const BUDGET_MS = 50_000; // 60s 함수 한도 아래로 여유를 두고 새 작업 착수를 멈춘다
@@ -26,6 +29,11 @@ const MEETING_LIMIT = 6;
 // 노트는 건당 100~150자라 프로젝트 하나를 통째로 넣어도 가볍다 — qna와 같은 규모로 돈다.
 const NOTE_LIMIT = 30;
 const NOTE_CONCURRENCY = 4;
+// 리스크 태깅은 입력이 문장 두세 개뿐이라 가장 가볍다
+const RISK_LIMIT = 40;
+const RISK_CONCURRENCY = 4;
+// 클러스터 배정은 LLM이 없는 SQL 한 문장 — 상한은 폭주 방지용이다
+const CLUSTER_LIMIT = 500;
 
 interface QnaTarget {
   project_id: string;
@@ -53,11 +61,20 @@ interface MeetingRow {
   title: string;
 }
 
+interface RiskTarget {
+  project_id: string;
+  title: string;
+  signals: string[];
+}
+
 export interface RefreshResult {
   qna: { targets: number; done: number; fail: number };
   embed: { done: number; fail: number };
   meeting: { targets: number; done: number; fail: number };
   note: { targets: number; done: number; fail: number };
+  risk: { targets: number; done: number; fail: number };
+  /** 클러스터 배정 건수. 클러스터 미구축(마이그레이션 018 전)이면 0 */
+  cluster: { done: number };
 }
 
 export async function runRefresh(): Promise<RefreshResult> {
@@ -94,11 +111,14 @@ export async function runRefresh(): Promise<RefreshResult> {
       const r = qnaTargets[next++];
       try {
         const summary: QnaSummary = await extractQnaSummary(r.title, r.threads);
+        // risk_tags를 NULL로 되돌린다 — 요약이 새로 나왔으면 그 태그는 옛 문장에 붙은 것이다.
+        // 5단계가 NULL을 대상으로 잡으므로 다음 실행에서 알아서 다시 태깅된다.
         await query(
           `INSERT INTO ai_insights (project_id, qna_summary, model, generated_at)
            VALUES ($1, $2, $3, now())
            ON CONFLICT (project_id) DO UPDATE
-             SET qna_summary = EXCLUDED.qna_summary, model = EXCLUDED.model, generated_at = now()`,
+             SET qna_summary = EXCLUDED.qna_summary, model = EXCLUDED.model,
+                 risk_tags = NULL, generated_at = now()`,
           [r.project_id, JSON.stringify(summary), QNA_MODEL],
         );
         qnaDone++;
@@ -224,10 +244,73 @@ export async function runRefresh(): Promise<RefreshResult> {
   }
   await Promise.all(Array.from({ length: NOTE_CONCURRENCY }, noteWorker));
 
+  // 5) 리스크 태깅 — 대상 조건은 scripts/tag-risks.mjs와 같다.
+  //    리스크 문장이 0개인 프로젝트는 아예 대상이 아니라(태그도 NULL로 남는다) 매번 다시 집히지 않는다.
+  //    qna_summary가 다시 뽑히면 위 1단계가 risk_tags를 NULL로 되돌려 여기서 다시 태깅된다.
+  const riskTargets =
+    Date.now() < deadline
+      ? await query<RiskTarget>(
+          `SELECT ai.project_id, p.title,
+                  ARRAY(SELECT jsonb_array_elements_text(ai.qna_summary->'riskSignals')) AS signals
+             FROM ai_insights ai
+             JOIN projects p ON p.id = ai.project_id
+            WHERE ai.risk_tags IS NULL
+              AND ai.qna_summary IS NOT NULL
+              AND jsonb_array_length(ai.qna_summary->'riskSignals') > 0
+              AND p.deleted_at IS NULL AND p.hidden = false
+            LIMIT $1`,
+          [RISK_LIMIT],
+        )
+      : [];
+
+  let riskDone = 0;
+  let riskFail = 0;
+  let riskNext = 0;
+  async function riskWorker(): Promise<void> {
+    while (riskNext < riskTargets.length && Date.now() < deadline) {
+      const r = riskTargets[riskNext++];
+      try {
+        const tags = await tagRiskSignals(r.title, r.signals);
+        await query(`UPDATE ai_insights SET risk_tags = $2 WHERE project_id = $1`, [
+          r.project_id,
+          tags,
+        ]);
+        riskDone++;
+      } catch {
+        riskFail++;
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: RISK_CONCURRENCY }, riskWorker));
+
+  // 6) 클러스터 배정 — 신규 프로젝트를 재클러스터링 없이 최근접 중심에 붙인다.
+  //    LLM도 왕복도 없는 SQL 한 문장이라 시간예산을 거의 안 먹는다.
+  //    클러스터 미구축(마이그레이션 018 전)이면 테이블이 없어 실패한다 — 그때는 조용히 0건.
+  let clusterDone = 0;
+  try {
+    const assigned = await query<{ id: string }>(
+      `UPDATE projects p
+          SET cluster_id = (SELECT c.id FROM clusters c ORDER BY c.centroid <=> p.embedding LIMIT 1)
+        WHERE p.id IN (
+          SELECT id FROM projects
+           WHERE embedding IS NOT NULL AND cluster_id IS NULL
+             AND deleted_at IS NULL AND hidden = false
+           LIMIT $1
+        )
+        RETURNING p.id`,
+      [CLUSTER_LIMIT],
+    );
+    clusterDone = assigned.length;
+  } catch {
+    clusterDone = 0;
+  }
+
   return {
     qna: { targets: qnaTargets.length, done: qnaDone, fail: qnaFail },
     embed: { done: embDone, fail: embFail },
     meeting: { targets: meetTargets.length, done: meetDone, fail: meetFail },
     note: { targets: noteTargets.length, done: noteDone, fail: noteFail },
+    risk: { targets: riskTargets.length, done: riskDone, fail: riskFail },
+    cluster: { done: clusterDone },
   };
 }

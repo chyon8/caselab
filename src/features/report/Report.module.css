@@ -196,6 +196,100 @@
 }
 
 /* ==========================================================================
+   상단 요약 6칸 — 한 줄. 좁아지면 3+3, 더 좁아지면 2칸씩 (auto-fit은 4+2로 끊겨서 안 쓴다)
+   ========================================================================== */
+.stat-row-6 {
+  grid-template-columns: repeat(6, 1fr);
+  max-width: none;
+  gap: 10px;
+}
+
+.stat-row-6 .stat-card {
+  padding: 20px 18px;
+}
+
+/* 한 칸이 6분의 1이라 40px은 두 줄로 넘친다 */
+.stat-row-6 .stat-value {
+  font-size: 28px;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+
+.stat-row-6 .stat-label {
+  font-size: 13px;
+  color: var(--page-text);
+  font-weight: 500;
+}
+
+/* 값의 단서 — 분모·제외 조건처럼 안 쓰면 오해하는 것만 */
+.stat-sub {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-faint);
+  margin-top: 4px;
+}
+
+@media (max-width: 1080px) {
+  .stat-row-6 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .stat-row-6 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ==========================================================================
+   매니저별 지표 — 지표가 다섯이라 막대로는 비교가 안 된다
+   ========================================================================== */
+.table-wrap {
+  overflow-x: auto;
+  margin-bottom: 56px;
+}
+
+.table {
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 640px;
+  width: 100%;
+  max-width: 900px;
+}
+
+.table th {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-faint);
+  text-align: left;
+  padding: 0 14px 8px 0;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 11px 14px 11px 0;
+  border-top: 1px solid var(--header-rule);
+  color: var(--page-text);
+  white-space: nowrap;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 표본이 적은 매니저 — 숨기는 대신 못 믿을 수치라고 말한다(막대 섹션과 같은 처리) */
+.row-weak td {
+  color: var(--text-faint);
+}
+
+/* 계약률 1위 — 표에서 눈이 갈 곳 하나는 있어야 한다 */
+.best {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* ==========================================================================
    모바일 반응형
    ========================================================================== */
 @media (max-width: 768px) {

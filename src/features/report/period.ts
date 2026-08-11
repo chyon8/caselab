@@ -16,6 +16,13 @@ export const REPORT_PERIODS = [
 
 export type ReportPeriod = (typeof REPORT_PERIODS)[number]["value"];
 
+/**
+ * 월별 계약률에 실을 최대 개월 수. 기간을 "전체"로 두면 막대가 끝없이 늘어난다.
+ * 쿼리(postgres.ts)와 화면 문구(Report.tsx)가 같은 값을 봐야 해서 여기 둔다 —
+ * 한쪽만 고치면 "최근 24개월"이라 써놓고 30개를 그리게 된다.
+ */
+export const REPORT_MONTHS = 24;
+
 /** URL 값 → 프리셋. 모르는 값은 "전체"로 떨어뜨린다 */
 export function parsePeriod(value?: string): ReportPeriod {
   const hit = REPORT_PERIODS.find((p) => p.value === value);

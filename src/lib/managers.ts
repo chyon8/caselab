@@ -19,7 +19,7 @@ export const MANAGER_NAMES: Record<string, string> = {
 };
 
 /** 필터 드롭다운에 개별 항목으로 노출할 매니저. 나머지는 "그 외"로 묶는다. */
-export const PRIMARY_MANAGERS = ["이상민", "장수룡", "김세민"];
+export const PRIMARY_MANAGERS = ["이상민", "장수룡", "김세민", "김나연"];
 
 export const OTHER_MANAGERS = "그 외";
 
@@ -36,6 +36,7 @@ export const MANAGER_SLACK_IDS: Record<string, string> = {
   manager_sangmin: "U07V76R1PLN",
   manager_semin: "U0B3X3HHB1C",
   manager_suyong: "U1FCQ09JQ",
+  manager_nayeon: "U9E0YD4JC",
 };
 
 /** Slack 메시지용 태그 — 매핑 있으면 <@ID>(멘션), 없으면 실명(멘션 없이 표시만) */
@@ -45,14 +46,14 @@ export function managerSlackTag(username: string | null): string {
   return slackId ? `<@${slackId}>` : managerName(username);
 }
 
-/** "그 외"는 주요 매니저 3인이 아닌 모든 담당자를 뜻한다 */
+/** "그 외"는 주요 매니저가 아닌 모든 담당자를 뜻한다 */
 export function matchesManager(manager: string, filter: string): boolean {
   if (filter === "전체") return true;
   if (filter === OTHER_MANAGERS) return !PRIMARY_MANAGERS.includes(manager);
   return manager === filter;
 }
 
-/** 주요 매니저 3인의 본진 계정명 (DB에는 실명이 아니라 계정명이 저장돼 있다) */
+/** 주요 매니저의 본진 계정명 (DB에는 실명이 아니라 계정명이 저장돼 있다) */
 export const PRIMARY_MANAGER_ACCOUNTS = Object.entries(MANAGER_NAMES)
   .filter(([, name]) => PRIMARY_MANAGERS.includes(name))
   .map(([account]) => account);

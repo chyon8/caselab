@@ -360,6 +360,20 @@ export interface ReportStats {
   byBudget: Breakdown[];
   byScope: Breakdown[];
   byProposals: Breakdown[];
+  /** 지원 1~5건 구간을 1건 단위로 쪼갠 계약률. byProposals의 '1~4건' 버킷이 감추는 차이를 본다 */
+  byLowProposals: Breakdown[];
+  /** 모집 전환 월(KST)별 계약률. 최근 순으로 최대 MONTHS_LIMIT개월 */
+  byMonth: Breakdown[];
+  /** 임베딩 클러스터(유형)별 계약률. 클러스터 미구축이면 빈 배열 */
+  byCluster: Breakdown[];
+  /**
+   * Q&A에서 뽑힌 리스크 태그 빈도 Top N.
+   * decided = 그 태그가 붙은 프로젝트 수, rate = 리스크가 하나라도 있는 프로젝트 대비 %.
+   * 한 프로젝트에 태그가 여러 개 붙으므로 rate 합은 100%를 넘는다.
+   */
+  topRisks: Breakdown[];
+  /** 리스크 태그가 하나라도 붙은 프로젝트 수 — topRisks rate의 분모 */
+  riskTagged: number;
   /** 단계별 소요일 중앙값. cancelled = 모집 → 취소 (결과가 반대인 건을 따로 본다) */
   medianDays: { inspection: number; recruiting: number; progress: number; cancelled: number };
   /** 모집 예산 대비 실제 계약금액. zeroExcluded = 계약금액 0원이라 뺀 건수 */
@@ -375,6 +389,33 @@ export interface Breakdown {
   rate: number;
   /** 표본이 적어 비율이 우연에 흔들리는 구간 — 화면에서 흐리게 + 배지 */
   lowSample?: boolean;
+}
+
+/**
+ * 검수 매니저 한 명의 성과 지표. 리포트의 다른 집계와 달리 **사람**이 단위라
+ * 아무에게나 보이면 안 된다 — 조회 자체를 권한 있는 계정에서만 한다(report/page.tsx).
+ */
+export interface ManagerStat {
+  /** 실명(매핑 없으면 계정명 그대로) */
+  manager: string;
+  /** 담당 건수 — 모집 중 포함 */
+  total: number;
+  /** 결판난 건수 (계약률의 분모) */
+  decided: number;
+  contractRate: number;
+  /** 취소율 = 취소 / 결판 */
+  cancelRate: number;
+  /** 계약금액 중앙값(원, 0원 제외) */
+  contractMedian: number | null;
+  /** 모집 → 진행 착수 중앙값(일) */
+  recruitingDays: number | null;
+  /** 아직 모집 중 */
+  pending: number;
+  /**
+   * 결판난 건이 적어 비율이 우연에 흔들리는 매니저 — 숨기지 않고 표시만 흐리게 한다.
+   * 다른 섹션과 달리 여기서 행을 빼면 "그 사람 담당 건은 없다"로 읽혀 더 나쁘다.
+   */
+  lowSample: boolean;
 }
 
 export interface AppNotification {

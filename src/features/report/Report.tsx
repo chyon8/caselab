@@ -2,26 +2,35 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import type { Breakdown, ReportStats } from "@/data/types";
+import type { Breakdown, ManagerStat, ReportStats } from "@/data/types";
 import { formatWon } from "@/lib/format";
-import { REPORT_PERIODS, type ReportPeriod } from "./period";
+import { REPORT_MONTHS, REPORT_PERIODS, type ReportPeriod } from "./period";
 import styles from "./Report.module.css";
 
 /** 막대가 나타내는 %가 무슨 %인지 — 섹션마다 다르다. 안 쓰면 계약률과 구성비가 같은 칸에서 섞여 보인다 */
-type Metric = "계약률" | "구성비";
+type Metric = "계약률" | "구성비" | "언급률";
 
 /**
  * 막대 하나. 비율(%)을 그대로 폭으로 쓴다 — 최댓값 기준으로 정규화하면
  * "37.7%가 100% 폭"이 되어 실제보다 격차가 커 보인다.
  */
-function RateBars({ rows, metric }: { rows: Breakdown[]; metric: Metric }) {
+function RateBars({
+  rows,
+  metric,
+  sampleLabel = "표본",
+}: {
+  rows: Breakdown[];
+  metric: Metric;
+  /** 표본 열의 제목 — 리스크 랭킹처럼 "표본"이 아니라 "프로젝트 수"인 섹션이 있다 */
+  sampleLabel?: string;
+}) {
   return (
     <div className={styles.bars}>
       <div className={`${styles["bar-row"]} ${styles["bar-head"]}`}>
         <div />
         <div />
         <div className={styles["bar-count"]}>{metric}</div>
-        <div className={styles["bar-sub"]}>표본</div>
+        <div className={styles["bar-sub"]}>{sampleLabel}</div>
       </div>
       {rows.map((r) => (
         <div
@@ -74,10 +83,13 @@ export default function Report({
   stats: s,
   period,
   lastSyncAt,
+  managers,
 }: {
   stats: ReportStats;
   period: ReportPeriod;
   lastSyncAt: string | null;
+  /** 볼 권한이 없으면 null — 조회 자체를 안 한 것이다(report/page.tsx) */
+  managers: ManagerStat[] | null;
 }) {
   // ko-KR 날짜 포맷(Intl)은 서버(Node ICU)와 브라우저(V8 ICU) 버전에 따라 구두점·공백이
   // 미묘하게 달라질 수 있다. SSR에서 바로 그리면 하이드레이션 불일치가 난다 — 마운트 후에만
@@ -116,13 +128,14 @@ export default function Report({
   const median = formatWon(s.contractMedian);
   const mean = formatWon(s.contractMean);
 
+  // 한 줄에 6칸이라 칸이 좁다 — 제목은 짧게, 단서는 아랫줄로 뺀다
   const statCards = [
-    { value: s.total.toLocaleString(), label: "이 기간 모집 전환된 케이스" },
-    { value: `${s.contractRate}%`, label: `계약률 — 결판난 ${decided.toLocaleString()}건 기준` },
-    { value: `${cancelRate}%`, label: `취소율 — 취소 ${s.cancelled.toLocaleString()}건` },
-    { value: median ?? "—", label: "계약금액 중앙값 — 전형적인 건 (0원 제외)" },
-    { value: mean ?? "—", label: "계약금액 평균 — 중앙값과 벌어지면 대형 건이 끌어올린 것" },
-    { value: s.pending.toLocaleString(), label: `모집 중 (결과 미정 · 전체의 ${s.pendingRate}%)` },
+    { value: s.total.toLocaleString(), label: "모집 전환 케이스", sub: "이 기간" },
+    { value: `${s.contractRate}%`, label: "계약률", sub: `결판난 ${decided.toLocaleString()}건 기준` },
+    { value: `${cancelRate}%`, label: "취소율", sub: `취소 ${s.cancelled.toLocaleString()}건` },
+    { value: median ?? "—", label: "계약금액 중앙값", sub: "전형적인 건 (0원 제외)" },
+    { value: mean ?? "—", label: "계약금액 평균", sub: "중앙값보다 크면 대형 건 영향" },
+    { value: s.pending.toLocaleString(), label: "모집 중", sub: `결과 미정 · 전체의 ${s.pendingRate}%` },
   ];
 
   const deltaTotal =
@@ -153,11 +166,13 @@ export default function Report({
         </p>
       )}
 
-      <div className={styles["stat-grid"]}>
+      {/* 6칸 한 줄 — 좁아지면 3+3, 더 좁아지면 2칸씩 */}
+      <div className={`${styles["stat-grid"]} ${styles["stat-row-6"]}`}>
         {statCards.map((c) => (
           <div key={c.label} className={styles["stat-card"]}>
             <div className={styles["stat-value"]}>{c.value}</div>
             <div className={styles["stat-label"]}>{c.label}</div>
+            <div className={styles["stat-sub"]}>{c.sub}</div>
           </div>
         ))}
       </div>
@@ -186,6 +201,62 @@ export default function Report({
         <RateBars rows={s.byProposals} metric="계약률" />
       </Section>
 
+      {s.byLowProposals.length > 0 && (
+        <Section
+          title="지원이 5건 이하일 때 — 1건은 다른 종류의 건이다"
+          note={
+            "앞 섹션의 «1~4건»은 성격이 다른 구간을 한 칸에 뭉칩니다. 1건 단위로 쪼개면 지원 1건짜리의 " +
+            "계약률만 크게 튑니다 — 공고 전에 개발사가 사실상 정해져 있던 건이 섞여 있다는 신호로 읽힙니다. " +
+            "지원자 수는 모집을 벗어나야 확정되므로, 여기서도 분모는 결판난 건(계약 도달 + 취소)입니다. " +
+            "지원 0건은 계약이 구조적으로 불가능해 뺐습니다."
+          }
+          finding={spread(s.byLowProposals)}
+        >
+          <RateBars rows={s.byLowProposals} metric="계약률" />
+        </Section>
+      )}
+
+      {s.byMonth.length > 0 && (
+        <Section
+          title="월별 계약률"
+          note={
+            `모집 전환된 달(KST) 기준입니다. 최근 ${REPORT_MONTHS}개월까지만 싣습니다. ` +
+            "최근 달일수록 아직 모집 중인 건이 빠져 분모가 작습니다 — 표본이 적은 달은 흐리게 표시했습니다."
+          }
+          finding={spread(s.byMonth)}
+        >
+          <RateBars rows={s.byMonth} metric="계약률" />
+        </Section>
+      )}
+
+      {s.byCluster.length > 0 && (
+        <Section
+          title="유형별 계약률 — 공고문 임베딩 클러스터"
+          note={
+            "카테고리(대분류)는 성격이 전혀 다른 프로젝트를 한 칸에 담습니다. 공고문 임베딩을 " +
+            "클러스터링해 실제 유형으로 다시 가른 계약률입니다. 유형명은 각 군집의 대표 공고를 보고 붙인 이름이라, " +
+            "군집을 다시 만들면 이름과 경계가 달라질 수 있습니다."
+          }
+          finding={spread(s.byCluster)}
+        >
+          <RateBars rows={s.byCluster} metric="계약률" />
+        </Section>
+      )}
+
+      {s.topRisks.length > 0 && (
+        <Section
+          title="가장 자주 반복되는 리스크"
+          note={
+            `개발사가 공고 Q&A에서 짚은 리스크를 고정 유형으로 분류해 센 것입니다. ` +
+            `리스크가 하나라도 잡힌 프로젝트 ${s.riskTagged.toLocaleString()}건이 분모이고, ` +
+            "한 프로젝트에 유형이 여러 개 붙으므로 비율의 합은 100%를 넘습니다."
+          }
+          finding={topRisk(s.topRisks)}
+        >
+          <RateBars rows={s.topRisks} metric="언급률" sampleLabel="프로젝트" />
+        </Section>
+      )}
+
       <Section
         title="모집 예산 → 실제 계약금액"
         note={
@@ -206,6 +277,20 @@ export default function Report({
       >
         <RateBars rows={s.contractByAmount} metric="구성비" />
       </Section>
+
+      {managers && managers.length > 0 && (
+        <Section
+          title="검수 매니저별 지표"
+          note={
+            "담당 매니저(inspection_manager) 기준입니다. 결판난 건이 적은 매니저는 빼지 않고 " +
+            "«표본 적음»으로 표시했습니다 — 행을 없애면 담당 건이 없는 것처럼 읽힙니다. " +
+            "계약률 차이는 역량 차이만이 아니라 배정된 건의 예산대·업무범위 구성 차이도 함께 " +
+            "반영한다는 점을 감안하고 보세요. 본진 계정에 실명이 없으면 계정명 그대로 표시됩니다."
+          }
+        >
+          <ManagerTable rows={managers} />
+        </Section>
+      )}
 
       <Section
         title="단계별 소요 기간 (중앙값)"
@@ -230,6 +315,55 @@ export default function Report({
           </div>
         </div>
       </Section>
+    </div>
+  );
+}
+
+/**
+ * 매니저별 지표 — 막대 대신 표. 한 사람에 지표가 다섯이라 막대로는 비교가 안 된다.
+ * 이 컴포넌트는 볼 권한이 있을 때만 렌더된다(호출부에서 조회 자체를 건너뛴다).
+ */
+function ManagerTable({ rows }: { rows: ManagerStat[] }) {
+  // 1위는 표본이 충분한 사람들 중에서만 고른다 — 6건짜리가 1위로 뽑히면 없는 경향을 만든다
+  const solid = rows.filter((r) => !r.lowSample);
+  const best = solid.length ? solid.reduce((a, b) => (b.contractRate > a.contractRate ? b : a)) : null;
+  return (
+    <div className={styles["table-wrap"]}>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th>매니저</th>
+            <th className={styles.num}>담당</th>
+            <th className={styles.num}>결판</th>
+            <th className={styles.num}>계약률</th>
+            <th className={styles.num}>취소율</th>
+            <th className={styles.num}>계약금액 중앙값</th>
+            <th className={styles.num}>모집→착수</th>
+            <th className={styles.num}>모집 중</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((m) => (
+            <tr key={m.manager} className={m.lowSample ? styles["row-weak"] : ""}>
+              <td>
+                {m.manager}
+                {m.lowSample && <span className={styles.weak}> · 표본 적음</span>}
+              </td>
+              <td className={styles.num}>{m.total.toLocaleString()}</td>
+              <td className={styles.num}>{m.decided.toLocaleString()}</td>
+              <td className={`${styles.num} ${m === best ? styles.best : ""}`}>
+                {m.contractRate}%
+              </td>
+              <td className={styles.num}>{m.cancelRate}%</td>
+              <td className={styles.num}>{formatWon(m.contractMedian) ?? "—"}</td>
+              <td className={styles.num}>
+                {m.recruitingDays === null ? "—" : `${m.recruitingDays}일`}
+              </td>
+              <td className={styles.num}>{m.pending.toLocaleString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -273,6 +407,15 @@ function spread(rows: Breakdown[]): string | null {
   if (hi.label === lo.label) return null;
   const gap = Math.round((hi.rate - lo.rate) * 10) / 10;
   return `가장 높은 «${hi.label}» ${hi.rate}% ↔ 가장 낮은 «${lo.label}» ${lo.rate}% — ${gap}%p 차이.`;
+}
+
+/** 리스크 랭킹용 — 상위 3개를 한 줄로. topShare와 달리 비율 합이 100%가 아니라 순위만 말한다 */
+function topRisk(rows: Breakdown[]): string | null {
+  const top = rows.slice(0, 3);
+  if (top.length === 0) return null;
+  return `가장 잦은 리스크는 ${top
+    .map((r) => `«${r.label}» ${r.decided.toLocaleString()}건(${r.rate}%)`)
+    .join(", ")} 순입니다.`;
 }
 
 /** 구성비 섹션용 — 1위가 얼마나 쏠려 있는지 */

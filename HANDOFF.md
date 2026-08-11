@@ -31,8 +31,12 @@
 | 공고문 임베딩 (L2) | `projects.embedding` (3-large, 1536d) | 6,032 |
 | **사전 미팅 녹취 추출** | `meetings.ai_extract` | **133/134** (1건은 92자 껍데기, 대상 제외) |
 | **매니저 노트 추출** | `ai_insights.note_extract` | **646/647** |
+| **리스크 태그(고정 15종)** | `ai_insights.risk_tags` | **1,583** (리스크 문장이 있는 프로젝트 전량) |
+| **공고문 유형 클러스터** | `projects.cluster_id` + `clusters` | **6,193 / 16개 유형** |
 
-**Vercel Cron이 신규분을 자동으로 따라간다** — [`src/lib/refresh.ts`](./src/lib/refresh.ts), 하루 3회(09:30·13:00·17:00 KST). 4단계: ①qna 요약 40 ②임베딩 60 ③미팅 추출 6 ④노트 추출 30. 대상 조건이 전부 `추출 없음 OR 원본이 바뀜`이라 **놓치지도 중복하지도 않고, 실패해도 다음 실행에 재시도된다.** 급하면 설정 → "지금 갱신"(`/api/refresh-now`, 같은 함수).
+**Vercel Cron이 신규분을 자동으로 따라간다** — [`src/lib/refresh.ts`](./src/lib/refresh.ts), 하루 3회(09:30·13:00·17:00 KST). 6단계: ①qna 요약 40 ②임베딩 60 ③미팅 추출 6 ④노트 추출 30 ⑤리스크 태깅 40 ⑥클러스터 배정 500(LLM 없음, SQL 한 문장). 대상 조건이 전부 `추출 없음 OR 원본이 바뀜`이라 **놓치지도 중복하지도 않고, 실패해도 다음 실행에 재시도된다.** 급하면 설정 → "지금 갱신"(`/api/refresh-now`, 같은 함수).
+
+> qna 요약이 다시 뽑히면 그 프로젝트의 `risk_tags`를 **NULL로 되돌린다** — 태그는 옛 문장에 붙은 것이라 그대로 두면 거짓말이 된다. ⑤가 NULL을 대상으로 잡으므로 다음 실행에 알아서 다시 태깅된다.
 
 > ⚠️ **cron은 DB에 이미 들어와 있는 것만 가공한다.** 적재는 n8n 몫이다 — n8n 스케줄이 안 걸려 있으면 새 데이터가 안 들어오고, cron은 할 일이 없다.
 
@@ -45,6 +49,7 @@
 - **공고문 검색 (L2 메인 표면)** — `normalize.ts` → 즉석 임베딩 → `POST /api/similar` → `POST /api/review-tips`(버튼으로만 생성). word/pdf/excel/ppt 첨부 지원(`officeparser`), 이미지·스캔 PDF는 **OpenAI 비전 OCR**(`extract-file-text.ts`, tesseract.js가 Vercel 서버리스와 충돌해 교체).
 - **동적 페이지 타이틀** — `generateMetadata` + `React.cache`.
 - **리포트 개편** (2026-08-09, `4a54ce0`) — 기간 선택(`features/report/period.ts`) 추가.
+- **리포트 5개 섹션 추가** (2026-08-11) — 아래 "리포트 확장" 참조.
 - **홈 "지금 동기화" 버튼**(브라우저 직접 트리거) — n8n이 Cloudflare Access 뒤라 서버(Vercel)에서 치면 403. 그래서 **Access에 신뢰된 사용자 브라우저**가 `mode:"no-cors"`로 직접 POST한다. 서버 GET `/api/admin/sync`가 `lastRunAt` + `webhookUrl`만 내려준다.
   - **완료 판정 주의:** 동기화 워크플로는 신규분이 있을 때만 `last_run_at`을 올린다 → 트리거 후 ≤24초만 시각 전진을 지켜보고, 안 오르면 "동기화 요청됨" 안내. **거짓 실패·무한 스피너 없음.**
   - ⚠️ `MAX(last_run_at)`이라 **소스 구분이 없다** — 프로젝트 워크플로만 돌아도 시각이 전진해 "됐다"로 보인다. 특정 소스가 실제로 들어왔는지는 화면에서 확인해야 한다.
@@ -69,6 +74,25 @@
 - **노이즈 72%를 LLM이 버린다**(`noiseDropped`) — 미팅 일정 조율, 고객에게 보낼 카톡 원문, 발송 기록. 정규식으로 못 자르는 자유 텍스트라 AI 판정이 필요하고, 그래서 **적재 → AI 판정 → 표시 제외** 순서가 강제된다.
 - **원문은 타임라인에 안 넣는다** — 생애주기 축의 사건이 아니라 "그 사이에 매니저가 뭘 했나"라, 24줄이 끼면 마일스톤이 파묻힌다(qna와 같은 처리). 요약 패널 아래 **접힌 카드 목록**으로 분리.
 - 원문 렌더는 HTML 이스케이프 해제 + 빈 줄 압축 + URL 링크 + 400자 초과 시 접기.
+
+### 리포트 확장 — 5개 섹션 (2026-08-11)
+
+| 섹션 | 재료 | 짚어야 할 것 |
+|---|---|---|
+| **검수 매니저별 지표** | `projects.inspection_manager` | **이상민 계정에서만 보인다.** 숨기는 게 아니라 **조회 자체를 안 한다**([`allowed-emails.ts`](./src/lib/auth/allowed-emails.ts) `REPORT_MANAGER_EMAILS`) — 받아놓고 CSS로 가리면 RSC 페이로드에 그대로 실린다 |
+| **지원 1~5건 (1건 단위)** | `proposal_count` | 기존 «1~4건» 버킷이 감추던 게 드러난다 — **지원 1건은 계약률 59%**, 2건은 17.7%. 공고 전에 개발사가 사실상 정해져 있던 건이 섞여 있다는 신호 |
+| **월별 계약률** | `recruit_started_at`(KST) | 최근 24개월. 최근 달일수록 모집 중이 많아 분모가 작다 → 표본 적음 표시 |
+| **유형별 계약률** | `clusters` × `projects.cluster_id` | 22.6%(의료 헬스케어) ↔ 41.3%(웹 유지보수). category(대분류)가 뭉개던 차이 |
+| **리스크 Top 10** | `ai_insights.risk_tags` | 비용 초과 27.4% / 일정 압박 26.9% / 요구사항 불명확 20.8% (분모 = 리스크가 잡힌 1,575건) |
+
+**리스크 태깅** — [`src/lib/risk-tags.ts`](./src/lib/risk-tags.ts) + [`scripts/tag-risks.mjs`](./scripts/tag-risks.mjs)(백필). `qna_summary.riskSignals`는 **자유 문장 2,315개가 전부 서로 다르다** — 같은 문장 세기로는 랭킹이 안 나온다. 키워드 규칙도 실측했지만(매칭률 77%) `"…해서 일정에 영향"` 같은 **결과절을 원인으로 오분류**해 일정·비용이 과대 계상됐다. 그래서 고정 15종 택소노미로 LLM이 분류한다.
+- **프롬프트가 결과절을 명시적으로 금지한다.** 첫 시도에서 "샘플 데이터 형태에 따라 …일정에 영향" 문장에 `일정 압박`이 같이 붙는 걸 실측하고, 기대 출력을 JSON으로 박아 고쳤다. 이 가드를 빼면 랭킹 1·2위가 통째로 흔들린다.
+- 택소노미 밖 값은 버린다 — 태그가 매번 새로 생기면 "가장 자주 반복되는 리스크"라는 질문 자체가 성립하지 않는다.
+
+**유형 클러스터** — [`migrations/018_clusters.sql`](./migrations/018_clusters.sql)(**Neon 적용 완료**) + [`scripts/cluster-projects.mjs`](./scripts/cluster-projects.mjs). 임베딩 6,193건 spherical k-means(k=16), 라벨은 중심 최근접 공고 14건을 보고 LLM이 명명.
+- **`centroid`를 테이블에 남기는 이유**는 신규 프로젝트를 **재클러스터링 없이** 최근접 중심에 붙이기 위해서다(cron ⑥). 그래서 백필 마지막에 **최종 중심으로 한 번 더 배정**한다 — 루프가 `배정 → 중심갱신` 순서라 그냥 끝내면 저장된 `cluster_id`가 한 세대 전 중심의 결과가 되고, cron과 규칙이 어긋난다.
+- ⚠️ **재실행하면 유형 경계와 이름이 바뀐다.** 기간별 비교 중이면 함부로 돌리지 않는다.
+- `비공개 프로젝트`(114건, 계약률 55.8%)는 모델 오류가 아니라 실제 군집이다 — 공고문이 통째로 가려진 건들. 유형이라기보단 데이터 가용성 버킷이라 해석에 주의.
 
 ### 개인별 즐겨찾기(관심) — 서버 저장 (2026-08-11)
 
@@ -121,7 +145,8 @@
 ## ⚠️ 블로커 / 대기 / 잊지 말 것
 
 - **n8n 스케줄 확정** — 워크플로가 소스별로 구성돼 있으나 **스케줄 주기가 미확정**이다. 안 걸려 있으면 동기화 버튼을 눌러야만 데이터가 들어오고, cron은 할 일이 없다. 사전 미팅 녹취(`meeting_transcripts`)는 매 실행이 최근 60일을 전량 재스캔·멱등 upsert라 크론을 걸어도 무해하다. **managenote를 동기화 웹훅에 연결했는지도 확인 필요.**
-- **AI 프롬프트(ⓒAI 필드)** — **리스크 태그만 남았다.** qna 요약·공고문 정규화·스코어링·미팅 요약·이슈 추출(노트 추출로 대체)은 전부 사용자 지시로 착수·완료됐다. 상세는 NEXT_STEPS 대기결정 #2.
+- **AI 프롬프트(ⓒAI 필드)** — **전부 완료.** 마지막 남았던 리스크 태그가 2026-08-11에 붙었다(위 "리포트 확장").
+- **`manager_sumin` 실명 미상** — 매니저별 지표 표에 계정명 그대로 나온다(6건). 실명을 알면 [`src/lib/managers.ts`](./src/lib/managers.ts) `MANAGER_NAMES`에 한 줄 추가. 추측해서 붙이지 않는다.
 - **계약금액 0원 건 정체** — 운영팀 확인 중. 집계 시 0 제외 예정. **착수 안 함(사용자 지시).**
 - **임베딩 DB 외부 참조 — owner URL 노출 처리 대기** (2026-07-27) — 읽기전용 롤 `embedding_ro` 발급 + 핸드오프 문서([EMBEDDING_DB_HANDOFF.md](./EMBEDDING_DB_HANDOFF.md)) 작성 완료. **대기결정:** 사용자가 이미 저쪽에 `neondb_owner`(쓰기 가능) URL을 준 상태 → RO URL로 교체 안내함. owner URL이 통제 밖에 남았으면 `neondb_owner` 비번 로테이션 필요(하면 `.env.local`·Vercel `DATABASE_URL`도 같이 갱신). **로테이션 여부 미결.**
 - **정규화 미세 이슈(무해)** — 안 고른 선택옵션이 가끔 불릿으로 새어듦. 실신호가 지배해 매칭엔 영향 없음.
@@ -133,6 +158,8 @@ node scripts/extract-qna.mjs [N]          # qna 요약 (qna_summary IS NULL만)
 node scripts/embed-projects.mjs [N]       # 공고문 임베딩 (embedding IS NULL만, 429 재시도)
 node scripts/extract-meetings.mjs [N]     # 미팅 녹취 추출 (ai_extract IS NULL 또는 녹취 길이 변화)
 node scripts/extract-managenotes.mjs [N]  # 매니저 노트 추출 (note_extract IS NULL 또는 노트 수 변화)
+node scripts/tag-risks.mjs [N]            # 리스크 태깅 (risk_tags IS NULL & riskSignals 있음)
+node scripts/cluster-projects.mjs [k=16]  # ⚠️ 전량 재클러스터링 — 유형 경계·이름이 바뀐다
 ```
 
 전부 멱등 — 이미 처리된 건 자동 스킵, 재실행하면 신규분만. 원본(`timeline_events`·`meetings`)은 불변, 파생만 갱신.

@@ -9,4 +9,22 @@ export const ALLOWED_EMAILS = [
   "sangmin@wishket.com", // 이상민
   "suyong@wishket.com", // 장수룡
   "seemin@wishket.com", // 김세민
+  "nayeon@wishket.com", // 김나연
 ];
+
+/**
+ * 리포트의 **매니저별 지표**를 볼 수 있는 계정.
+ *
+ * 사람이 평가 단위인 유일한 섹션이라 접근 범위를 따로 둔다.
+ * 여기 없는 계정은 섹션이 안 보이는 정도가 아니라 **조회 자체를 하지 않는다** —
+ * 숨기기만 하면 페이로드에는 실려서 개발자도구로 다 보인다.
+ */
+export const REPORT_MANAGER_EMAILS = [
+  "sangmin@wishket.com", // 이상민
+];
+
+export function canSeeManagerStats(email: string | undefined | null): boolean {
+  if (!email) return false;
+  const e = email.trim().toLowerCase();
+  return REPORT_MANAGER_EMAILS.some((allowed) => allowed.trim().toLowerCase() === e);
+}

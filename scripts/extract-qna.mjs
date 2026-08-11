@@ -82,7 +82,8 @@ async function save(projectId, summary) {
     `INSERT INTO ai_insights (project_id, qna_summary, model, generated_at)
      VALUES ($1, $2, $3, now())
      ON CONFLICT (project_id) DO UPDATE
-       SET qna_summary = EXCLUDED.qna_summary, model = EXCLUDED.model, generated_at = now()`,
+       SET qna_summary = EXCLUDED.qna_summary, model = EXCLUDED.model,
+           risk_tags = NULL, generated_at = now()`,
     [projectId, JSON.stringify(summary), MODEL],
   );
 }

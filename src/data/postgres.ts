@@ -1,5 +1,6 @@
 import { query } from "@/lib/db";
-import { managerFilterSql, managerName } from "@/lib/managers";
+import { MANAGER_NAMES, managerFilterSql, managerName } from "@/lib/managers";
+import { REPORT_MONTHS } from "@/features/report/period";
 import type { PoolQna } from "@/lib/review-tips";
 import {
   daysBetween,
@@ -22,6 +23,7 @@ import type {
   KanbanStatus,
   ManagenoteExtract,
   ManagerNote,
+  ManagerStat,
   MeetingExtract,
   Posting,
   Project,
@@ -385,6 +387,9 @@ const MIN_SAMPLE = 30;
 /** 이 아래는 숨기진 않되 신뢰할 수 없다고 표시한다 */
 const SOFT_SAMPLE = 100;
 
+/** 리스크 태그 랭킹에 실을 개수 */
+const RISK_TOP_N = 10;
+
 /** 유사사례 집계 통계 — 코사인 유사도 상위 N건을 표본으로 삼는다(카드로 보여주는 5~8건보다 크게) */
 const SIMILAR_STATS_POOL = 30;
 /** 표본이 이보다 적으면 계약률·취소단계·모집기간·예산증감은 숨긴다 — 리포트 MIN_SAMPLE(100)보다 훨씬 작다 */
@@ -643,6 +648,10 @@ export class PostgresDataSource implements DataSource {
       byBudget,
       byScope,
       byProposals,
+      byLowProposals,
+      byMonth,
+      byCluster,
+      topRisks,
       [dayRows],
       [delta],
     ] = await Promise.all([
@@ -721,6 +730,60 @@ export class PostgresDataSource implements DataSource {
           ORDER BY min(proposal_count)`,
       ),
 
+      // 지원 1~5건을 1건 단위로. '1~4건' 버킷은 성격이 다른 구간을 한 칸에 뭉친다 —
+      // 실측상 1건은 계약률이 두 배 넘게 높다(이미 개발사가 정해진 건이 섞여 있다는 신호).
+      // 0건은 계약이 구조적으로 불가능해 뺀다(위 버킷 섹션에 이미 나온다).
+      // 분모는 다른 섹션과 같은 결판난 건 — proposal_count는 모집을 벗어나야 확정된다.
+      query<BreakdownRow>(
+        `SELECT proposal_count::text || '건' AS label,
+                count(*) FILTER (WHERE ${DECIDED}) AS decided,
+                round(100.0 * count(*) FILTER (WHERE ${WON})
+                      / NULLIF(count(*) FILTER (WHERE ${DECIDED}), 0), 1) AS rate
+           ${live} AND proposal_count BETWEEN 1 AND 5
+          GROUP BY proposal_count ORDER BY proposal_count`,
+      ),
+
+      // 월별 계약률. 최근 달일수록 아직 모집 중인 건이 많아 분모가 작다 —
+      // 숨기지 않고 표본수를 같이 실어 흐리게 표시한다(MIN_SAMPLE 컷을 걸지 않는 이유).
+      query<BreakdownRow>(
+        `SELECT to_char(date_trunc('month', recruit_started_at AT TIME ZONE 'Asia/Seoul'), 'YYYY-MM') AS label,
+                count(*) FILTER (WHERE ${DECIDED}) AS decided,
+                round(100.0 * count(*) FILTER (WHERE ${WON})
+                      / NULLIF(count(*) FILTER (WHERE ${DECIDED}), 0), 1) AS rate
+           ${live} AND recruit_started_at IS NOT NULL
+          GROUP BY 1 ORDER BY 1 DESC LIMIT ${REPORT_MONTHS}`,
+      ),
+
+      // 임베딩 클러스터(유형)별 계약률 — category(대분류)가 감추는 실제 유형 차이.
+      // 마이그레이션 018 미적용/클러스터 미구축이면 조인 결과가 0행이라 섹션이 통째로 사라진다.
+      query<BreakdownRow>(
+        `SELECT c.label AS label,
+                count(*) FILTER (WHERE ${DECIDED}) AS decided,
+                round(100.0 * count(*) FILTER (WHERE ${WON})
+                      / NULLIF(count(*) FILTER (WHERE ${DECIDED}), 0), 1) AS rate
+           FROM projects JOIN clusters c ON c.id = projects.cluster_id
+          WHERE deleted_at IS NULL AND hidden = false ${window}
+          GROUP BY 1 HAVING count(*) FILTER (WHERE ${DECIDED}) >= ${MIN_SAMPLE}
+          ORDER BY 3 DESC`,
+      ).catch(() => [] as BreakdownRow[]),
+
+      // 리스크 태그 빈도. 분모는 "리스크 태그가 하나라도 붙은 프로젝트 수"(tagged) —
+      // 태그 총합을 분모로 쓰면 한 프로젝트에 여러 태그가 붙어 비율의 뜻이 흐려진다.
+      query<BreakdownRow & { pool: string }>(
+        `WITH tagged AS (
+           SELECT p.id, ai.risk_tags
+             FROM projects p JOIN ai_insights ai ON ai.project_id = p.id
+            WHERE p.deleted_at IS NULL AND p.hidden = false ${window}
+              AND ai.risk_tags IS NOT NULL AND cardinality(ai.risk_tags) > 0
+         )
+         SELECT t AS label,
+                count(*) AS decided,
+                round(100.0 * count(*) / NULLIF((SELECT count(*) FROM tagged), 0), 1) AS rate,
+                (SELECT count(*) FROM tagged) AS pool
+           FROM tagged, unnest(risk_tags) t
+          GROUP BY 1 ORDER BY 2 DESC LIMIT ${RISK_TOP_N}`,
+      ),
+
       // 취소까지 걸린 기간을 같이 뽑는다 — 앞 3개는 전부 "계약까지 간 건"의 시간이라
       // 이것만 보면 깨진 건이 얼마나 오래 매달려 있었는지가 리포트에서 통째로 빠진다.
       query<{ inspection: string; recruiting: string; progress: string; cancelled: string }>(
@@ -763,6 +826,12 @@ export class PostgresDataSource implements DataSource {
       byBudget: toBreakdown(byBudget, SOFT_SAMPLE),
       byScope: toBreakdown(byScope, SOFT_SAMPLE),
       byProposals: toBreakdown(byProposals, SOFT_SAMPLE),
+      byLowProposals: toBreakdown(byLowProposals, SOFT_SAMPLE),
+      // SQL은 최근 월부터 뽑는다(LIMIT을 걸려고) — 화면은 시간순이라 뒤집는다
+      byMonth: toBreakdown(byMonth, SOFT_SAMPLE).reverse(),
+      byCluster: toBreakdown(byCluster, SOFT_SAMPLE),
+      topRisks: toBreakdown(topRisks),
+      riskTagged: Number(topRisks[0]?.pool ?? 0),
       medianDays: {
         inspection: Math.round(Number(dayRows?.inspection ?? 0)),
         recruiting: Math.round(Number(dayRows?.recruiting ?? 0)),
@@ -776,6 +845,61 @@ export class PostgresDataSource implements DataSource {
         zeroExcluded: Number(delta?.zero_excluded ?? 0),
       },
     };
+  }
+
+  /**
+   * 매니저별 성과 지표. getReportStats와 분리해 둔 이유는 권한이다 —
+   * 볼 수 있는 계정에서만 호출하므로, 다른 사람 화면의 페이로드에는 애초에 실리지 않는다.
+   *
+   * 그룹 키를 실명으로 만드는 것도 SQL에서 한다. DB에 계정명('manager_dongmin')과
+   * 실명('우동민')이 섞여 들어와 있어(실측), JS에서 뒤늦게 합치면 중앙값을 다시 못 구한다.
+   */
+  async getManagerStats(periodDays?: number | null): Promise<ManagerStat[]> {
+    const days = Number.isInteger(periodDays) && (periodDays as number) > 0 ? periodDays : null;
+    const window = days ? `AND recruit_started_at >= now() - interval '${days} days'` : "";
+
+    const rows = await query<{
+      manager: string;
+      total: string;
+      decided: string;
+      won: string;
+      cancelled: string;
+      pending: string;
+      contract_median: string | null;
+      recruiting_days: string | null;
+    }>(
+      `SELECT COALESCE($1::jsonb ->> inspection_manager, inspection_manager) AS manager,
+              count(*)                                                      AS total,
+              count(*) FILTER (WHERE ${DECIDED})                            AS decided,
+              count(*) FILTER (WHERE ${WON})                                AS won,
+              count(*) FILTER (WHERE status = '완료(취소)')                  AS cancelled,
+              count(*) FILTER (WHERE stage < 3 AND status <> '완료(취소)')   AS pending,
+              percentile_cont(0.5) WITHIN GROUP (
+                ORDER BY contract_amount) FILTER (WHERE contract_amount > 0) AS contract_median,
+              percentile_cont(0.5) WITHIN GROUP (
+                ORDER BY EXTRACT(DAY FROM progress_started_at - recruit_started_at)) AS recruiting_days
+         FROM projects
+        WHERE deleted_at IS NULL AND hidden = false AND inspection_manager IS NOT NULL ${window}
+        GROUP BY 1
+        ORDER BY 2 DESC`,
+      [JSON.stringify(MANAGER_NAMES)],
+    );
+
+    return rows.map((r) => {
+      const decided = Number(r.decided);
+      return {
+        manager: r.manager,
+        total: Number(r.total),
+        decided,
+        contractRate: decided ? Math.round((Number(r.won) / decided) * 1000) / 10 : 0,
+        cancelRate: decided ? Math.round((Number(r.cancelled) / decided) * 1000) / 10 : 0,
+        contractMedian: r.contract_median === null ? null : Number(r.contract_median),
+        recruitingDays:
+          r.recruiting_days === null ? null : Math.round(Number(r.recruiting_days)),
+        pending: Number(r.pending),
+        lowSample: decided < MIN_SAMPLE,
+      };
+    });
   }
 
   async getLastSyncAt(): Promise<string | null> {
