@@ -899,6 +899,12 @@ export default function TestPage() {
                   해당없음 {score.sections.filter((s) => !s.applicable).length}개는 총점·게이트에서 제외됨
                 </p>
               )}
+              {score.sections.some((s) => s.guess && s.guess.length > 0) && (
+                <p className={styles.naHint}>
+                  <span className={styles.guessBadge}>추측</span> 표시는 인풋에 없는 내용을 분야 통념으로
+                  채운 것 — 점수에 반영 안 됨, 통화로 확인할 것
+                </p>
+              )}
 
               {score.sections.map((s) => (
                 <div key={s.id} className={`${styles.section} ${s.applicable ? "" : styles.sectionNa}`}>
@@ -922,6 +928,18 @@ export default function TestPage() {
                     </div>
                   )}
                   {s.summary && <p className={styles.sectionSummary}>{s.summary}</p>}
+                  {/* 추측 — 인풋에 없어 비어 있는 섹션을 분야 통념으로 채운 것. 점수에는 안 들어간다.
+                      s.guess 체크는 옛 localStorage 번들(이 필드가 없던 때) 대비. */}
+                  {s.guess && s.guess.length > 0 && (
+                    <div className={styles.guessBox}>
+                      <span className={styles.guessBadge}>추측</span>
+                      <ul className={styles.guessList}>
+                        {s.guess.map((g, i) => (
+                          <li key={i}>{g}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               ))}
               {score.notes.length > 0 && (

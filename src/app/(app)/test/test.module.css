@@ -328,6 +328,32 @@
   color: var(--text-body-soft);
   line-height: 1.5;
 }
+/* 추측 — 인풋에 없는 내용이라 사실(summary)과 한눈에 갈리게 색·굵기·점선 테두리로 뗀다 */
+.guessBox {
+  margin-top: 6px;
+  padding-left: var(--space-sm);
+  border-left: 2px dashed var(--status-meeting-fg);
+}
+.guessBadge {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--status-meeting-fg);
+  background: var(--status-meeting-bg);
+  padding: 1px 6px;
+  border-radius: var(--rounded-xs);
+  margin-bottom: 4px;
+}
+.guessList {
+  list-style: disc;
+  padding-left: 15px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.guessList li {
+  margin-bottom: 2px;
+}
 .notes {
   margin-top: var(--space-md);
   padding: var(--space-sm) var(--space-md);

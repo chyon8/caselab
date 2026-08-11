@@ -61,18 +61,23 @@ export function AppProvider({
   user,
   notifications,
   initialReviews,
+  initialStarred,
   children,
 }: {
   user: { name: string; email: string } | null;
   notifications: AppNotification[];
   initialReviews: Record<string, CaseReview>;
+  /** 로그인 계정의 관심 프로젝트 id — 서버(favorite 테이블)에서 읽어 온 것 */
+  initialStarred: string[];
   children: React.ReactNode;
 }) {
   // 초기 렌더는 항상 라이트(false) — 서버가 그린 것과 똑같이 그려야 하이드레이션 에러가 안 난다.
   // 마운트 후 useEffect(아래)에서 OS 설정으로 보정한다. 이후엔 수동 토글이 우선한다.
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
-  const [starred, setStarred] = useState<Record<string, boolean>>({ p1: true });
+  const [starred, setStarred] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(initialStarred.map((id) => [id, true])),
+  );
   const [notifRead, setNotifRead] = useState<Record<string, boolean>>({});
   const [reviews, setReviews] = useState(initialReviews);
   const [slackConnected, setSlackConnected] = useState(true);
@@ -111,6 +116,21 @@ export function AppProvider({
     document.documentElement.dataset.theme = darkMode ? "dark" : "light";
   }, [darkMode]);
 
+  /** 별표는 먼저 켜고(즉시 반응) 서버에 저장한다. 저장이 실패하면 되돌린다 — 다음 방문에 사라지는 것보다 낫다 */
+  const toggleStar = (id: string) => {
+    const on = !starred[id];
+    setStarred((s) => ({ ...s, [id]: on }));
+    fetch("/api/favorites", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId: id, on }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(String(res.status));
+      })
+      .catch(() => setStarred((s) => ({ ...s, [id]: !on })));
+  };
+
   const value: AppContextValue = {
     user,
     darkMode,
@@ -118,7 +138,7 @@ export function AppProvider({
     sidebarCollapsed,
     toggleSidebar: () => setSidebarCollapsed((v) => !v),
     starred,
-    toggleStar: (id) => setStarred((s) => ({ ...s, [id]: !s[id] })),
+    toggleStar,
     notifications,
     notifRead,
     markRead: (id) => setNotifRead((r) => ({ ...r, [id]: true })),

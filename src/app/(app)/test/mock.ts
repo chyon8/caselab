@@ -30,19 +30,69 @@ const MOCK_QUESTIONS: AskQuestion[] = [
 // 12섹션 스코어 — SAMPLE이 러프해서 필수(features·platform)가 비어 gate 실패.
 // 해당없음(applicable=false) 예시는 없다 — SAMPLE에 "그건 필요 없다"고 말한 문장이 없어서,
 // 인용문 대조 규칙상 해당없음이 나올 수 없기 때문(mock이 실제 규칙을 어기면 안 됨).
-const CONF: Record<string, { c: number; s: string }> = {
+// g = 추측(guess). 인풋에 없어 비어 있는 섹션을 분야 통념으로 채운 것 — 점수에는 안 들어간다.
+// features(55)·integrations(40)는 게이트 임계(60) 미달이라 추측이 붙고, budget·timeline은 guessAllowed=false다.
+// 문구는 gpt-5.5 실측 출력에서 가져왔다 — mock이 실물보다 성기면 화면 판단이 어긋난다.
+const CONF: Record<string, { c: number; s: string; g?: string[] }> = {
   purpose: { c: 72, s: "반려동물 산책 매칭 앱(견주↔산책 도우미 예약). 방향은 명확." },
   core_problem: { c: 15, s: "기존 운영방식·해결하려는 문제는 언급 없음." },
   features: { c: 55, s: "지역·시간 검색, 예약, 산책 후 사진·경로 전달, 인앱 결제." },
-  admin: { c: 0, s: "" },
-  users: { c: 20, s: "견주/도우미 양측이 있으나 규모·타겟 미언급." },
-  platform: { c: 45, s: "'앱'으로만 언급 — iOS/Android/웹 범위 불명확." },
-  integrations: { c: 40, s: "인앱 결제(PG 연동 필요) 정도만 암시." },
-  design: { c: 0, s: "" },
-  tech_stack: { c: 0, s: "" },
+  admin: {
+    c: 0,
+    s: "",
+    g: [
+      "도우미 신원 확인은 보통 PASS 본인인증이나 휴대폰 본인확인 연동으로 처리하는 편입니다.",
+      "결제가 있으면 관리자에 도우미별 정산 내역, 수수료율, 환불 처리 화면이 따라오는 경우가 많습니다.",
+    ],
+  },
+  users: {
+    c: 20,
+    s: "견주/도우미 양측이 있으나 규모·타겟 미언급.",
+    g: ["양면 시장이라 도우미 공급이 되는 특정 지역부터 여는 경우가 많습니다."],
+  },
+  platform: {
+    c: 45,
+    s: "'앱'으로만 언급 — iOS/Android/웹 범위 불명확.",
+    g: [
+      "역할이 갈려 견주용·도우미용 앱을 따로 내거나 한 앱에서 모드를 분기하는 갈림길이 생기는 편입니다.",
+      "관리자는 별도 웹으로 두는 경우가 많습니다.",
+    ],
+  },
+  integrations: {
+    c: 40,
+    s: "인앱 결제(PG 연동 필요) 정도만 암시.",
+    g: [
+      "국내 앱 결제는 보통 토스페이먼츠, KG이니시스, 나이스페이먼츠 같은 PG 연동을 검토하는 경우가 많습니다.",
+      "지역·경로 기능은 네이버 지도 API, 카카오맵 API, Google Maps Platform 중 하나를 사용하는 편입니다.",
+      "예약 알림은 카카오 알림톡, Firebase Cloud Messaging, APNs 조합으로 처리될 가능성이 높습니다.",
+    ],
+  },
+  design: {
+    c: 0,
+    s: "",
+    g: [
+      "소비자용 매칭 앱은 보통 Figma로 견주 앱, 도우미 앱, 관리자 웹의 주요 화면 시안을 제작하는 편입니다.",
+    ],
+  },
+  tech_stack: {
+    c: 0,
+    s: "",
+    g: [
+      "위치 기반 매칭 앱은 보통 Flutter 또는 React Native 앱, Node.js/NestJS 또는 Spring Boot 서버, PostgreSQL 조합을 쓰는 경우가 많습니다.",
+      "산책 경로처럼 위치 좌표를 저장하면 PostgreSQL의 PostGIS 확장을 검토하는 편입니다.",
+    ],
+  },
   budget: { c: 10, s: "'예산은 잘 모르겠고' — 사실상 미정." },
   timeline: { c: 15, s: "'최대한 빨리' — 구체 일정 없음." },
-  deliverables: { c: 0, s: "" },
+  deliverables: {
+    c: 0,
+    s: "",
+    g: [
+      "앱 출시까지 포함한다면 App Store Connect와 Google Play Console 등록용 빌드, 스크린샷, 개인정보처리방침 URL이 필요할 가능성이 높습니다.",
+      "결제·위치정보를 다루므로 개인정보처리방침, 위치기반서비스 이용약관 문서가 따라오는 편입니다.",
+      "운영 인수인계를 위해 API 명세서는 Swagger/OpenAPI 형식으로 제공하는 경우가 많습니다.",
+    ],
+  },
 };
 
 // 총점·게이트 산수는 실제 코드(assembleScore)로 — mock이 규칙을 따로 들고 있다가 어긋나지 않게
@@ -53,6 +103,7 @@ function buildScore(): ScoreResult {
         id: sec.id,
         confidence: CONF[sec.id].c,
         summary: CONF[sec.id].s,
+        guess: CONF[sec.id].g ?? [],
       })),
       notes: ["'최대한 빨리' 표현 — 일정 압박 가능성. 킥오프 전 마감 합의 필요."],
     },

@@ -2,8 +2,12 @@
 // 스코어링(12섹션)과 독립. 오직 두 목적에만 복무한다: ①업무 범위 구체화 ②신뢰할 만한 견적.
 // 유사사례/검수팁을 재료로 쓰지 않는다 — 다른 프로젝트 얘기가 섞이면 오염되므로 이 인풋만 본다.
 
-/** 질문 생성 모델 — 4o로 올렸다가 mini로 다시 내림(퀄리티 비교용). */
-const MODEL = "gpt-4o-mini";
+/**
+ * 질문 생성 모델 — 4o-mini → gpt-5.5 상향 (2026-08-11, 사용자 지시).
+ * ★ gpt-5 계열은 temperature를 안 받는다(기본값 1만 허용, 다른 값이면 400).
+ *   그래서 아래 요청에 temperature가 없다. 모델을 4o 계열로 되돌리면 다시 넣어야 한다.
+ */
+const MODEL = "gpt-5.5";
 
 export interface AskQuestion {
   text: string;
@@ -51,7 +55,6 @@ export async function generateQuestions(text: string): Promise<AskQuestion[]> {
     body: JSON.stringify({
       model: MODEL,
       store: true,
-      temperature: 0.3,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: PROMPT },
