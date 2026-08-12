@@ -9,7 +9,20 @@
 
 import { REPOST_HEADINGS, REPOST_MISSING, type RepostSection } from "./repost";
 
-const MODEL = "gpt-4o";
+/**
+ * 공고문 draft 모델 — 4o → gpt-5.5 상향 (2026-08-12, 사용자 지시).
+ * ★ gpt-5 계열은 temperature를 안 받는다(기본값 1만 허용, 다른 값이면 400).
+ *   그래서 아래 요청에 temperature가 없다. 모델을 4o 계열로 되돌리면 다시 넣어야 한다.
+ */
+const MODEL = "gpt-5.5";
+
+/**
+ * 추론 강도 — scoring.ts와 같은 이유로 none. draft는 11개 섹션을 전부 쓰느라 출력이 길어
+ * Vercel 60초(maxDuration) 안에 들어와야 한다. 품질이 아쉬우면 low→medium으로 올리되
+ * 실제 소요 시간을 재고 올려라(초과하면 504).
+ * ★ gpt-5.5 지원값: none/low/medium/high/xhigh ('minimal'은 400).
+ */
+const REASONING_EFFORT = "none";
 
 /** 통화 한 건 중 draft 재료로 쓰는 부분 */
 export interface DraftCall {
@@ -166,7 +179,7 @@ export async function draftPosting(text: string, calls: DraftCall[]): Promise<Dr
     body: JSON.stringify({
       model: MODEL,
       store: true,
-      temperature: 0.2,
+      reasoning_effort: REASONING_EFFORT,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: PROMPT },
