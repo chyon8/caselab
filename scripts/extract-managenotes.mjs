@@ -3,11 +3,10 @@
 // 이미 추출된 프로젝트는 건너뛴다. 노트 수가 늘면 다시 집어간다(멱등).
 // ⚠️ 프롬프트는 src/lib/managenote-extract.ts와 같아야 한다 — 한쪽만 고치면 결과가 갈라진다.
 import { neon } from "@neondatabase/serverless";
-import fs from "fs";
+import { readEnv } from "./env.mjs";
 
-const env = fs.readFileSync(new URL("../.env.local", import.meta.url), "utf8");
-const DB = env.match(/DATABASE_URL=(.*)/)[1].trim();
-const KEY = env.match(/OPENAI_API_KEY=(.*)/)[1].trim();
+const DB = readEnv("DATABASE_URL");
+const KEY = readEnv("OPENAI_API_KEY");
 const LIMIT = parseInt(process.argv[2] ?? "30", 10);
 const MODEL = "gpt-4o-mini";
 const CONCURRENCY = 5;

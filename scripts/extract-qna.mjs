@@ -4,11 +4,10 @@
 // technical_notes 필드 추가 이전에 만들어진 요약은 그 키가 없으므로 자동으로 다시 집어간다
 // (재추출 후엔 빈 배열이라도 키가 생기므로 다시 건너뛴다 — 멱등).
 import { neon } from "@neondatabase/serverless";
-import fs from "fs";
+import { readEnv } from "./env.mjs";
 
-const env = fs.readFileSync(new URL("../.env.local", import.meta.url), "utf8");
-const DB = env.match(/DATABASE_URL=(.*)/)[1].trim();
-const KEY = env.match(/OPENAI_API_KEY=(.*)/)[1].trim();
+const DB = readEnv("DATABASE_URL");
+const KEY = readEnv("OPENAI_API_KEY");
 const LIMIT = parseInt(process.argv[2] ?? "100", 10);
 const MODEL = "gpt-4o-mini";
 const CONCURRENCY = 6;

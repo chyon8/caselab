@@ -3,11 +3,10 @@
 // 이미 추출된 미팅은 건너뛴다(멱등). 원본(meetings.transcript)은 건드리지 않는다.
 // ⚠️ 프롬프트는 src/lib/meeting-extract.ts와 같아야 한다 — 한쪽만 고치면 결과가 갈라진다.
 import { neon } from "@neondatabase/serverless";
-import fs from "fs";
+import { readEnv } from "./env.mjs";
 
-const env = fs.readFileSync(new URL("../.env.local", import.meta.url), "utf8");
-const DB = env.match(/DATABASE_URL=(.*)/)[1].trim();
-const KEY = env.match(/OPENAI_API_KEY=(.*)/)[1].trim();
+const DB = readEnv("DATABASE_URL");
+const KEY = readEnv("OPENAI_API_KEY");
 const LIMIT = parseInt(process.argv[2] ?? "20", 10);
 const MODEL = "gpt-4o-mini";
 const CONCURRENCY = 4;

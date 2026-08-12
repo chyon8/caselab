@@ -3,11 +3,10 @@
 // text-embedding-3-large를 dimensions:1536으로 축소해 기존 컬럼 차원에 맞춘다.
 // 이미 embedding 있는 프로젝트는 건너뛴다. 원본은 건드리지 않는다.
 import { neon } from "@neondatabase/serverless";
-import fs from "fs";
+import { readEnv } from "./env.mjs";
 
-const env = fs.readFileSync(new URL("../.env.local", import.meta.url), "utf8");
-const DB = env.match(/DATABASE_URL=(.*)/)[1].trim();
-const KEY = env.match(/OPENAI_API_KEY=(.*)/)[1].trim();
+const DB = readEnv("DATABASE_URL");
+const KEY = readEnv("OPENAI_API_KEY");
 const LIMIT = parseInt(process.argv[2] ?? "100", 10);
 const MODEL = "text-embedding-3-large";
 const DIMS = 1536; // projects.embedding 컬럼 차원

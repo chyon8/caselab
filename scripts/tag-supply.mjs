@@ -3,11 +3,10 @@
 // 결판난(계약 도달 or 취소) 프로젝트만. 이미 태깅된 건 건너뛴다.
 // ⚠️ src/lib/supply-tags.ts의 사본이다 — 택소노미/프롬프트를 고치면 양쪽을 맞춰야 한다.
 import { neon } from "@neondatabase/serverless";
-import fs from "fs";
+import { readEnv } from "./env.mjs";
 
-const env = fs.readFileSync(new URL("../.env.local", import.meta.url), "utf8");
-const sql = neon(env.match(/DATABASE_URL=(.*)/)[1].trim());
-const KEY = env.match(/OPENAI_API_KEY=(.*)/)[1].trim();
+const sql = neon(readEnv("DATABASE_URL"));
+const KEY = readEnv("OPENAI_API_KEY");
 const LIMIT = parseInt(process.argv[2] ?? "200", 10);
 const MODEL = "gpt-5.5"; // mini는 "해당 없으면 빈 배열" 제약을 못 지킨다 (실측)
 const CONCURRENCY = 8;
