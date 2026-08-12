@@ -278,6 +278,73 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 한 섹션 안의 소제목 — 같은 주제를 각도만 바꿔 이어 볼 때 (section-title보다 한 단계 아래) */
+.sub {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: var(--page-text);
+  margin: 0 0 10px;
+}
+
+/* 제목 열만 넓게 — 나머지는 nowrap이라 제목이 밀리면 표가 다 밀린다 */
+.cell-title {
+  white-space: normal;
+  min-width: 260px;
+  max-width: 420px;
+}
+
+.row-link {
+  color: var(--page-text);
+  text-decoration: none;
+}
+
+.row-link:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+/* 목록 페이지 넘김 — 클라이언트 상태라 화면 이동이 없다(스크롤이 위로 안 튄다) */
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -40px 0 56px;
+}
+
+.pager-btn {
+  font-size: 13px;
+  padding: 7px 14px;
+  border: none;
+  border-radius: var(--rounded-pill);
+  background: var(--panel-bg);
+  color: var(--page-text);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pager-btn:hover:not(:disabled) {
+  color: var(--color-primary);
+}
+
+/* 첫/끝 페이지 — 없애면 버튼 위치가 흔들려서, 자리는 두고 누르지만 못하게 */
+.pager-btn:disabled {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.pager-at {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 다음 페이지를 받아오는 동안 — 표 높이는 유지해서 아래 섹션이 들썩이지 않게 한다 */
+.loading {
+  opacity: 0.45;
+  transition: opacity 0.12s;
+}
+
 /* 표본이 적은 매니저 — 숨기는 대신 못 믿을 수치라고 말한다(막대 섹션과 같은 처리) */
 .row-weak td {
   color: var(--text-faint);

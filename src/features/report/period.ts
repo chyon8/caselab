@@ -23,6 +23,14 @@ export type ReportPeriod = (typeof REPORT_PERIODS)[number]["value"];
  */
 export const REPORT_MONTHS = 24;
 
+/**
+ * 저지원 프로젝트 목록의 시작일. 통계(막대)는 기간 전체를 보지만, **실물 목록은 지금 손댈 수 있는
+ * 것만** 본다 — 2024년 건을 넘겨보는 건 검수에 쓸모가 없다. 쿼리와 화면 문구가 같은 값을 봐야 한다.
+ */
+export const LOW_PROPOSAL_FROM = "2026-01-01";
+/** 목록 한 페이지 건수 — 한 번에 쭉 내리지 않고 넘겨 본다 */
+export const LOW_PROPOSAL_PAGE = 25;
+
 /** URL 값 → 프리셋. 모르는 값은 "전체"로 떨어뜨린다 */
 export function parsePeriod(value?: string): ReportPeriod {
   const hit = REPORT_PERIODS.find((p) => p.value === value);

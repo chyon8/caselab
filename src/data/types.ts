@@ -362,10 +362,28 @@ export interface ReportStats {
   byProposals: Breakdown[];
   /** 지원 1~5건 구간을 1건 단위로 쪼갠 계약률. byProposals의 '1~4건' 버킷이 감추는 차이를 본다 */
   byLowProposals: Breakdown[];
+  /**
+   * 공고의 어떤 성질이 개발사 공급 풀을 좁히나.
+   * rate = 그 성질이 붙은 건 중 지원 1~5건 비율, decided = 그 성질이 붙은 결판 건수.
+   * 계약률이 아니다 — 전체 평균 저지원 비율과 비교해야 뜻이 생긴다.
+   */
+  supplyTraits: Breakdown[];
+  /**
+   * 기준선(%) — 태깅은 됐지만 **아무 성질도 안 붙은** 건의 저지원 비율.
+   * supplyTraits 각 줄을 이것과 비교한다. 전체 코퍼스 평균을 쓰면 안 된다 —
+   * 태깅 범위가 코퍼스 전체가 아니라 코호트가 달라진다.
+   */
+  supplyBaseline: number;
+  /**
+   * 매니저 노트에서 뽑은 **실제 취소 사유** 랭킹.
+   * decided = 그 사유가 붙은 취소 건수, rate = 사유가 잡힌 취소 건 대비 %.
+   * 개발사 Q&A의 topRisks와 다른 질문이다 — 실측상 두 목록은 겹치지 않는다.
+   */
+  cancelReasons: Breakdown[];
+  /** 취소 사유가 하나라도 잡힌 건수 — cancelReasons rate의 분모 */
+  cancelTagged: number;
   /** 모집 전환 월(KST)별 계약률. 최근 순으로 최대 MONTHS_LIMIT개월 */
   byMonth: Breakdown[];
-  /** 임베딩 클러스터(유형)별 계약률. 클러스터 미구축이면 빈 배열 */
-  byCluster: Breakdown[];
   /**
    * Q&A에서 뽑힌 리스크 태그 빈도 Top N.
    * decided = 그 태그가 붙은 프로젝트 수, rate = 리스크가 하나라도 있는 프로젝트 대비 %.
@@ -378,6 +396,31 @@ export interface ReportStats {
   medianDays: { inspection: number; recruiting: number; progress: number; cancelled: number };
   /** 모집 예산 대비 실제 계약금액. zeroExcluded = 계약금액 0원이라 뺀 건수 */
   budgetDelta: { increased: number; same: number; decreased: number; zeroExcluded: number };
+}
+
+/** 지원자가 거의 없었던 프로젝트 한 건 — 비율만 보면 "어떤 건이 그랬나"를 못 본다 */
+export interface LowProposalProject {
+  id: string;
+  title: string;
+  /** 공급 풀을 좁히는 성질(supply_tags). 없으면 빈 배열 — 평범한 공고가 그렇다 */
+  supplyTags: string[];
+  proposalCount: number;
+  /** 화면 표기용 ("4,500만원"). 기간제(월 단가)면 "월 600만원" */
+  budget: string | null;
+  status: ProjectStatus;
+  manager: string;
+  /** 모집 전환일 "2026-07-02" */
+  recruitedAt: string;
+}
+
+/** 저지원 프로젝트 목록 한 페이지 — 1,056건을 한 번에 내리지 않는다 */
+export interface LowProposalPage {
+  rows: LowProposalProject[];
+  /** 필터 적용 후 전체 건수 (페이지 수 계산용) */
+  total: number;
+  /** 1-based. 범위를 벗어난 요청은 서버가 마지막 페이지로 당겨온다 */
+  page: number;
+  pageSize: number;
 }
 
 /** 리포트의 한 줄 — "1억+ : 결판 186건 중 계약률 14.5%" */

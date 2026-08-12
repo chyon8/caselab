@@ -6,6 +6,7 @@ import type {
   AppNotification,
   CaseReview,
   KanbanColumn,
+  LowProposalPage,
   ManagerStat,
   Project,
   ProjectFull,
@@ -33,8 +34,11 @@ const EMPTY_STATS: ReportStats = {
   byScope: [],
   byProposals: [],
   byLowProposals: [],
+  supplyTraits: [],
+  supplyBaseline: 0,
+  cancelReasons: [],
+  cancelTagged: 0,
   byMonth: [],
-  byCluster: [],
   topRisks: [],
   riskTagged: 0,
   medianDays: { inspection: 0, recruiting: 0, progress: 0, cancelled: 0 },
@@ -79,6 +83,8 @@ export interface DataSource {
   searchSimilarQnaPool(vector: number[], limit?: number, scope?: string): Promise<PoolQna[]>;
   /** periodDays = 모집 전환일 기준 최근 N일. null/undefined면 기간 전체 */
   getReportStats(periodDays?: number | null): Promise<ReportStats>;
+  /** 저지원(지원 1~5건) 프로젝트 실물 목록 한 페이지. 집계와 달리 페이지를 넘긴다 */
+  getLowProposalProjects(periodDays?: number | null, page?: number): Promise<LowProposalPage>;
   /** 매니저별 성과 지표 — 볼 권한이 있는 계정에서만 호출한다(REPORT_MANAGER_EMAILS) */
   getManagerStats(periodDays?: number | null): Promise<ManagerStat[]>;
   /** 마지막 동기화 시각(ISO) — 리포트가 "언제 기준 데이터인지" 밝히는 데 쓴다 */
@@ -164,6 +170,10 @@ class MockDataSource implements DataSource {
 
   async getReportStats(): Promise<ReportStats> {
     return EMPTY_STATS;
+  }
+
+  async getLowProposalProjects(): Promise<LowProposalPage> {
+    return { rows: [], total: 0, page: 1, pageSize: 0 };
   }
 
   async getManagerStats(): Promise<ManagerStat[]> {

@@ -10,7 +10,8 @@ interface RefreshResult {
   meeting: { targets: number; done: number; fail: number };
   note: { targets: number; done: number; fail: number };
   risk: { targets: number; done: number; fail: number };
-  cluster: { done: number };
+  cancel: { targets: number; done: number; fail: number };
+  supply: { targets: number; done: number; fail: number };
 }
 
 const NOTIFICATION_TOGGLES = [
@@ -86,7 +87,7 @@ export default function Settings() {
           <div className={styles["slack-id"]}>
             <div>
               <div className={styles["slack-name"]}>
-                Q&A 요약 · 공고문 임베딩 · 미팅 · 노트 추출 · 리스크 태깅 · 유형 배정
+                Q&A 요약 · 임베딩 · 미팅 · 노트 추출 · 리스크 · 취소 사유 · 공급난이도 태깅
               </div>
               <div className={styles["slack-status"]}>
                 평소엔 하루 3회(09:30·13:00·17:00) 자동 갱신 — 신규 유입분만
@@ -105,15 +106,18 @@ export default function Settings() {
         {refreshResult && !refreshError && (
           <div className={styles["refresh-result"]}>
             Q&A 요약 {refreshResult.qna.done}건 · 임베딩 {refreshResult.embed.done}건 · 미팅 추출{" "}
-            {refreshResult.meeting.done}건 · 노트 추출 {refreshResult.note.done}건 · 리스크 태깅{" "}
-            {refreshResult.risk.done}건 · 유형 배정 {refreshResult.cluster.done}건 갱신됨
+            {refreshResult.meeting.done}건 · 노트 추출 {refreshResult.note.done}건 · 리스크{" "}
+            {refreshResult.risk.done}건 · 취소 사유 {refreshResult.cancel.done}건 · 공급난이도{" "}
+            {refreshResult.supply.done}건 갱신됨
             {refreshResult.qna.fail +
               refreshResult.embed.fail +
               refreshResult.meeting.fail +
               refreshResult.note.fail +
-              refreshResult.risk.fail >
+              refreshResult.risk.fail +
+              refreshResult.cancel.fail +
+              refreshResult.supply.fail >
               0 &&
-              ` (실패 ${refreshResult.qna.fail + refreshResult.embed.fail + refreshResult.meeting.fail + refreshResult.note.fail + refreshResult.risk.fail}건)`}
+              ` (실패 ${refreshResult.qna.fail + refreshResult.embed.fail + refreshResult.meeting.fail + refreshResult.note.fail + refreshResult.risk.fail + refreshResult.cancel.fail + refreshResult.supply.fail}건)`}
           </div>
         )}
       </div>

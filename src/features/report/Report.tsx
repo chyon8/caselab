@@ -2,13 +2,19 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import type { Breakdown, ManagerStat, ReportStats } from "@/data/types";
+import type { Breakdown, LowProposalPage, ManagerStat, ReportStats } from "@/data/types";
 import { formatWon } from "@/lib/format";
-import { REPORT_MONTHS, REPORT_PERIODS, type ReportPeriod } from "./period";
+import {
+  LOW_PROPOSAL_FROM,
+  REPORT_MONTHS,
+  REPORT_PERIODS,
+  type ReportPeriod,
+} from "./period";
+import LowProposalList from "./LowProposalList";
 import styles from "./Report.module.css";
 
 /** 막대가 나타내는 %가 무슨 %인지 — 섹션마다 다르다. 안 쓰면 계약률과 구성비가 같은 칸에서 섞여 보인다 */
-type Metric = "계약률" | "구성비" | "언급률";
+type Metric = "계약률" | "구성비" | "언급률" | "저지원 비율";
 
 /**
  * 막대 하나. 비율(%)을 그대로 폭으로 쓴다 — 최댓값 기준으로 정규화하면
@@ -83,11 +89,14 @@ export default function Report({
   stats: s,
   period,
   lastSyncAt,
+  lowProposals,
   managers,
 }: {
   stats: ReportStats;
   period: ReportPeriod;
   lastSyncAt: string | null;
+  /** 저지원 프로젝트 목록 한 페이지 — 집계(stats)와 달리 URL의 lp로 넘긴다 */
+  lowProposals: LowProposalPage;
   /** 볼 권한이 없으면 null — 조회 자체를 안 한 것이다(report/page.tsx) */
   managers: ManagerStat[] | null;
 }) {
@@ -213,6 +222,34 @@ export default function Report({
           finding={spread(s.byLowProposals)}
         >
           <RateBars rows={s.byLowProposals} metric="계약률" />
+
+          {s.supplyTraits.length > 0 && (
+            <>
+              <p className={styles.sub}>무엇이 개발사 공급 풀을 좁히나</p>
+              <p className={styles.note}>
+                «쇼핑몰», «앱» 같은 분야가 아니라, 공고에 붙으면 <strong>지원할 수 있는 회사가
+                줄어드는 조건</strong>입니다. 각 조건이 붙은 건 중 지원이 1~5건에 그친 비율입니다.
+                평범한 공고에는 아무 조건도 안 붙고, <strong>그런 건들의 저지원 비율이 {s.supplyBaseline}%
+                </strong>입니다 — 이보다 높은 줄만 실제로 사람을 못 모으는 조건입니다. 낮은 줄은
+                제약이 아니라는 뜻입니다.
+              </p>
+              {spread(s.supplyTraits) && <p className={styles.finding}>{spread(s.supplyTraits)}</p>}
+              <RateBars rows={s.supplyTraits} metric="저지원 비율" sampleLabel="해당 건" />
+            </>
+          )}
+
+          {lowProposals.total > 0 && (
+            <>
+              <p className={styles.sub}>실제 그 프로젝트들</p>
+              <p className={styles.note}>
+                선택한 기간 안에서, {LOW_PROPOSAL_FROM.slice(0, 4)}년 이후 모집 전환된 것 중 지원
+                1~5건으로 결판난 {lowProposals.total.toLocaleString()}건입니다 (최근순). 위 막대는
+                기간 전체를 보지만 이 목록은 지금 손댈 수 있는 것만 봅니다. 제목을 누르면 상세로
+                갑니다.
+              </p>
+              <LowProposalList initial={lowProposals} period={period} />
+            </>
+          )}
         </Section>
       )}
 
@@ -229,29 +266,32 @@ export default function Report({
         </Section>
       )}
 
-      {s.byCluster.length > 0 && (
+
+      {s.cancelReasons.length > 0 && (
         <Section
-          title="유형별 계약률 — 공고문 임베딩 클러스터"
+          title="실제 취소 사유 — 매니저 노트 기준"
           note={
-            "카테고리(대분류)는 성격이 전혀 다른 프로젝트를 한 칸에 담습니다. 공고문 임베딩을 " +
-            "클러스터링해 실제 유형으로 다시 가른 계약률입니다. 유형명은 각 군집의 대표 공고를 보고 붙인 이름이라, " +
-            "군집을 다시 만들면 이름과 경계가 달라질 수 있습니다."
+            `깨진 프로젝트에서 매니저가 남긴 «결과와 그 이유»를 고정 유형으로 분류해 센 것입니다. ` +
+            `사유가 잡힌 취소 건 ${s.cancelTagged.toLocaleString()}건이 분모이고, 한 건에 사유가 ` +
+            `여럿이면 각각 셉니다. ⚠️ 매니저 노트 적재가 아직 전량이 아니라 최근 구간에 쏠려 ` +
+            `있습니다 — 순위는 읽되 %는 확정치로 보지 마세요.`
           }
-          finding={spread(s.byCluster)}
+          finding={topRank(s.cancelReasons, "취소 사유")}
         >
-          <RateBars rows={s.byCluster} metric="계약률" />
+          <RateBars rows={s.cancelReasons} metric="구성비" sampleLabel="취소 건" />
         </Section>
       )}
 
       {s.topRisks.length > 0 && (
         <Section
-          title="가장 자주 반복되는 리스크"
+          title="개발사가 공고에서 짚은 리스크 — 취소 사유가 아니다"
           note={
-            `개발사가 공고 Q&A에서 짚은 리스크를 고정 유형으로 분류해 센 것입니다. ` +
+            `지원한 개발사가 공고 Q&A에서 계약 전에 물은 것을 고정 유형으로 분류해 센 것입니다. ` +
             `리스크가 하나라도 잡힌 프로젝트 ${s.riskTagged.toLocaleString()}건이 분모이고, ` +
-            "한 프로젝트에 유형이 여러 개 붙으므로 비율의 합은 100%를 넘습니다."
+            "한 프로젝트에 유형이 여러 개 붙으므로 비율의 합은 100%를 넘습니다. " +
+            "«왜 깨졌나»의 답은 여기에 없습니다 — 그건 매니저 노트에서 따로 뽑아야 합니다."
           }
-          finding={topRisk(s.topRisks)}
+          finding={topRank(s.topRisks, "지적")}
         >
           <RateBars rows={s.topRisks} metric="언급률" sampleLabel="프로젝트" />
         </Section>
@@ -409,11 +449,11 @@ function spread(rows: Breakdown[]): string | null {
   return `가장 높은 «${hi.label}» ${hi.rate}% ↔ 가장 낮은 «${lo.label}» ${lo.rate}% — ${gap}%p 차이.`;
 }
 
-/** 리스크 랭킹용 — 상위 3개를 한 줄로. topShare와 달리 비율 합이 100%가 아니라 순위만 말한다 */
-function topRisk(rows: Breakdown[]): string | null {
+/** 태그 랭킹용 — 상위 3개를 한 줄로. topShare와 달리 비율 합이 100%가 아니라 순위만 말한다 */
+function topRank(rows: Breakdown[], noun: string): string | null {
   const top = rows.slice(0, 3);
   if (top.length === 0) return null;
-  return `가장 잦은 리스크는 ${top
+  return `가장 잦은 ${noun}는 ${top
     .map((r) => `«${r.label}» ${r.decided.toLocaleString()}건(${r.rate}%)`)
     .join(", ")} 순입니다.`;
 }

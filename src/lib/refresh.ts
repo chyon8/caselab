@@ -4,7 +4,8 @@
 //   3) 추출이 없는 사전 미팅 녹취 → meetings.ai_extract
 //   4) 추출이 없거나 노트 수가 바뀐 프로젝트 → ai_insights.note_extract
 //   5) 리스크 문장은 있는데 태그가 없는 프로젝트 → ai_insights.risk_tags
-//   6) 임베딩은 있는데 클러스터 배정이 없는 프로젝트 → projects.cluster_id (LLM 없음, SQL 한 방)
+//   6) 취소로 끝났는데 사유 태그가 없는 프로젝트 → ai_insights.cancel_tags
+//   7) 결판났는데 공급난이도 태그가 없는 프로젝트 → ai_insights.supply_tags
 // 백필(대량 재추출)은 scripts/*.mjs 수동 실행 몫. 이건 신규 소량만 소화한다.
 // 시간예산 안에 다 못 끝내도 다음 실행에서 이어진다(대상 쿼리가 IS NULL/변화감지라 자동 재개).
 
@@ -18,6 +19,8 @@ import {
 import { extractManagenotes, NOTE_MODEL, type NoteItem } from "@/lib/managenote-extract";
 import { extractQnaSummary, QNA_MODEL, type QnaThread } from "@/lib/qna-extract";
 import { tagRiskSignals } from "@/lib/risk-tags";
+import { tagCancelReasons } from "@/lib/cancel-tags";
+import { tagSupplyTraits } from "@/lib/supply-tags";
 import type { ManagenoteExtract, MeetingExtract, QnaSummary } from "@/data/types";
 
 const BUDGET_MS = 50_000; // 60s 함수 한도 아래로 여유를 두고 새 작업 착수를 멈춘다
@@ -32,8 +35,12 @@ const NOTE_CONCURRENCY = 4;
 // 리스크 태깅은 입력이 문장 두세 개뿐이라 가장 가볍다
 const RISK_LIMIT = 40;
 const RISK_CONCURRENCY = 4;
-// 클러스터 배정은 LLM이 없는 SQL 한 문장 — 상한은 폭주 방지용이다
-const CLUSTER_LIMIT = 500;
+const CANCEL_LIMIT = 30;
+const CANCEL_CONCURRENCY = 4;
+// 공급난이도는 판정이 까다로워 상위 모델을 쓴다(mini는 부정 제약을 못 지킨다 — 실측).
+// 건당 비용이 커서 한 실행당 소량만 돈다.
+const SUPPLY_LIMIT = 20;
+const SUPPLY_CONCURRENCY = 4;
 
 interface QnaTarget {
   project_id: string;
@@ -67,14 +74,28 @@ interface RiskTarget {
   signals: string[];
 }
 
+interface CancelTarget {
+  project_id: string;
+  title: string;
+  outcomes: string[];
+}
+
+interface SupplyTarget {
+  id: string;
+  title: string;
+  tech: string | null;
+  category: string | null;
+  posting_raw: string | null;
+}
+
 export interface RefreshResult {
   qna: { targets: number; done: number; fail: number };
   embed: { done: number; fail: number };
   meeting: { targets: number; done: number; fail: number };
   note: { targets: number; done: number; fail: number };
   risk: { targets: number; done: number; fail: number };
-  /** 클러스터 배정 건수. 클러스터 미구축(마이그레이션 018 전)이면 0 */
-  cluster: { done: number };
+  cancel: { targets: number; done: number; fail: number };
+  supply: { targets: number; done: number; fail: number };
 }
 
 export async function runRefresh(): Promise<RefreshResult> {
@@ -233,7 +254,8 @@ export async function runRefresh(): Promise<RefreshResult> {
           `INSERT INTO ai_insights (project_id, note_extract, model, generated_at)
            VALUES ($1, $2, $3, now())
            ON CONFLICT (project_id) DO UPDATE
-             SET note_extract = EXCLUDED.note_extract, model = EXCLUDED.model, generated_at = now()`,
+             SET note_extract = EXCLUDED.note_extract, model = EXCLUDED.model,
+                 cancel_tags = NULL, generated_at = now()`,
           [r.project_id, JSON.stringify(x), NOTE_MODEL],
         );
         noteDone++;
@@ -283,27 +305,87 @@ export async function runRefresh(): Promise<RefreshResult> {
   }
   await Promise.all(Array.from({ length: RISK_CONCURRENCY }, riskWorker));
 
-  // 6) 클러스터 배정 — 신규 프로젝트를 재클러스터링 없이 최근접 중심에 붙인다.
-  //    LLM도 왕복도 없는 SQL 한 문장이라 시간예산을 거의 안 먹는다.
-  //    클러스터 미구축(마이그레이션 018 전)이면 테이블이 없어 실패한다 — 그때는 조용히 0건.
-  let clusterDone = 0;
-  try {
-    const assigned = await query<{ id: string }>(
-      `UPDATE projects p
-          SET cluster_id = (SELECT c.id FROM clusters c ORDER BY c.centroid <=> p.embedding LIMIT 1)
-        WHERE p.id IN (
-          SELECT id FROM projects
-           WHERE embedding IS NOT NULL AND cluster_id IS NULL
-             AND deleted_at IS NULL AND hidden = false
-           LIMIT $1
+  // 6) 취소 사유 태깅 — 대상 조건은 scripts/tag-cancels.mjs와 같다.
+  //    노트 추출이 갱신되면(note_extract 재생성) 4단계가 cancel_tags를 NULL로 되돌려 다시 태깅된다.
+  const cancelTargets =
+    Date.now() < deadline
+      ? await query<CancelTarget>(
+          `SELECT ai.project_id, p.title,
+                  ARRAY(SELECT jsonb_array_elements_text(ai.note_extract->'outcome')) AS outcomes
+             FROM ai_insights ai
+             JOIN projects p ON p.id = ai.project_id
+            WHERE ai.cancel_tags IS NULL
+              AND ai.note_extract IS NOT NULL
+              AND jsonb_array_length(ai.note_extract->'outcome') > 0
+              AND p.status = '완료(취소)'
+              AND p.deleted_at IS NULL AND p.hidden = false
+            LIMIT $1`,
+          [CANCEL_LIMIT],
         )
-        RETURNING p.id`,
-      [CLUSTER_LIMIT],
-    );
-    clusterDone = assigned.length;
-  } catch {
-    clusterDone = 0;
+      : [];
+
+  let cancelDone = 0;
+  let cancelFail = 0;
+  let cancelNext = 0;
+  async function cancelWorker(): Promise<void> {
+    while (cancelNext < cancelTargets.length && Date.now() < deadline) {
+      const r = cancelTargets[cancelNext++];
+      try {
+        const tags = await tagCancelReasons(r.title, r.outcomes);
+        await query(`UPDATE ai_insights SET cancel_tags = $2 WHERE project_id = $1`, [
+          r.project_id,
+          tags,
+        ]);
+        cancelDone++;
+      } catch {
+        cancelFail++;
+      }
+    }
   }
+  await Promise.all(Array.from({ length: CANCEL_CONCURRENCY }, cancelWorker));
+
+  // 7) 공급난이도 태깅 — 대상 조건은 scripts/tag-supply.mjs와 같다.
+  //    결판난 건만 본다(지원자 수가 확정돼야 저지원 비율에 쓸 수 있다).
+  const supplyTargets =
+    Date.now() < deadline
+      ? await query<SupplyTarget>(
+          `SELECT p.id, p.title, p.tech, p.category, p.posting_raw
+             FROM projects p
+             LEFT JOIN ai_insights ai ON ai.project_id = p.id
+            WHERE ai.supply_tags IS NULL
+              AND p.deleted_at IS NULL AND p.hidden = false
+              AND ((p.stage >= 3 AND p.status <> '완료(취소)') OR p.status = '완료(취소)')
+            ORDER BY p.recruit_started_at DESC NULLS LAST
+            LIMIT $1`,
+          [SUPPLY_LIMIT],
+        )
+      : [];
+
+  let supplyDone = 0;
+  let supplyFail = 0;
+  let supplyNext = 0;
+  async function supplyWorker(): Promise<void> {
+    while (supplyNext < supplyTargets.length && Date.now() < deadline) {
+      const r = supplyTargets[supplyNext++];
+      try {
+        const tags = await tagSupplyTraits({
+          title: r.title,
+          tech: r.tech,
+          category: r.category,
+          posting: r.posting_raw,
+        });
+        await query(
+          `INSERT INTO ai_insights (project_id, supply_tags) VALUES ($1, $2)
+           ON CONFLICT (project_id) DO UPDATE SET supply_tags = EXCLUDED.supply_tags`,
+          [r.id, tags],
+        );
+        supplyDone++;
+      } catch {
+        supplyFail++;
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: SUPPLY_CONCURRENCY }, supplyWorker));
 
   return {
     qna: { targets: qnaTargets.length, done: qnaDone, fail: qnaFail },
@@ -311,6 +393,7 @@ export async function runRefresh(): Promise<RefreshResult> {
     meeting: { targets: meetTargets.length, done: meetDone, fail: meetFail },
     note: { targets: noteTargets.length, done: noteDone, fail: noteFail },
     risk: { targets: riskTargets.length, done: riskDone, fail: riskFail },
-    cluster: { done: clusterDone },
+    cancel: { targets: cancelTargets.length, done: cancelDone, fail: cancelFail },
+    supply: { targets: supplyTargets.length, done: supplyDone, fail: supplyFail },
   };
 }

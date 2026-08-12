@@ -1,6 +1,10 @@
 import { query } from "@/lib/db";
 import { MANAGER_NAMES, managerFilterSql, managerName } from "@/lib/managers";
-import { REPORT_MONTHS } from "@/features/report/period";
+import {
+  LOW_PROPOSAL_FROM,
+  LOW_PROPOSAL_PAGE,
+  REPORT_MONTHS,
+} from "@/features/report/period";
 import type { PoolQna } from "@/lib/review-tips";
 import {
   daysBetween,
@@ -21,6 +25,7 @@ import type {
   IssueLogEntry,
   KanbanColumn,
   KanbanStatus,
+  LowProposalPage,
   ManagenoteExtract,
   ManagerNote,
   ManagerStat,
@@ -389,6 +394,13 @@ const SOFT_SAMPLE = 100;
 
 /** 리스크 태그 랭킹에 실을 개수 */
 const RISK_TOP_N = 10;
+/** 저지원의 기준 — 0건은 계약이 구조적으로 불가능해 뺀다 */
+const LOW_PROPOSAL_MAX = 5;
+/**
+ * 공급난이도 트레이트는 대부분 드물다 — MIN_SAMPLE(30)로 자르면 신호가 가장 센 것들
+ * (기구설계 50%, 게임엔진 30%)이 통째로 사라진다. 낮춰서 싣되 30 미만은 «표본 적음»으로 표시한다.
+ */
+const SUPPLY_MIN_SAMPLE = 10;
 
 /** 유사사례 집계 통계 — 코사인 유사도 상위 N건을 표본으로 삼는다(카드로 보여주는 5~8건보다 크게) */
 const SIMILAR_STATS_POOL = 30;
@@ -649,8 +661,10 @@ export class PostgresDataSource implements DataSource {
       byScope,
       byProposals,
       byLowProposals,
+      supplyTraits,
+      [baseline],
+      cancelReasons,
       byMonth,
-      byCluster,
       topRisks,
       [dayRows],
       [delta],
@@ -739,9 +753,54 @@ export class PostgresDataSource implements DataSource {
                 count(*) FILTER (WHERE ${DECIDED}) AS decided,
                 round(100.0 * count(*) FILTER (WHERE ${WON})
                       / NULLIF(count(*) FILTER (WHERE ${DECIDED}), 0), 1) AS rate
-           ${live} AND proposal_count BETWEEN 1 AND 5
+           ${live} AND proposal_count BETWEEN 1 AND ${LOW_PROPOSAL_MAX}
           GROUP BY proposal_count ORDER BY proposal_count`,
       ),
+
+      // 공고의 어떤 성질이 개발사 공급 풀을 좁히나. rate는 계약률이 아니라
+      // **그 성질이 붙은 건 중 지원 1~5건 비율**이다 — 전체 평균과 비교해야 뜻이 생긴다.
+      // 태깅 안 된 구간(supply_tags IS NULL)은 분모에서 빠진다. 백필 전이면 0행 → 섹션이 사라진다.
+      query<BreakdownRow>(
+        `SELECT t AS label,
+                count(*) AS decided,
+                round(100.0 * count(*) FILTER (WHERE p.proposal_count BETWEEN 1 AND ${LOW_PROPOSAL_MAX})
+                      / NULLIF(count(*), 0), 1) AS rate
+           FROM projects p
+           JOIN ai_insights ai ON ai.project_id = p.id, unnest(ai.supply_tags) t
+          WHERE p.deleted_at IS NULL AND p.hidden = false ${window}
+            AND (${DECIDED}) AND p.proposal_count IS NOT NULL
+          GROUP BY 1 HAVING count(*) >= ${SUPPLY_MIN_SAMPLE}
+          ORDER BY 3 DESC`,
+      ).catch(() => [] as BreakdownRow[]),
+
+      // 성질이 하나도 안 붙은 건의 저지원 비율 = 위 트레이트들을 재는 기준선
+      query<{ n: string; low: string }>(
+        `SELECT count(*) AS n,
+                count(*) FILTER (WHERE p.proposal_count BETWEEN 1 AND ${LOW_PROPOSAL_MAX}) AS low
+           FROM projects p JOIN ai_insights ai ON ai.project_id = p.id
+          WHERE p.deleted_at IS NULL AND p.hidden = false ${window}
+            AND (${DECIDED}) AND p.proposal_count IS NOT NULL
+            AND ai.supply_tags IS NOT NULL AND cardinality(ai.supply_tags) = 0`,
+      ).catch(() => []),
+
+      // 매니저 노트에서 뽑은 실제 취소 사유. 분모는 사유가 하나라도 잡힌 취소 건.
+      query<BreakdownRow & { pool: string }>(
+        `WITH tagged AS (
+           SELECT p.id, ai.cancel_tags
+             FROM projects p JOIN ai_insights ai ON ai.project_id = p.id
+            WHERE p.deleted_at IS NULL AND p.hidden = false ${window}
+              AND p.status = '완료(취소)'
+              AND ai.cancel_tags IS NOT NULL AND cardinality(ai.cancel_tags) > 0
+         )
+         SELECT t AS label,
+                count(*) AS decided,
+                round(100.0 * count(*) / NULLIF((SELECT count(*) FROM tagged), 0), 1) AS rate,
+                (SELECT count(*) FROM tagged) AS pool
+           FROM tagged, unnest(cancel_tags) t
+          GROUP BY 1 ORDER BY 2 DESC`,
+      ).catch(() => []),
+
+
 
       // 월별 계약률. 최근 달일수록 아직 모집 중인 건이 많아 분모가 작다 —
       // 숨기지 않고 표본수를 같이 실어 흐리게 표시한다(MIN_SAMPLE 컷을 걸지 않는 이유).
@@ -754,18 +813,6 @@ export class PostgresDataSource implements DataSource {
           GROUP BY 1 ORDER BY 1 DESC LIMIT ${REPORT_MONTHS}`,
       ),
 
-      // 임베딩 클러스터(유형)별 계약률 — category(대분류)가 감추는 실제 유형 차이.
-      // 마이그레이션 018 미적용/클러스터 미구축이면 조인 결과가 0행이라 섹션이 통째로 사라진다.
-      query<BreakdownRow>(
-        `SELECT c.label AS label,
-                count(*) FILTER (WHERE ${DECIDED}) AS decided,
-                round(100.0 * count(*) FILTER (WHERE ${WON})
-                      / NULLIF(count(*) FILTER (WHERE ${DECIDED}), 0), 1) AS rate
-           FROM projects JOIN clusters c ON c.id = projects.cluster_id
-          WHERE deleted_at IS NULL AND hidden = false ${window}
-          GROUP BY 1 HAVING count(*) FILTER (WHERE ${DECIDED}) >= ${MIN_SAMPLE}
-          ORDER BY 3 DESC`,
-      ).catch(() => [] as BreakdownRow[]),
 
       // 리스크 태그 빈도. 분모는 "리스크 태그가 하나라도 붙은 프로젝트 수"(tagged) —
       // 태그 총합을 분모로 쓰면 한 프로젝트에 여러 태그가 붙어 비율의 뜻이 흐려진다.
@@ -827,9 +874,16 @@ export class PostgresDataSource implements DataSource {
       byScope: toBreakdown(byScope, SOFT_SAMPLE),
       byProposals: toBreakdown(byProposals, SOFT_SAMPLE),
       byLowProposals: toBreakdown(byLowProposals, SOFT_SAMPLE),
+      supplyTraits: toBreakdown(supplyTraits, MIN_SAMPLE),
+      // 기준선 = **태깅은 됐는데 아무 성질도 안 붙은 건**의 저지원 비율.
+      // 전체 코퍼스로 잡으면 안 된다 — 태깅 범위가 최근 구간이라 코호트가 달라 비교가 성립하지 않는다.
+      supplyBaseline: Number(baseline?.n)
+        ? Math.round((Number(baseline.low) / Number(baseline.n)) * 1000) / 10
+        : 0,
+      cancelReasons: toBreakdown(cancelReasons),
+      cancelTagged: Number(cancelReasons[0]?.pool ?? 0),
       // SQL은 최근 월부터 뽑는다(LIMIT을 걸려고) — 화면은 시간순이라 뒤집는다
       byMonth: toBreakdown(byMonth, SOFT_SAMPLE).reverse(),
-      byCluster: toBreakdown(byCluster, SOFT_SAMPLE),
       topRisks: toBreakdown(topRisks),
       riskTagged: Number(topRisks[0]?.pool ?? 0),
       medianDays: {
@@ -844,6 +898,80 @@ export class PostgresDataSource implements DataSource {
         decreased: Number(delta?.decreased ?? 0),
         zeroExcluded: Number(delta?.zero_excluded ?? 0),
       },
+    };
+  }
+
+  /**
+   * 저지원 프로젝트 실물 목록. 집계와 분리한 이유는 **페이지를 넘기기 때문**이다 —
+   * 페이지를 바꿀 때마다 리포트 집계 12개를 통째로 다시 돌릴 이유가 없다.
+   *
+   * 시작일(LOW_PROPOSAL_FROM)을 기간 필터와 **함께** 건다. 기간을 "전체"로 둬도 목록은
+   * 2026년 이후만 나오고, 기간을 3개월로 좁히면 그쪽이 더 좁으니 그대로 따른다.
+   */
+  async getLowProposalProjects(
+    periodDays?: number | null,
+    page = 1,
+  ): Promise<LowProposalPage> {
+    const days = Number.isInteger(periodDays) && (periodDays as number) > 0 ? periodDays : null;
+    const window = days ? `AND p.recruit_started_at >= now() - interval '${days} days'` : "";
+    const size = LOW_PROPOSAL_PAGE;
+    const want = Math.max(1, Math.floor(page));
+
+    const rows = await query<{
+      id: string;
+      title: string;
+      supply_tags: string[] | null;
+      proposal_count: number;
+      budget: string | null;
+      budget_monthly: boolean | null;
+      status: string;
+      inspection_manager: string | null;
+      recruit_started_at: string | null;
+      total: string;
+    }>(
+      `SELECT p.id, p.title, ai.supply_tags, p.proposal_count, p.budget, p.budget_monthly,
+              p.status, p.inspection_manager, p.recruit_started_at,
+              count(*) OVER() AS total
+         FROM projects p
+         LEFT JOIN ai_insights ai ON ai.project_id = p.id
+        WHERE p.deleted_at IS NULL AND p.hidden = false ${window}
+          AND p.recruit_started_at >= $3
+          AND p.proposal_count BETWEEN 1 AND ${LOW_PROPOSAL_MAX}
+          AND (${DECIDED})
+        ORDER BY p.recruit_started_at DESC NULLS LAST, p.id DESC
+        LIMIT $1 OFFSET $2`,
+      [size, (want - 1) * size, LOW_PROPOSAL_FROM],
+    );
+
+    // 마지막 페이지를 넘어간 요청(URL 직접 수정)은 0행이라 count(*) OVER()도 못 받는다.
+    // 그때만 총계를 따로 센다 — 안 그러면 화면이 "0건"이라고 거짓말한다.
+    let total = Number(rows[0]?.total ?? 0);
+    if (rows.length === 0) {
+      const [c] = await query<{ n: string }>(
+        `SELECT count(*) AS n FROM projects p
+          WHERE p.deleted_at IS NULL AND p.hidden = false ${window}
+            AND p.recruit_started_at >= $1
+            AND p.proposal_count BETWEEN 1 AND ${LOW_PROPOSAL_MAX}
+            AND (${DECIDED})`,
+        [LOW_PROPOSAL_FROM],
+      );
+      total = Number(c?.n ?? 0);
+    }
+
+    return {
+      rows: rows.map((r) => ({
+        id: String(r.id),
+        title: r.title,
+        supplyTags: r.supply_tags ?? [],
+        proposalCount: Number(r.proposal_count),
+        budget: r.budget_monthly ? formatMonthlyWon(r.budget) : formatWon(r.budget),
+        status: r.status as ProjectStatus,
+        manager: managerName(r.inspection_manager),
+        recruitedAt: formatYmd(r.recruit_started_at),
+      })),
+      total,
+      page: want,
+      pageSize: size,
     };
   }
 

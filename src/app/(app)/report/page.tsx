@@ -24,11 +24,22 @@ export default async function ReportPage({
   // 집계는 SQL로 계산해서 받는다 — 6,000건을 브라우저로 실어나르지 않는다.
   // 리포트는 열 때마다 다시 계산한다(스냅샷 테이블 없음). 대신 언제 기준 데이터인지
   // 마지막 동기화 시각을 같이 내려서, 따로 "갱신" 버튼을 두지 않는다.
-  const [stats, lastSyncAt, managers] = await Promise.all([
+  const [stats, lastSyncAt, lowProposals, managers] = await Promise.all([
     dataSource.getReportStats(days),
     dataSource.getLastSyncAt(),
+    // 첫 페이지만 서버에서. 넘김은 클라이언트가 /api/low-proposals로 직접 받는다
+    // — 링크로 넘기면 아래 집계 전부가 다시 계산되고 스크롤도 맨 위로 튄다.
+    dataSource.getLowProposalProjects(days, 1),
     showManagers ? dataSource.getManagerStats(days) : Promise.resolve(null),
   ]);
 
-  return <Report stats={stats} period={period} lastSyncAt={lastSyncAt} managers={managers} />;
+  return (
+    <Report
+      stats={stats}
+      period={period}
+      lastSyncAt={lastSyncAt}
+      lowProposals={lowProposals}
+      managers={managers}
+    />
+  );
 }
