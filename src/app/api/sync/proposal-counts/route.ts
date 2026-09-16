@@ -1,5 +1,9 @@
 import { query } from "@/lib/db";
-import { MAX_BATCH, requireSyncKey } from "@/lib/sync/auth";
+import { requireSyncKey } from "@/lib/sync/auth";
+
+// 이 라우트는 id + 정수 한 개만 받는다. 공고문 전체를 받는 일반 동기화(MAX_BATCH=500)와
+// 페이로드 크기가 다르므로 모집중 프로젝트 전량을 한 번에 받을 수 있게 별도 상한을 둔다.
+const MAX_PROPOSAL_COUNT_BATCH = 10_000;
 
 /**
  * POST /api/sync/proposal-counts
@@ -37,9 +41,11 @@ export async function POST(req: Request): Promise<Response> {
   if (!Array.isArray(rows)) {
     return Response.json({ error: "rows 배열이 필요합니다." }, { status: 400 });
   }
-  if (rows.length > MAX_BATCH) {
+  if (rows.length > MAX_PROPOSAL_COUNT_BATCH) {
     return Response.json(
-      { error: `배치는 최대 ${MAX_BATCH}건입니다. (받은 건수: ${rows.length})` },
+      {
+        error: `지원수 배치는 최대 ${MAX_PROPOSAL_COUNT_BATCH}건입니다. (받은 건수: ${rows.length})`,
+      },
       { status: 400 },
     );
   }

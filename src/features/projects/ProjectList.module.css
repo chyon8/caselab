@@ -118,7 +118,7 @@
 /* ===== 리스트 뷰 ===== */
 .table-head {
   display: grid;
-  grid-template-columns: 24px 2.2fr 1fr 1.1fr 1fr 0.7fr 0.7fr;
+  grid-template-columns: 24px 2.2fr 0.9fr 1.35fr 0.9fr 0.7fr 0.7fr;
   gap: 16px;
   padding: 0 16px 12px 16px;
   border-bottom: 1px solid var(--header-rule);
@@ -135,7 +135,7 @@
 
 .row {
   display: grid;
-  grid-template-columns: 24px 2.2fr 1fr 1.1fr 1fr 0.7fr 0.7fr;
+  grid-template-columns: 24px 2.2fr 0.9fr 1.35fr 0.9fr 0.7fr 0.7fr;
   gap: 16px;
   align-items: center;
   padding: 18px 16px;
@@ -186,6 +186,20 @@
 .client {
   font-size: 14px;
   color: var(--text-muted);
+}
+
+.status-overview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-count {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
 }
 
 .manager {
@@ -572,7 +586,7 @@
   /* 테이블 행 → 깔끔한 1줄 카드 */
   .row {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
     gap: 2px 10px;
     padding: 12px 0;
@@ -593,10 +607,15 @@
   }
 
   /* 상태 태그: 1행 우측 */
-  .row > div:nth-child(4) {
+  .status-overview {
     grid-column: 2;
     grid-row: 1;
     justify-self: end;
+    gap: 6px;
+  }
+
+  .status-count {
+    font-size: 12px;
   }
 
   /* 고객사 + 날짜: 2행 서브라인 */

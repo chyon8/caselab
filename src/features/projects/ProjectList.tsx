@@ -556,7 +556,7 @@ export default function ProjectList({
               <div />
               <div className={styles.th}>프로젝트명</div>
               <div className={styles.th}>고객사</div>
-              <div className={styles.th}>상태</div>
+              <div className={styles.th}>상태 · 지원</div>
               <div className={styles.th}>검수담당</div>
               <div className={`${styles.th} ${styles.right}`}>가격</div>
               <div className={`${styles.th} ${styles.right}`}>검수완료</div>
@@ -588,12 +588,17 @@ export default function ProjectList({
                     {p.name}
                   </Link>
                   <div className={styles.client}>{p.client}</div>
-                  <div>
+                  <div className={styles["status-overview"]}>
                     <span
                       className={`${st.chip} ${st[STATUS_KEY[p.meetingActive ? "미팅중" : p.status]]}`}
                     >
                       {statusLabel(p.meetingActive ? "미팅중" : p.status)}
                     </span>
+                    {p.status === "모집" && (
+                      <span className={styles["status-count"]}>
+                        {p.proposalCount == null ? "—" : `${p.proposalCount}건`}
+                      </span>
+                    )}
                   </div>
                   <div className={styles.manager}>{p.manager}</div>
                   <div className={styles.price}>
