@@ -594,11 +594,9 @@ export default function ProjectList({
                     >
                       {statusLabel(p.meetingActive ? "미팅중" : p.status)}
                     </span>
-                    {p.status === "모집" && (
-                      <span className={styles["status-count"]}>
-                        {p.proposalCount == null ? "—" : `${p.proposalCount}건`}
-                      </span>
-                    )}
+                    <span className={styles["status-count"]}>
+                      {p.proposalCount == null ? "—" : `${p.proposalCount}건`}
+                    </span>
                   </div>
                   <div className={styles.manager}>{p.manager}</div>
                   <div className={styles.price}>
