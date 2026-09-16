@@ -97,7 +97,6 @@ interface ProjectRow {
   posting_raw?: string | null;
   risk_tags?: string[] | null;
   issue_log?: IssueLogEntry[] | null;
-  posting_structured?: Posting | null;
   qna_summary?: QnaSummary | null;
   note_extract?: ManagenoteExtract | null;
 }
@@ -157,10 +156,10 @@ const LIST_COLUMNS = `
 /** 상세용 — 목록 컬럼 + 공고 원문 + 무거운 AI JSONB */
 const DETAIL_COLUMNS = `
   ${LIST_COLUMNS}, p.posting_raw,
-  ai.issue_log, ai.posting_structured, ai.qna_summary, ai.note_extract
+  ai.issue_log, ai.qna_summary, ai.note_extract
 `;
 
-/** AI 공고문 구조화 전(프롬프트 검토 대기)에는 원문을 배경 자리에 그대로 노출한다 (§3) */
+/** 상세 공고문은 원문을 한 덩어리로 노출한다. */
 function fallbackPosting(title: string, raw: string | null): Posting {
   return {
     title,
@@ -361,7 +360,7 @@ function toProjectFull(
   return {
     ...toProject(row),
     intake: {
-      posting: row.posting_structured ?? fallbackPosting(row.title, row.posting_raw ?? null),
+      posting: fallbackPosting(row.title, row.posting_raw ?? null),
       call: detail.call,
     },
     calls: detail.calls,

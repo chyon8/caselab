@@ -517,7 +517,6 @@ export default function ProjectDetail({
         >
           <span className={styles["posting-header-left"]}>
             <span className={styles["posting-header-title"]}>검수 공고문</span>
-            <span className={styles["ai-badge"]}>AI 생성 초안</span>
           </span>
           <span className={styles["posting-header-right"]}>
             {showIntake ? "접기" : "펼치기"}
@@ -530,85 +529,7 @@ export default function ProjectDetail({
         {showIntake && (
           <div className={styles["posting-content"]}>
             <div className={styles["posting-title"]}>{posting.title}</div>
-
-            <section className={styles["posting-section"]}>
-              <div className={styles.eyebrow}>프로젝트 배경 및 목표</div>
-              <p className={styles["posting-para"]}>{posting.background}</p>
-            </section>
-
-            <section className={styles["posting-section"]}>
-              <div className={styles.eyebrow}>과업 범위</div>
-              <div className={styles["sub-label"]}>1. 수행 범위</div>
-              <ul className={styles.bullets}>
-                {posting.scopeSummary.map((s) => (
-                  <li key={s}>{s}</li>
-                ))}
-              </ul>
-              <div className={styles["sub-label"]}>2. 상세 기능 요구 사항</div>
-              <div className={styles["feature-groups"]}>
-                {posting.featureGroups.map((fg) => (
-                  <div key={fg.heading}>
-                    <div className={styles["group-heading"]}>{fg.heading}</div>
-                    <ul className={styles.bullets}>
-                      {fg.items.map((it) => (
-                        <li key={it}>{it}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-              <div className={styles["sub-label"]}>3. 비기능적 요구사항</div>
-              <ul className={styles.bullets}>
-                {posting.nonFunctional.map((n) => (
-                  <li key={n}>{n}</li>
-                ))}
-              </ul>
-            </section>
-
-            <section className={styles["posting-section"]}>
-              <div className={styles.eyebrow}>기술 스택</div>
-              <ul className={styles.bullets}>
-                {posting.techStack.map((ts) => (
-                  <li key={ts}>{ts}</li>
-                ))}
-              </ul>
-            </section>
-
-            <section className={styles["posting-section"]}>
-              <div className={styles.eyebrow}>주요 일정</div>
-              <ul className={styles.bullets}>
-                <li>희망 착수일: {posting.schedule.start}</li>
-                {posting.schedule.milestones.map((m) => (
-                  <li key={m}>{m}</li>
-                ))}
-                <li>최종 오픈(납품) 희망일: {posting.schedule.due}</li>
-              </ul>
-            </section>
-
-            <section className={styles["posting-section"]}>
-              <div className={styles.eyebrow}>지원 자격 및 우대 사항</div>
-              <div className={styles["sub-label"]}>지원 자격</div>
-              <ul className={styles.bullets}>
-                {posting.qualRequired.map((qr) => (
-                  <li key={qr}>{qr}</li>
-                ))}
-              </ul>
-              <div className={styles["sub-label"]}>우대 사항</div>
-              <ul className={styles.bullets}>
-                {posting.qualPreferred.map((qp) => (
-                  <li key={qp}>{qp}</li>
-                ))}
-              </ul>
-            </section>
-
-            <section className={styles["posting-section-last"]}>
-              <div className={styles.eyebrow}>산출물</div>
-              <ul className={styles.bullets}>
-                {posting.deliverables.map((d) => (
-                  <li key={d}>{d}</li>
-                ))}
-              </ul>
-            </section>
+            <p className={styles["posting-para"]}>{posting.background}</p>
           </div>
         )}
       </div>

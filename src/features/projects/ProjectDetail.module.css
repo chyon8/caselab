@@ -244,24 +244,6 @@
   margin: 20px 0 4px 0;
 }
 
-.posting-section {
-  padding: 22px 0;
-  border-bottom: 1px solid var(--row-border);
-}
-
-.posting-section-last {
-  padding: 22px 0 0 0;
-}
-
-.eyebrow {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  color: var(--color-primary);
-  margin-bottom: 12px;
-}
-
 .posting-para {
   font-size: 14px;
   line-height: 1.65;
@@ -269,58 +251,6 @@
   margin: 0;
   /* 본진 공고 원문은 줄바꿈(\r\n)으로만 구조가 잡혀 있다 — 보존하지 않으면 한 덩어리로 뭉친다 */
   white-space: pre-wrap;
-}
-
-.sub-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--page-text);
-  margin: 14px 0 8px 0;
-}
-
-.sub-label:first-of-type {
-  margin-top: 0;
-}
-
-.group-heading {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-}
-
-.feature-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.bullets {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.bullets li {
-  position: relative;
-  padding-left: 16px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--text-body-soft);
-}
-
-.bullets li::before {
-  content: "";
-  position: absolute;
-  left: 3px;
-  top: 9px;
-  width: 4px;
-  height: 4px;
-  border-radius: var(--rounded-pill);
-  background: var(--color-rule);
 }
 
 /* 스테퍼 아래 단계별 소요일 */
@@ -1444,4 +1374,3 @@
     padding: 14px;
   }
 }
-
