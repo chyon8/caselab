@@ -5,9 +5,9 @@
 -- planning_status: 보유 기획 자료 수준 (idea/detail/document)
 -- proposal_count : 지원자 수 — 퍼널의 첫 단계
 --
--- proposal_count 는 증분 동기화로 따라온다. 2026-07-14 본진 실측 결과, 지원이 들어오면
--- project_project.date_modified 도 갱신된다 (5,853/5,920 = 98.9%). 나머지 1.1%는 방금 지원이
--- 들어온 모집중 건으로, 다음 수정 때 따라잡힌다. proposal_proposal 별도 동기화는 필요 없다.
+-- proposal_count 는 프로젝트 최초 적재 후 proposal_counts_refresh.sql로 계속 갱신한다.
+-- 본진 project_project.date_modified는 지원이 들어와도 갱신되지 않으므로 프로젝트 증분
+-- 커서만으로는 모집 중 지원수를 실시간 반영할 수 없다.
 
 ALTER TABLE projects
   ADD COLUMN IF NOT EXISTS dev_scope       TEXT,

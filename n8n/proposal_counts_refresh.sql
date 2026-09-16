@@ -2,7 +2,7 @@
 -- 본진 조회 엔드포인트: POST http://wishket-api-server:8001/query
 -- 수신: POST /api/sync/proposal-counts
 --
--- ⚠️ 왜 별도 워크플로인가
+-- ⚠️ 왜 프로젝트 증분 조회와 별도 쿼리인가
 --   본진 project_project.date_modified 는 지원이 들어와도 갱신되지 않는다. 그래서
 --   date_modified 커서 기반인 projects 워크플로(projects_incremental.sql)는 모집중인 행을
 --   다시 조회하지 않고, proposal_count 가 마지막 동기화 시점 값에 고정된다.
@@ -10,9 +10,9 @@
 --    projects_incremental.sql 의 "지원이 들어오면 date_modified 도 갱신된다 98.9%" 주석은 틀렸다.)
 --   → 이 쿼리는 커서를 쓰지 않고 모집중인 건을 매번 전량 다시 읽는다.
 --
--- ⚠️ 커서를 저장하지 않는다. 여기서 읽는 행의 date_modified 는 projects 커서보다 과거라,
---   저장하면 증분 동기화가 뒤로 밀려 같은 구간을 반복 처리한다. 수신 라우트도 sync_state 를
---   건드리지 않는다.
+-- ⚠️ projects 커서는 저장하지 않는다. 여기서 읽는 행의 date_modified 는 projects 커서보다
+--   과거라, 저장하면 증분 동기화가 뒤로 밀려 같은 구간을 반복 처리한다. 수신 라우트는 홈
+--   버튼의 완료 감지를 위해 별도 `proposal_counts` source의 last_run_at만 기록한다.
 --
 -- 페이로드는 id + 정수 두 컬럼뿐이라 500건이라도 수십 KB — Vercel 4.5MB 한도와 무관하다.
 

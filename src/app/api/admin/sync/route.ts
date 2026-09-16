@@ -16,10 +16,26 @@ const NO_STORE = { headers: { "Cache-Control": "no-store" } };
 export async function GET(): Promise<Response> {
   const webhookUrl = process.env.N8N_SYNC_WEBHOOK_URL ?? null;
   if (!process.env.DATABASE_URL) {
-    return Response.json({ lastRunAt: null, webhookUrl }, NO_STORE);
+    return Response.json(
+      { lastRunAt: null, proposalCountsLastRunAt: null, webhookUrl },
+      NO_STORE,
+    );
   }
-  const rows = await query<{ last_run_at: string | null }>(
-    "SELECT MAX(last_run_at) AS last_run_at FROM sync_state",
+  const rows = await query<{
+    last_run_at: string | null;
+    proposal_counts_last_run_at: string | null;
+  }>(
+    `SELECT MAX(last_run_at) AS last_run_at,
+            MAX(last_run_at) FILTER (WHERE source = 'proposal_counts')
+              AS proposal_counts_last_run_at
+       FROM sync_state`,
   );
-  return Response.json({ lastRunAt: rows[0]?.last_run_at ?? null, webhookUrl }, NO_STORE);
+  return Response.json(
+    {
+      lastRunAt: rows[0]?.last_run_at ?? null,
+      proposalCountsLastRunAt: rows[0]?.proposal_counts_last_run_at ?? null,
+      webhookUrl,
+    },
+    NO_STORE,
+  );
 }

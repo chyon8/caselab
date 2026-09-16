@@ -4,13 +4,17 @@
 커서는 CaseLab이 소유하므로 n8n은 무상태다 — 죽었다 살아나도 그 자리부터 이어간다.
 
 ```
-① Schedule Trigger (15분)
+① Schedule Trigger (15분) 또는 홈 버튼 Webhook Trigger
         ↓
 ② HTTP GET  CaseLab /api/sync/cursor?source=projects     ← 어디까지 가져왔는지 물어본다
         ↓
-③ HTTP POST 본진 /query  (projects_incremental.sql)      ← 그 이후 변경분 500건 조회
+③ HTTP POST 본진 /query  (projects_incremental.sql)      ← 그 이후 변경분 400건 조회
         ↓
 ④ HTTP POST CaseLab /api/sync/projects                   ← 통째로 넘긴다 (가공은 CaseLab이)
+        ↓ 증분 루프가 끝난 뒤
+⑤ HTTP POST 본진 /query  (proposal_counts_refresh.sql)   ← 모집중 지원수 전량 재조회
+        ↓
+⑥ HTTP POST CaseLab /api/sync/proposal-counts            ← 지원수 갱신 + 완료 시각 기록
 ```
 
 ---
@@ -48,8 +52,8 @@ SQL은 [`projects_incremental.sql`](./projects_incremental.sql). 두 자리에 �
 
 > `'2025-07-13T00:00:00Z'`가 백필 시작점(= 1년 전)이다. 더 과거까지 원하면 이 날짜만 바꾼다.
 
-**첫 실행은 `LIMIT 500`을 `LIMIT 10`으로 줄여서 돌린다.** 10건이 CaseLab 화면에 뜨면
-파이프라인 전체가 검증된 것이고, 그때 500으로 올린다.
+**첫 실행은 `LIMIT 400`을 `LIMIT 10`으로 줄여서 돌린다.** 10건이 CaseLab 화면에 뜨면
+파이프라인 전체가 검증된 것이고, 그때 400으로 올린다.
 
 ---
 
@@ -79,11 +83,11 @@ SQL은 [`projects_incremental.sql`](./projects_incremental.sql). 두 자리에 �
 ④ 뒤에 IF 노드를 달아 ②로 되돌린다:
 
 ```
-IF  ③의 결과 건수 == 500  →  ② 로 루프
-    아니면                →  종료 (따라잡음)
+IF  ③의 결과 건수 == 400  →  ② 로 루프
+    아니면                →  ⑤ 지원수 리프레시
 ```
 
-무한 루프 방지로 실행당 최대 반복 횟수(예: 60회 = 3만 건)를 걸어둔다.
+무한 루프 방지로 실행당 최대 반복 횟수(예: 60회 = 2.4만 건)를 걸어둔다.
 이 루프는 장애로 밀린 데이터를 따라잡을 때도 동일하게 동작한다.
 
 ---
@@ -96,7 +100,7 @@ IF  ③의 결과 건수 == 500  →  ② 로 루프
 
 ---
 
-# 부속 워크플로 — 지원수 리프레시
+# 메인 워크플로 마지막 단계 — 지원수 리프레시
 
 위 워크플로는 `date_modified` 커서로 돈다. 그런데 **본진은 지원이 들어와도
 `project_project.date_modified`를 갱신하지 않는다.** 그래서 모집중인 프로젝트는 한 번
@@ -107,17 +111,20 @@ IF  ③의 결과 건수 == 500  →  ② 로 루프
 > 갱신된 건은 정확하다 (계약·진행·완료 1,845건에 지원 0건이 하나도 없다).
 > → **망가진 건 "지금 모집 중인 건의 실시간 숫자"뿐이고, 종료된 건의 통계·유사사례는 멀쩡하다.**
 
-이걸 메우는 3노드짜리 별도 워크플로다. 커서를 쓰지도, 저장하지도 않는다.
+이걸 메우는 2노드를 **메인 동기화 워크플로의 증분 루프가 끝나는 지점**에 붙인다.
+그래야 홈의 "지금 동기화" 웹훅을 눌렀을 때 지원수도 같은 실행에서 갱신된다.
+projects 커서는 쓰거나 변경하지 않는다.
 
 ```
-① Schedule Trigger (30분)
+⑤ HTTP POST 본진 /query  (proposal_counts_refresh.sql)   ← 모집중인 건 전량, id·지원수만
         ↓
-② HTTP POST 본진 /query  (proposal_counts_refresh.sql)   ← 모집중인 건 전량, id·지원수만
-        ↓
-③ HTTP POST CaseLab /api/sync/proposal-counts            ← 있는 행의 지원수만 덮어쓴다
+⑥ HTTP POST CaseLab /api/sync/proposal-counts            ← 있는 행만 갱신, 완료 시각 기록
 ```
 
-## ② 본진 조회
+> 별도 30분 Schedule Trigger를 ⑤에 함께 연결해 자동 갱신을 유지해도 된다. 핵심은 홈 버튼의
+> Webhook Trigger에서 시작한 실행도 반드시 ⑤→⑥을 지나도록 연결하는 것이다.
+
+## ⑤ 본진 조회
 
 | 항목 | 값 |
 |---|---|
@@ -125,14 +132,14 @@ IF  ③의 결과 건수 == 500  →  ② 로 루프
 | URL | `http://wishket-api-server:8001/query` |
 | Body | SQL = [`proposal_counts_refresh.sql`](./proposal_counts_refresh.sql) **그대로** (커서 주입할 표현식 없음) |
 
-## ③ CaseLab 적재
+## ⑥ CaseLab 적재
 
 | 항목 | 값 |
 |---|---|
 | Method | `POST` |
 | URL | `https://<caselab>/api/sync/proposal-counts` |
 | Header | `X-CaseLab-Key: <CASELAB_SYNC_KEY>` |
-| Body | `{ "rows": <②의 결과 배열> }` |
+| Body | `{ "rows": <⑤의 결과 배열> }` |
 
 응답:
 ```json
@@ -143,8 +150,8 @@ IF  ③의 결과 건수 == 500  →  ② 로 루프
 
 ## 주의
 
-- **`sync_state`를 건드리지 않는다.** 여기서 읽는 행의 `date_modified`는 projects 커서보다
-  과거라, 커서를 저장하면 증분 동기화가 뒤로 밀려 같은 구간을 반복 처리한다.
+- **projects의 `sync_state` 커서는 건드리지 않는다.** 완료 감지를 위한 `proposal_counts`
+  행의 `last_run_at`만 기록하고 `cursor_value`는 NULL로 둔다.
 - **INSERT하지 않는다.** id·지원수 두 컬럼뿐이라 새 행을 만들면 반쪽짜리 프로젝트가 생긴다.
   아직 CaseLab에 없는 프로젝트는 projects 워크플로가 곧 온전히 적재한다.
 - `content_hash`를 안 건드리므로 **임베딩이 무효화되지 않는다** (재임베딩 비용 없음).
