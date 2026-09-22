@@ -4,7 +4,7 @@ import { scrubPii } from "@/lib/sync/pii";
 import { SAVE_CURSOR_SQL } from "@/lib/sync/sync-state";
 import { valuesClause } from "@/lib/sync/sql";
 
-const SOURCE = "submission_analysis_2026_01_08";
+const SOURCE = "submission_analysis_2026_01_08_v2";
 const PAGE_SIZE = 200;
 
 interface RawAnalysisProject {
@@ -38,6 +38,7 @@ interface RawAnalysisProject {
   project_has_manage_experience?: number | boolean | null;
   business_form?: string | null;
   acquisition_path?: string | null;
+  detail_created_at?: string | null;
   project_purpose?: string | null;
   plan_status?: string | null;
   detail_plan_status?: string | null;
@@ -75,7 +76,8 @@ const COLS = [
   "source_extracted_at", "hidden", "initial_snapshot_id", "initial_description",
   "initial_budget", "initial_term_days", "snapshot_created_at", "snapshot_modified_at",
   "categories", "representative_field", "is_turnkey", "submit_purpose",
-  "project_has_manage_experience", "business_form", "acquisition_path", "project_purpose",
+  "project_has_manage_experience", "business_form", "acquisition_path", "detail_created_at",
+  "project_purpose",
   "plan_status", "detail_plan_status", "budget_option", "term_option", "launch_date",
   "max_launch_date", "launch_date_option", "inside_manpower", "detail_inside_manpower",
   "is_supporting_project", "supporting_project", "is_support_cost",
@@ -115,7 +117,8 @@ function mapRow(row: RawAnalysisProject): unknown[] | null {
     number(row.initial_budget), number(row.initial_term_days), row.snapshot_created_at ?? null,
     row.snapshot_modified_at ?? null, text(row.categories), text(row.representative_field),
     bool(row.is_turnkey), row.submit_purpose ?? null, bool(row.project_has_manage_experience),
-    row.business_form ?? null, row.acquisition_path ?? null, row.project_purpose ?? null,
+    row.business_form ?? null, row.acquisition_path ?? null, row.detail_created_at ?? null,
+    row.project_purpose ?? null,
     row.plan_status ?? null, text(row.detail_plan_status), row.budget_option ?? null,
     row.term_option ?? null, row.launch_date ?? null, row.max_launch_date ?? null,
     row.launch_date_option ?? null, bool(row.inside_manpower), text(row.detail_inside_manpower),

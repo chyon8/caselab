@@ -20,7 +20,7 @@ Manual Trigger → 분석 커서 → 분석 원천 조회 → 분석 적재 → 
 
 - 기존 `cursor` GET 노드를 복제
 - 이름: `분석 커서`
-- URL: `https://caselab-three.vercel.app/api/sync/cursor?source=submission_analysis_2026_01_08`
+- URL: `https://caselab-three.vercel.app/api/sync/cursor?source=submission_analysis_2026_01_08_v2`
 - 기존 `X-CaseLab-Key` 유지
 
 ### 분석 원천 조회

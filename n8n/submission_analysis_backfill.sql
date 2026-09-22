@@ -45,6 +45,7 @@ SELECT
     WHERE ci.project_id = pp.id ORDER BY ci.date_created ASC LIMIT 1) AS business_form,
   (SELECT cc.acquisition_path FROM client_client cc WHERE cc.id = pp.client_id) AS acquisition_path,
 
+  DATE_FORMAT(d.date_created, '%Y-%m-%dT%H:%i:%sZ') AS detail_created_at,
   d.project_purpose,
   d.plan_status,
   d.detail_plan_status,
