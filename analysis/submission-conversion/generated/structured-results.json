@@ -1,0 +1,1516 @@
+{
+  "as_of": "2026-09-22T06:23:37.000Z",
+  "cohort": {
+    "total": 4319,
+    "verified_snapshot": 1007
+  },
+  "outcomes": {
+    "7d": {
+      "eligible": 4301,
+      "ineligible": 0,
+      "recruited": 1850,
+      "unknown": 18,
+      "rate_pct": 43,
+      "observation_bounds_pct": [
+        42.8,
+        43.3
+      ],
+      "ci95_pct_confirmed_only": [
+        41.5,
+        44.5
+      ]
+    },
+    "14d": {
+      "eligible": 4301,
+      "ineligible": 0,
+      "recruited": 1901,
+      "unknown": 18,
+      "rate_pct": 44.2,
+      "observation_bounds_pct": [
+        44,
+        44.4
+      ],
+      "ci95_pct_confirmed_only": [
+        42.7,
+        45.7
+      ]
+    },
+    "30d": {
+      "eligible": 4162,
+      "ineligible": 139,
+      "recruited": 1857,
+      "unknown": 18,
+      "rate_pct": 44.6,
+      "observation_bounds_pct": [
+        44.4,
+        44.9
+      ],
+      "ci95_pct_confirmed_only": [
+        43.1,
+        46.1
+      ]
+    },
+    "cumulative": {
+      "eligible": 4301,
+      "ineligible": 0,
+      "recruited": 1932,
+      "unknown": 18,
+      "rate_pct": 44.9,
+      "observation_bounds_pct": [
+        44.7,
+        45.1
+      ],
+      "ci95_pct_confirmed_only": [
+        43.4,
+        46.4
+      ]
+    }
+  },
+  "monthly_14d": [
+    {
+      "label": "2026-03",
+      "total": 574,
+      "recruited": 276,
+      "rate_pct": 48.1,
+      "ci95_pct": [
+        44,
+        52.2
+      ],
+      "comparison_total": 3727,
+      "comparison_recruited": 1625,
+      "difference_pp": 4.5,
+      "difference_ci95_pp": [
+        0.1,
+        8.9
+      ]
+    },
+    {
+      "label": "2026-04",
+      "total": 573,
+      "recruited": 241,
+      "rate_pct": 42.1,
+      "ci95_pct": [
+        38.1,
+        46.1
+      ],
+      "comparison_total": 3728,
+      "comparison_recruited": 1660,
+      "difference_pp": -2.5,
+      "difference_ci95_pp": [
+        -6.7,
+        1.9
+      ]
+    },
+    {
+      "label": "2026-01",
+      "total": 561,
+      "recruited": 271,
+      "rate_pct": 48.3,
+      "ci95_pct": [
+        44.2,
+        52.4
+      ],
+      "comparison_total": 3740,
+      "comparison_recruited": 1630,
+      "difference_pp": 4.7,
+      "difference_ci95_pp": [
+        0.3,
+        9.1
+      ]
+    },
+    {
+      "label": "2026-05",
+      "total": 548,
+      "recruited": 225,
+      "rate_pct": 41.1,
+      "ci95_pct": [
+        37,
+        45.2
+      ],
+      "comparison_total": 3753,
+      "comparison_recruited": 1676,
+      "difference_pp": -3.6,
+      "difference_ci95_pp": [
+        -8,
+        0.8
+      ]
+    },
+    {
+      "label": "2026-07",
+      "total": 543,
+      "recruited": 230,
+      "rate_pct": 42.4,
+      "ci95_pct": [
+        38.3,
+        46.6
+      ],
+      "comparison_total": 3758,
+      "comparison_recruited": 1671,
+      "difference_pp": -2.1,
+      "difference_ci95_pp": [
+        -6.5,
+        2.4
+      ]
+    },
+    {
+      "label": "2026-06",
+      "total": 529,
+      "recruited": 248,
+      "rate_pct": 46.9,
+      "ci95_pct": [
+        42.7,
+        51.1
+      ],
+      "comparison_total": 3772,
+      "comparison_recruited": 1653,
+      "difference_pp": 3.1,
+      "difference_ci95_pp": [
+        -1.4,
+        7.6
+      ]
+    },
+    {
+      "label": "2026-02",
+      "total": 520,
+      "recruited": 237,
+      "rate_pct": 45.6,
+      "ci95_pct": [
+        41.3,
+        49.9
+      ],
+      "comparison_total": 3781,
+      "comparison_recruited": 1664,
+      "difference_pp": 1.6,
+      "difference_ci95_pp": [
+        -3,
+        6.2
+      ]
+    },
+    {
+      "label": "2026-08",
+      "total": 453,
+      "recruited": 173,
+      "rate_pct": 38.2,
+      "ci95_pct": [
+        33.8,
+        42.7
+      ],
+      "comparison_total": 3848,
+      "comparison_recruited": 1728,
+      "difference_pp": -6.7,
+      "difference_ci95_pp": [
+        -11.4,
+        -1.9
+      ]
+    }
+  ],
+  "structured_14d": {
+    "attachment": [
+      {
+        "label": "no",
+        "total": 3594,
+        "recruited": 1477,
+        "rate_pct": 41.1,
+        "ci95_pct": [
+          39.5,
+          42.7
+        ],
+        "comparison_total": 707,
+        "comparison_recruited": 424,
+        "difference_pp": -18.9,
+        "difference_ci95_pp": [
+          -22.7,
+          -14.9
+        ]
+      },
+      {
+        "label": "yes",
+        "total": 707,
+        "recruited": 424,
+        "rate_pct": 60,
+        "ci95_pct": [
+          56.3,
+          63.5
+        ],
+        "comparison_total": 3594,
+        "comparison_recruited": 1477,
+        "difference_pp": 18.9,
+        "difference_ci95_pp": [
+          14.9,
+          22.7
+        ]
+      }
+    ],
+    "prior_task_submissions": [
+      {
+        "label": "0",
+        "total": 3078,
+        "recruited": 1228,
+        "rate_pct": 39.9,
+        "ci95_pct": [
+          38.2,
+          41.6
+        ],
+        "comparison_total": 1223,
+        "comparison_recruited": 673,
+        "difference_pp": -15.1,
+        "difference_ci95_pp": [
+          -18.4,
+          -11.8
+        ]
+      },
+      {
+        "label": "1",
+        "total": 638,
+        "recruited": 319,
+        "rate_pct": 50,
+        "ci95_pct": [
+          46.1,
+          53.9
+        ],
+        "comparison_total": 3663,
+        "comparison_recruited": 1582,
+        "difference_pp": 6.8,
+        "difference_ci95_pp": [
+          2.6,
+          11
+        ]
+      },
+      {
+        "label": "3+",
+        "total": 293,
+        "recruited": 194,
+        "rate_pct": 66.2,
+        "ci95_pct": [
+          60.6,
+          71.4
+        ],
+        "comparison_total": 4008,
+        "comparison_recruited": 1707,
+        "difference_pp": 23.6,
+        "difference_ci95_pp": [
+          17.8,
+          29
+        ]
+      },
+      {
+        "label": "2",
+        "total": 240,
+        "recruited": 146,
+        "rate_pct": 60.8,
+        "ci95_pct": [
+          54.5,
+          66.8
+        ],
+        "comparison_total": 4061,
+        "comparison_recruited": 1755,
+        "difference_pp": 17.6,
+        "difference_ci95_pp": [
+          11.1,
+          23.8
+        ]
+      },
+      {
+        "label": "unknown",
+        "total": 52,
+        "recruited": 14,
+        "rate_pct": 26.9,
+        "ci95_pct": [
+          16.8,
+          40.3
+        ],
+        "comparison_total": 4249,
+        "comparison_recruited": 1887,
+        "difference_pp": -17.5,
+        "difference_ci95_pp": [
+          -27.7,
+          -4
+        ]
+      }
+    ],
+    "business_form": [
+      {
+        "label": "corporate_business",
+        "total": 1961,
+        "recruited": 1012,
+        "rate_pct": 51.6,
+        "ci95_pct": [
+          49.4,
+          53.8
+        ],
+        "comparison_total": 2340,
+        "comparison_recruited": 889,
+        "difference_pp": 13.6,
+        "difference_ci95_pp": [
+          10.6,
+          16.6
+        ]
+      },
+      {
+        "label": "individual",
+        "total": 1360,
+        "recruited": 400,
+        "rate_pct": 29.4,
+        "ci95_pct": [
+          27.1,
+          31.9
+        ],
+        "comparison_total": 2941,
+        "comparison_recruited": 1501,
+        "difference_pp": -21.6,
+        "difference_ci95_pp": [
+          -24.5,
+          -18.5
+        ]
+      },
+      {
+        "label": "individual_business",
+        "total": 611,
+        "recruited": 273,
+        "rate_pct": 44.7,
+        "ci95_pct": [
+          40.8,
+          48.6
+        ],
+        "comparison_total": 3690,
+        "comparison_recruited": 1628,
+        "difference_pp": 0.6,
+        "difference_ci95_pp": [
+          -3.6,
+          4.8
+        ]
+      },
+      {
+        "label": "unknown",
+        "total": 217,
+        "recruited": 168,
+        "rate_pct": 77.4,
+        "ci95_pct": [
+          71.4,
+          82.5
+        ],
+        "comparison_total": 4084,
+        "comparison_recruited": 1733,
+        "difference_pp": 35,
+        "difference_ci95_pp": [
+          28.8,
+          40.3
+        ]
+      },
+      {
+        "label": "team",
+        "total": 152,
+        "recruited": 48,
+        "rate_pct": 31.6,
+        "ci95_pct": [
+          24.7,
+          39.3
+        ],
+        "comparison_total": 4149,
+        "comparison_recruited": 1853,
+        "difference_pp": -13.1,
+        "difference_ci95_pp": [
+          -20.1,
+          -5.2
+        ]
+      }
+    ],
+    "acquisition_path": [
+      {
+        "label": "unknown",
+        "total": 1717,
+        "recruited": 749,
+        "rate_pct": 43.6,
+        "ci95_pct": [
+          41.3,
+          46
+        ],
+        "comparison_total": 2584,
+        "comparison_recruited": 1152,
+        "difference_pp": -1,
+        "difference_ci95_pp": [
+          -4,
+          2.1
+        ]
+      },
+      {
+        "label": "BY_NAVER",
+        "total": 709,
+        "recruited": 305,
+        "rate_pct": 43,
+        "ci95_pct": [
+          39.4,
+          46.7
+        ],
+        "comparison_total": 3592,
+        "comparison_recruited": 1596,
+        "difference_pp": -1.4,
+        "difference_ci95_pp": [
+          -5.4,
+          2.6
+        ]
+      },
+      {
+        "label": "BY_AI",
+        "total": 647,
+        "recruited": 297,
+        "rate_pct": 45.9,
+        "ci95_pct": [
+          42.1,
+          49.8
+        ],
+        "comparison_total": 3654,
+        "comparison_recruited": 1604,
+        "difference_pp": 2,
+        "difference_ci95_pp": [
+          -2.1,
+          6.2
+        ]
+      },
+      {
+        "label": "BY_GOOGLE",
+        "total": 503,
+        "recruited": 202,
+        "rate_pct": 40.2,
+        "ci95_pct": [
+          36,
+          44.5
+        ],
+        "comparison_total": 3798,
+        "comparison_recruited": 1699,
+        "difference_pp": -4.6,
+        "difference_ci95_pp": [
+          -9,
+          0
+        ]
+      },
+      {
+        "label": "BY_FRIEND",
+        "total": 378,
+        "recruited": 193,
+        "rate_pct": 51.1,
+        "ci95_pct": [
+          46,
+          56.1
+        ],
+        "comparison_total": 3923,
+        "comparison_recruited": 1708,
+        "difference_pp": 7.5,
+        "difference_ci95_pp": [
+          2.2,
+          12.8
+        ]
+      },
+      {
+        "label": "BY_ETC",
+        "total": 244,
+        "recruited": 114,
+        "rate_pct": 46.7,
+        "ci95_pct": [
+          40.6,
+          53
+        ],
+        "comparison_total": 4057,
+        "comparison_recruited": 1787,
+        "difference_pp": 2.7,
+        "difference_ci95_pp": [
+          -3.6,
+          9.1
+        ]
+      },
+      {
+        "label": "BY_YOZMIT",
+        "total": 52,
+        "recruited": 23,
+        "rate_pct": 44.2,
+        "ci95_pct": [
+          31.6,
+          57.7
+        ],
+        "comparison_total": 4249,
+        "comparison_recruited": 1878,
+        "difference_pp": 0,
+        "difference_ci95_pp": [
+          -12.7,
+          13.6
+        ]
+      },
+      {
+        "label": "BY_BLOG",
+        "total": 21,
+        "recruited": 8,
+        "rate_pct": 38.1,
+        "ci95_pct": [
+          20.8,
+          59.1
+        ],
+        "comparison_total": 4280,
+        "comparison_recruited": 1893,
+        "difference_pp": -6.1,
+        "difference_ci95_pp": [
+          -23.5,
+          14.9
+        ]
+      },
+      {
+        "label": "BY_WEBINAR",
+        "total": 18,
+        "recruited": 5,
+        "rate_pct": 27.8,
+        "ci95_pct": [
+          12.5,
+          50.9
+        ],
+        "comparison_total": 4283,
+        "comparison_recruited": 1896,
+        "difference_pp": -16.5,
+        "difference_ci95_pp": [
+          -31.8,
+          6.7
+        ]
+      },
+      {
+        "label": "BY_META",
+        "total": 12,
+        "recruited": 5,
+        "rate_pct": 41.7,
+        "ci95_pct": [
+          19.3,
+          68
+        ],
+        "comparison_total": 4289,
+        "comparison_recruited": 1896,
+        "difference_pp": -2.5,
+        "difference_ci95_pp": [
+          -25,
+          23.8
+        ]
+      }
+    ],
+    "attachment_by_history": [
+      {
+        "label": "0|no",
+        "total": 2619,
+        "recruited": 966,
+        "rate_pct": 36.9,
+        "ci95_pct": [
+          35.1,
+          38.8
+        ],
+        "comparison_total": 1682,
+        "comparison_recruited": 935,
+        "difference_pp": -18.7,
+        "difference_ci95_pp": [
+          -21.6,
+          -15.6
+        ]
+      },
+      {
+        "label": "1|no",
+        "total": 515,
+        "recruited": 247,
+        "rate_pct": 48,
+        "ci95_pct": [
+          43.7,
+          52.3
+        ],
+        "comparison_total": 3786,
+        "comparison_recruited": 1654,
+        "difference_pp": 4.3,
+        "difference_ci95_pp": [
+          -0.3,
+          8.9
+        ]
+      },
+      {
+        "label": "0|yes",
+        "total": 459,
+        "recruited": 262,
+        "rate_pct": 57.1,
+        "ci95_pct": [
+          52.5,
+          61.5
+        ],
+        "comparison_total": 3842,
+        "comparison_recruited": 1639,
+        "difference_pp": 14.4,
+        "difference_ci95_pp": [
+          9.6,
+          19.1
+        ]
+      },
+      {
+        "label": "3+|no",
+        "total": 218,
+        "recruited": 138,
+        "rate_pct": 63.3,
+        "ci95_pct": [
+          56.7,
+          69.4
+        ],
+        "comparison_total": 4083,
+        "comparison_recruited": 1763,
+        "difference_pp": 20.1,
+        "difference_ci95_pp": [
+          13.3,
+          26.4
+        ]
+      },
+      {
+        "label": "2|no",
+        "total": 196,
+        "recruited": 115,
+        "rate_pct": 58.7,
+        "ci95_pct": [
+          51.7,
+          65.3
+        ],
+        "comparison_total": 4105,
+        "comparison_recruited": 1786,
+        "difference_pp": 15.2,
+        "difference_ci95_pp": [
+          8,
+          22
+        ]
+      },
+      {
+        "label": "1|yes",
+        "total": 123,
+        "recruited": 72,
+        "rate_pct": 58.5,
+        "ci95_pct": [
+          49.7,
+          66.9
+        ],
+        "comparison_total": 4178,
+        "comparison_recruited": 1829,
+        "difference_pp": 14.8,
+        "difference_ci95_pp": [
+          5.8,
+          23.3
+        ]
+      },
+      {
+        "label": "3+|yes",
+        "total": 75,
+        "recruited": 56,
+        "rate_pct": 74.7,
+        "ci95_pct": [
+          63.8,
+          83.1
+        ],
+        "comparison_total": 4226,
+        "comparison_recruited": 1845,
+        "difference_pp": 31,
+        "difference_ci95_pp": [
+          20,
+          39.6
+        ]
+      },
+      {
+        "label": "unknown|no",
+        "total": 46,
+        "recruited": 11,
+        "rate_pct": 23.9,
+        "ci95_pct": [
+          13.9,
+          37.9
+        ],
+        "comparison_total": 4255,
+        "comparison_recruited": 1890,
+        "difference_pp": -20.5,
+        "difference_ci95_pp": [
+          -30.6,
+          -6.4
+        ]
+      },
+      {
+        "label": "2|yes",
+        "total": 44,
+        "recruited": 31,
+        "rate_pct": 70.5,
+        "ci95_pct": [
+          55.8,
+          81.8
+        ],
+        "comparison_total": 4257,
+        "comparison_recruited": 1870,
+        "difference_pp": 26.5,
+        "difference_ci95_pp": [
+          11.8,
+          38
+        ]
+      },
+      {
+        "label": "unknown|yes",
+        "total": 6,
+        "recruited": 3,
+        "rate_pct": 50,
+        "ci95_pct": [
+          18.8,
+          81.2
+        ],
+        "comparison_total": 4295,
+        "comparison_recruited": 1898,
+        "difference_pp": 5.8,
+        "difference_ci95_pp": [
+          -25.4,
+          37
+        ]
+      }
+    ],
+    "business_form_by_customer_history": [
+      {
+        "label": "first|corporate_business",
+        "total": 1371,
+        "recruited": 667,
+        "rate_pct": 48.7,
+        "ci95_pct": [
+          46,
+          51.3
+        ],
+        "comparison_total": 2930,
+        "comparison_recruited": 1234,
+        "difference_pp": 6.5,
+        "difference_ci95_pp": [
+          3.3,
+          9.7
+        ]
+      },
+      {
+        "label": "first|individual",
+        "total": 1085,
+        "recruited": 295,
+        "rate_pct": 27.2,
+        "ci95_pct": [
+          24.6,
+          29.9
+        ],
+        "comparison_total": 3216,
+        "comparison_recruited": 1606,
+        "difference_pp": -22.7,
+        "difference_ci95_pp": [
+          -25.9,
+          -19.5
+        ]
+      },
+      {
+        "label": "repeat|corporate_business",
+        "total": 590,
+        "recruited": 345,
+        "rate_pct": 58.5,
+        "ci95_pct": [
+          54.5,
+          62.4
+        ],
+        "comparison_total": 3711,
+        "comparison_recruited": 1556,
+        "difference_pp": 16.5,
+        "difference_ci95_pp": [
+          12.3,
+          20.8
+        ]
+      },
+      {
+        "label": "first|individual_business",
+        "total": 466,
+        "recruited": 197,
+        "rate_pct": 42.3,
+        "ci95_pct": [
+          37.9,
+          46.8
+        ],
+        "comparison_total": 3835,
+        "comparison_recruited": 1704,
+        "difference_pp": -2.2,
+        "difference_ci95_pp": [
+          -6.8,
+          2.6
+        ]
+      },
+      {
+        "label": "repeat|individual",
+        "total": 275,
+        "recruited": 105,
+        "rate_pct": 38.2,
+        "ci95_pct": [
+          32.6,
+          44
+        ],
+        "comparison_total": 4026,
+        "comparison_recruited": 1796,
+        "difference_pp": -6.4,
+        "difference_ci95_pp": [
+          -12.2,
+          -0.4
+        ]
+      },
+      {
+        "label": "repeat|individual_business",
+        "total": 145,
+        "recruited": 76,
+        "rate_pct": 52.4,
+        "ci95_pct": [
+          44.3,
+          60.4
+        ],
+        "comparison_total": 4156,
+        "comparison_recruited": 1825,
+        "difference_pp": 8.5,
+        "difference_ci95_pp": [
+          0.3,
+          16.6
+        ]
+      },
+      {
+        "label": "repeat|unknown",
+        "total": 135,
+        "recruited": 124,
+        "rate_pct": 91.9,
+        "ci95_pct": [
+          86,
+          95.4
+        ],
+        "comparison_total": 4166,
+        "comparison_recruited": 1777,
+        "difference_pp": 49.2,
+        "difference_ci95_pp": [
+          43.1,
+          53
+        ]
+      },
+      {
+        "label": "first|team",
+        "total": 126,
+        "recruited": 39,
+        "rate_pct": 31,
+        "ci95_pct": [
+          23.5,
+          39.5
+        ],
+        "comparison_total": 4175,
+        "comparison_recruited": 1862,
+        "difference_pp": -13.6,
+        "difference_ci95_pp": [
+          -21.2,
+          -5
+        ]
+      },
+      {
+        "label": "first|unknown",
+        "total": 82,
+        "recruited": 44,
+        "rate_pct": 53.7,
+        "ci95_pct": [
+          42.9,
+          64
+        ],
+        "comparison_total": 4219,
+        "comparison_recruited": 1857,
+        "difference_pp": 9.6,
+        "difference_ci95_pp": [
+          -1.2,
+          20.1
+        ]
+      },
+      {
+        "label": "repeat|team",
+        "total": 26,
+        "recruited": 9,
+        "rate_pct": 34.6,
+        "ci95_pct": [
+          19.4,
+          53.8
+        ],
+        "comparison_total": 4275,
+        "comparison_recruited": 1892,
+        "difference_pp": -9.6,
+        "difference_ci95_pp": [
+          -24.9,
+          9.6
+        ]
+      }
+    ]
+  },
+  "verified_snapshot_14d": {
+    "description_available": [
+      {
+        "label": "yes",
+        "total": 859,
+        "recruited": 456,
+        "rate_pct": 53.1,
+        "ci95_pct": [
+          49.7,
+          56.4
+        ],
+        "comparison_total": 148,
+        "comparison_recruited": 32,
+        "difference_pp": 31.5,
+        "difference_ci95_pp": [
+          23.4,
+          38.2
+        ]
+      },
+      {
+        "label": "no",
+        "total": 148,
+        "recruited": 32,
+        "rate_pct": 21.6,
+        "ci95_pct": [
+          15.8,
+          28.9
+        ],
+        "comparison_total": 859,
+        "comparison_recruited": 456,
+        "difference_pp": -31.5,
+        "difference_ci95_pp": [
+          -38.2,
+          -23.4
+        ]
+      }
+    ],
+    "budget": [
+      {
+        "label": "missing_or_zero",
+        "total": 760,
+        "recruited": 301,
+        "rate_pct": 39.6,
+        "ci95_pct": [
+          36.2,
+          43.1
+        ],
+        "comparison_total": 247,
+        "comparison_recruited": 187,
+        "difference_pp": -36.1,
+        "difference_ci95_pp": [
+          -42.1,
+          -29.4
+        ]
+      },
+      {
+        "label": "lt_5m",
+        "total": 80,
+        "recruited": 52,
+        "rate_pct": 65,
+        "ci95_pct": [
+          54.1,
+          74.5
+        ],
+        "comparison_total": 927,
+        "comparison_recruited": 436,
+        "difference_pp": 18,
+        "difference_ci95_pp": [
+          6.6,
+          28
+        ]
+      },
+      {
+        "label": "10m_to_30m",
+        "total": 65,
+        "recruited": 57,
+        "rate_pct": 87.7,
+        "ci95_pct": [
+          77.5,
+          93.6
+        ],
+        "comparison_total": 942,
+        "comparison_recruited": 431,
+        "difference_pp": 41.9,
+        "difference_ci95_pp": [
+          31.3,
+          48.6
+        ]
+      },
+      {
+        "label": "30m_plus",
+        "total": 58,
+        "recruited": 43,
+        "rate_pct": 74.1,
+        "ci95_pct": [
+          61.6,
+          83.7
+        ],
+        "comparison_total": 949,
+        "comparison_recruited": 445,
+        "difference_pp": 27.2,
+        "difference_ci95_pp": [
+          14.3,
+          37.3
+        ]
+      },
+      {
+        "label": "5m_to_10m",
+        "total": 44,
+        "recruited": 35,
+        "rate_pct": 79.5,
+        "ci95_pct": [
+          65.5,
+          88.8
+        ],
+        "comparison_total": 963,
+        "comparison_recruited": 453,
+        "difference_pp": 32.5,
+        "difference_ci95_pp": [
+          18.1,
+          42.3
+        ]
+      }
+    ],
+    "term": [
+      {
+        "label": "missing_or_zero",
+        "total": 703,
+        "recruited": 271,
+        "rate_pct": 38.5,
+        "ci95_pct": [
+          35,
+          42.2
+        ],
+        "comparison_total": 304,
+        "comparison_recruited": 217,
+        "difference_pp": -32.8,
+        "difference_ci95_pp": [
+          -38.8,
+          -26.4
+        ]
+      },
+      {
+        "label": "1_to_30",
+        "total": 130,
+        "recruited": 82,
+        "rate_pct": 63.1,
+        "ci95_pct": [
+          54.5,
+          70.9
+        ],
+        "comparison_total": 877,
+        "comparison_recruited": 406,
+        "difference_pp": 16.8,
+        "difference_ci95_pp": [
+          7.6,
+          25.3
+        ]
+      },
+      {
+        "label": "31_to_90",
+        "total": 119,
+        "recruited": 95,
+        "rate_pct": 79.8,
+        "ci95_pct": [
+          71.7,
+          86.1
+        ],
+        "comparison_total": 888,
+        "comparison_recruited": 393,
+        "difference_pp": 35.6,
+        "difference_ci95_pp": [
+          26.8,
+          42.6
+        ]
+      },
+      {
+        "label": "91_plus",
+        "total": 55,
+        "recruited": 40,
+        "rate_pct": 72.7,
+        "ci95_pct": [
+          59.8,
+          82.7
+        ],
+        "comparison_total": 952,
+        "comparison_recruited": 448,
+        "difference_pp": 25.7,
+        "difference_ci95_pp": [
+          12.4,
+          36.1
+        ]
+      }
+    ]
+  },
+  "reason_sample": {
+    "provided_rows": 646,
+    "matched_rows": 646,
+    "reason_counts": [
+      {
+        "reason": "모집 전환",
+        "total": 175
+      },
+      {
+        "reason": "기타(미지정)",
+        "total": 106
+      },
+      {
+        "reason": "연락안됨",
+        "total": 104
+      },
+      {
+        "reason": "프로젝트 연기",
+        "total": 54
+      },
+      {
+        "reason": "직접 취소",
+        "total": 43
+      },
+      {
+        "reason": "단가 안 맞음",
+        "total": 26
+      },
+      {
+        "reason": "단순 문의/견적 문의",
+        "total": 26
+      },
+      {
+        "reason": "기획 및 내용 구체화 필요",
+        "total": 19
+      },
+      {
+        "reason": "중복등록",
+        "total": 19
+      },
+      {
+        "reason": "실수",
+        "total": 16
+      },
+      {
+        "reason": "기타(지정)",
+        "total": 13
+      },
+      {
+        "reason": "잔여",
+        "total": 11
+      },
+      {
+        "reason": "타 업체와 진행",
+        "total": 8
+      },
+      {
+        "reason": "취소",
+        "total": 7
+      },
+      {
+        "reason": "자체 진행",
+        "total": 5
+      },
+      {
+        "reason": "위시켓 이용 불가",
+        "total": 4
+      },
+      {
+        "reason": "지원사업 선정 전",
+        "total": 3
+      },
+      {
+        "reason": "내용 공개 불가",
+        "total": 2
+      },
+      {
+        "reason": "이용 약관 위배",
+        "total": 2
+      },
+      {
+        "reason": "Test",
+        "total": 1
+      },
+      {
+        "reason": "대학교 과제",
+        "total": 1
+      },
+      {
+        "reason": "진행 일정 안 맞음",
+        "total": 1
+      }
+    ],
+    "outcomes": [
+      {
+        "outcome": "rejected",
+        "total": 428,
+        "with_file": 58,
+        "repeat_client": 77,
+        "corporate": 150,
+        "individual": 189
+      },
+      {
+        "outcome": "recruited",
+        "total": 175,
+        "with_file": 39,
+        "repeat_client": 49,
+        "corporate": 103,
+        "individual": 30
+      },
+      {
+        "outcome": "cancelled",
+        "total": 43,
+        "with_file": 6,
+        "repeat_client": 15,
+        "corporate": 17,
+        "individual": 20
+      }
+    ]
+  },
+  "pre_recruit_cancellation_codes": {
+    "total": 351,
+    "add_mistake": 101,
+    "explicit_test": 2,
+    "counts": [
+      {
+        "code": "add_mistake",
+        "total": 101
+      },
+      {
+        "code": "project_cancel",
+        "total": 86
+      },
+      {
+        "code": "blank",
+        "total": 40
+      },
+      {
+        "code": "etc",
+        "total": 38
+      },
+      {
+        "code": "change_plan",
+        "total": 25
+      },
+      {
+        "code": "duplicate",
+        "total": 18
+      },
+      {
+        "code": "by_inhouse",
+        "total": 10
+      },
+      {
+        "code": "contract_other",
+        "total": 8
+      },
+      {
+        "code": "cannot_contact",
+        "total": 1
+      },
+      {
+        "code": "etc .",
+        "total": 1
+      },
+      {
+        "code": "etc 검수 대기 시간이 너무 길어요",
+        "total": 1
+      },
+      {
+        "code": "etc 검수연락안옴",
+        "total": 1
+      },
+      {
+        "code": "etc 검토 후 재등록",
+        "total": 1
+      },
+      {
+        "code": "etc 견적만 받아보고싶어여",
+        "total": 1
+      },
+      {
+        "code": "etc 계정을 회사계정으로 변경하기 위함",
+        "total": 1
+      },
+      {
+        "code": "etc 기획이 아직 마무리 되지 않았습니다.해당 업무를 수행해줄수 있는 분이 있는지와 예산",
+        "total": 1
+      },
+      {
+        "code": "etc 나중에 프로젝트 범위가 더욱 명확해지면 재공고 예정",
+        "total": 1
+      },
+      {
+        "code": "etc 내부 정책 검토 후 다시 작성 예정입니다.",
+        "total": 1
+      },
+      {
+        "code": "etc 내용 수정 후 재등록",
+        "total": 1
+      },
+      {
+        "code": "etc 다시 등록하기 위해서 취소",
+        "total": 1
+      },
+      {
+        "code": "etc 다시 잘 작성",
+        "total": 1
+      },
+      {
+        "code": "etc 본인계정정보확인필요",
+        "total": 1
+      },
+      {
+        "code": "etc 아직 내부 보고 이루어지지 않음...",
+        "total": 1
+      },
+      {
+        "code": "etc 아직 미확정",
+        "total": 1
+      },
+      {
+        "code": "etc 일시중단",
+        "total": 1
+      },
+      {
+        "code": "etc 전화를 너무 많이해서 힘들어요... 꼭 전화로 해야합니까? 카톡이나 메시지로 주고",
+        "total": 1
+      },
+      {
+        "code": "etc 추후 재 신청",
+        "total": 1
+      },
+      {
+        "code": "etc 클라이언트 정보 수정 후 재작성 희망",
+        "total": 1
+      },
+      {
+        "code": "etc 테스트",
+        "total": 1
+      },
+      {
+        "code": "etc 테스트..",
+        "total": 1
+      },
+      {
+        "code": "etc 프로젝트 기획을 조금만 보완해서 다시 프로젝트 의뢰 드리겠습니다!",
+        "total": 1
+      },
+      {
+        "code": "etc 프로젝트 내용을 좀 더 상세하게 적어서 다시 올리고싶어요",
+        "total": 1
+      },
+      {
+        "code": "project_destruction",
+        "total": 1
+      }
+    ]
+  },
+  "contract_90d_reference_only": {
+    "eligible": 3241,
+    "contracted": 406,
+    "by_attachment": [
+      {
+        "label": "no",
+        "total": 2731,
+        "recruited": 321,
+        "rate_pct": 11.8,
+        "ci95_pct": [
+          10.6,
+          13
+        ],
+        "comparison_total": 510,
+        "comparison_recruited": 85,
+        "difference_pp": -4.9,
+        "difference_ci95_pp": [
+          -8.5,
+          -1.7
+        ]
+      },
+      {
+        "label": "yes",
+        "total": 510,
+        "recruited": 85,
+        "rate_pct": 16.7,
+        "ci95_pct": [
+          13.7,
+          20.1
+        ],
+        "comparison_total": 2731,
+        "comparison_recruited": 321,
+        "difference_pp": 4.9,
+        "difference_ci95_pp": [
+          1.7,
+          8.5
+        ]
+      }
+    ],
+    "by_history": [
+      {
+        "label": "0",
+        "total": 2297,
+        "recruited": 241,
+        "rate_pct": 10.5,
+        "ci95_pct": [
+          9.3,
+          11.8
+        ],
+        "comparison_total": 944,
+        "comparison_recruited": 165,
+        "difference_pp": -7,
+        "difference_ci95_pp": [
+          -9.8,
+          -4.4
+        ]
+      },
+      {
+        "label": "1",
+        "total": 500,
+        "recruited": 78,
+        "rate_pct": 15.6,
+        "ci95_pct": [
+          12.7,
+          19
+        ],
+        "comparison_total": 2741,
+        "comparison_recruited": 328,
+        "difference_pp": 3.6,
+        "difference_ci95_pp": [
+          0.5,
+          7.2
+        ]
+      },
+      {
+        "label": "3+",
+        "total": 225,
+        "recruited": 48,
+        "rate_pct": 21.3,
+        "ci95_pct": [
+          16.5,
+          27.1
+        ],
+        "comparison_total": 3016,
+        "comparison_recruited": 358,
+        "difference_pp": 9.5,
+        "difference_ci95_pp": [
+          4.5,
+          15.3
+        ]
+      },
+      {
+        "label": "2",
+        "total": 182,
+        "recruited": 39,
+        "rate_pct": 21.4,
+        "ci95_pct": [
+          16.1,
+          27.9
+        ],
+        "comparison_total": 3059,
+        "comparison_recruited": 367,
+        "difference_pp": 9.4,
+        "difference_ci95_pp": [
+          4,
+          16
+        ]
+      },
+      {
+        "label": "unknown",
+        "total": 37,
+        "recruited": 0,
+        "rate_pct": 0,
+        "ci95_pct": [
+          0,
+          9.4
+        ],
+        "comparison_total": 3204,
+        "comparison_recruited": 406,
+        "difference_pp": -12.7,
+        "difference_ci95_pp": [
+          -13.9,
+          -3.2
+        ]
+      }
+    ]
+  }
+}

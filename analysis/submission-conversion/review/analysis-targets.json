@@ -1,0 +1,4297 @@
+[
+  {
+    "anon_id": "T0001",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0002",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0003",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0004",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0005",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0006",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0007",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0008",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0009",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0010",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0011",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0012",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0013",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0014",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0015",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0016",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0017",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0018",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0019",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0020",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0021",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0022",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0023",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0024",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0025",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0026",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0027",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0028",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0029",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0030",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0031",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0032",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0033",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0034",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0035",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0036",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0037",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0038",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0039",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0040",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0041",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0042",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0043",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0044",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0045",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0046",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0047",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0048",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0049",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0050",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0051",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0052",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0053",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0054",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0055",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0056",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0057",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0058",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0059",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0060",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0061",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0062",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0063",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0064",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0065",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0066",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0067",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0068",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0069",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0070",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0071",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0072",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0073",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0074",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0075",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0076",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0077",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0078",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0079",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0080",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0081",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0082",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0083",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0084",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0085",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0086",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0087",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0088",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0089",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0090",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0091",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0092",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0093",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0094",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0095",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0096",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0097",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0098",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0099",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0100",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0101",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0102",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0103",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0104",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0105",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0106",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0107",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0108",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0109",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0110",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0111",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0112",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0113",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0114",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0115",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0116",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0117",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0118",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0119",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0120",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0121",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0122",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0123",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0124",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0125",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0126",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0127",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0128",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0129",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0130",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0131",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0132",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0133",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0134",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0135",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0136",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0137",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0138",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0139",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0140",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0141",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0142",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0143",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0144",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0145",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0146",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0147",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0148",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0149",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0150",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0151",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0152",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0153",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0154",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0155",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0156",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0157",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0158",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0159",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0160",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0161",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0162",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0163",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0164",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0165",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0166",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0167",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0168",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0169",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0170",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0171",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0172",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0173",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0174",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0175",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0176",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0177",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0178",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0179",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0180",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0181",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0182",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0183",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0184",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0185",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0186",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0187",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0188",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0189",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0190",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0191",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0192",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0193",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0194",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0195",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0196",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0197",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0198",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0199",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0200",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0201",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0202",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0203",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0204",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0205",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0206",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0207",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0208",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0209",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0210",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0211",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0212",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0213",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0214",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0215",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0216",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0217",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0218",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0219",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0220",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0221",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0222",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0223",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0224",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0225",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0226",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0227",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0228",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0229",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0230",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0231",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0232",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0233",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0234",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0235",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0236",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0237",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0238",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0239",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0240",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0241",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0242",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0243",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0244",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0245",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0246",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0247",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0248",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0249",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0250",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0251",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0252",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0253",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0254",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0255",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0256",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0257",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0258",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0259",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0260",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0261",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0262",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0263",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0264",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0265",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0266",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0267",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0268",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0269",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0270",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0271",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0272",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0273",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0274",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0275",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0276",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0277",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0278",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0279",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0280",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0281",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0282",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0283",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0284",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0285",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0286",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0287",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0288",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0289",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0290",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0291",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0292",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0293",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0294",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0295",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0296",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0297",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0298",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0299",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0300",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0301",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0302",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0303",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0304",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0305",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0306",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0307",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0308",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0309",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0310",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0311",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0312",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0313",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0314",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0315",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0316",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0317",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0318",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0319",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0320",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0321",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0322",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0323",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0324",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0325",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0326",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0327",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0328",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0329",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0330",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0331",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0332",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0333",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0334",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0335",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0336",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0337",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0338",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0339",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0340",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0341",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0342",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0343",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0344",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0345",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0346",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0347",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0348",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0349",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0350",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0351",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0352",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0353",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0354",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0355",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0356",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0357",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0358",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0359",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0360",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0361",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0362",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0363",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0364",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0365",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0366",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0367",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0368",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0369",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0370",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0371",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0372",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0373",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0374",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0375",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0376",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0377",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0378",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0379",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0380",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0381",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0382",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0383",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0384",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0385",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0386",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0387",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0388",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0389",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0390",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0391",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0392",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0393",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0394",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0395",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0396",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0397",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0398",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0399",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0400",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0401",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0402",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0403",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0404",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0405",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0406",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0407",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0408",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0409",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0410",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0411",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0412",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0413",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0414",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0415",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0416",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0417",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0418",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0419",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0420",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0421",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0422",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0423",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0424",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0425",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0426",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0427",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0428",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0429",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0430",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0431",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0432",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0433",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0434",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0435",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0436",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0437",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0438",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0439",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0440",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0441",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0442",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0443",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0444",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0445",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0446",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0447",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0448",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0449",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0450",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0451",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0452",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0453",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0454",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0455",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0456",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0457",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0458",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0459",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0460",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0461",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0462",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0463",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0464",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0465",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0466",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0467",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0468",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0469",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0470",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0471",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0472",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0473",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0474",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0475",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0476",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0477",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0478",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0479",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0480",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0481",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0482",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0483",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0484",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0485",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0486",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0487",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0488",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0489",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0490",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0491",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0492",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0493",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0494",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0495",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0496",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0497",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0498",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0499",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0500",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0501",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0502",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0503",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0504",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0505",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0506",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0507",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0508",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0509",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0510",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0511",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0512",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0513",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0514",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0515",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0516",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0517",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0518",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0519",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0520",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0521",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0522",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0523",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0524",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0525",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0526",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0527",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0528",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0529",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0530",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0531",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0532",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0533",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0534",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0535",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0536",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0537",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0538",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0539",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0540",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0541",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0542",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0543",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0544",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0545",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0546",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0547",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0548",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0549",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0550",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0551",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0552",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0553",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0554",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0555",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0556",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0557",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0558",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0559",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0560",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0561",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0562",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0563",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0564",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0565",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0566",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0567",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0568",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0569",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0570",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0571",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0572",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0573",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0574",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0575",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0576",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0577",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0578",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0579",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0580",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0581",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0582",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0583",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0584",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0585",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0586",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0587",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0588",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0589",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0590",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0591",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0592",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0593",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0594",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0595",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0596",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0597",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0598",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0599",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0600",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0601",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0602",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0603",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0604",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0605",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0606",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0607",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0608",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0609",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0610",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0611",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0612",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0613",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0614",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0615",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0616",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0617",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0618",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0619",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0620",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0621",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0622",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0623",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0624",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0625",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0626",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0627",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0628",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0629",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0630",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0631",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0632",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0633",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0634",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0635",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0636",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0637",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0638",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0639",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0640",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0641",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0642",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0643",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0644",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0645",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0646",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0647",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0648",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0649",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0650",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0651",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0652",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0653",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0654",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0655",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0656",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0657",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0658",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0659",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0660",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0661",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0662",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0663",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0664",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0665",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0666",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0667",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0668",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0669",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0670",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0671",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0672",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0673",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0674",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0675",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0676",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0677",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0678",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0679",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0680",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0681",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0682",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0683",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0684",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0685",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0686",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0687",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0688",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0689",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0690",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0691",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0692",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0693",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0694",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0695",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0696",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0697",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0698",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0699",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0700",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0701",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0702",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0703",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0704",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0705",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0706",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0707",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0708",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0709",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0710",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0711",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0712",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0713",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0714",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0715",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0716",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0717",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0718",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0719",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0720",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0721",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0722",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0723",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0724",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0725",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0726",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0727",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0728",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0729",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0730",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0731",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0732",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0733",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0734",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0735",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0736",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0737",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0738",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0739",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0740",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0741",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0742",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0743",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0744",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0745",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0746",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0747",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0748",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0749",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0750",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0751",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0752",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0753",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0754",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0755",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0756",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0757",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0758",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0759",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0760",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0761",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0762",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0763",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0764",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0765",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0766",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0767",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0768",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0769",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0770",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0771",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0772",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0773",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0774",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0775",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0776",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0777",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0778",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0779",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0780",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0781",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0782",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0783",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0784",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0785",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0786",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0787",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0788",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0789",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0790",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0791",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0792",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0793",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0794",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0795",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0796",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0797",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0798",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0799",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0800",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0801",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0802",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0803",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0804",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0805",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0806",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0807",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0808",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0809",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0810",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0811",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0812",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0813",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0814",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0815",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0816",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0817",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0818",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0819",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0820",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0821",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0822",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0823",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0824",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0825",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0826",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0827",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0828",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0829",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0830",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0831",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0832",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0833",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0834",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0835",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0836",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0837",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0838",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0839",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0840",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0841",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0842",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0843",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0844",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0845",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0846",
+    "submitted_month": "2026-05",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0847",
+    "submitted_month": "2026-08",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0848",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0849",
+    "submitted_month": "2026-07",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0850",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0851",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0852",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0853",
+    "submitted_month": "2026-01",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0854",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0855",
+    "submitted_month": "2026-03",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0856",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  },
+  {
+    "anon_id": "T0857",
+    "submitted_month": "2026-06",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0858",
+    "submitted_month": "2026-02",
+    "recruited_within_14d": true
+  },
+  {
+    "anon_id": "T0859",
+    "submitted_month": "2026-04",
+    "recruited_within_14d": false
+  }
+]
