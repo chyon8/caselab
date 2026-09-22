@@ -23,5 +23,8 @@
 *.tsbuildinfo
 next-env.d.ts
 
+# 분석 원자료·행 단위 결과 (프로젝트 ID/자유서술 포함, Git 금지)
+/.private/
+
 # tesseract.js OCR 언어 데이터 (런타임에 자동 다운로드되는 캐시, 소스 아님)
 *.traineddata
