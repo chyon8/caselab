@@ -1,0 +1,1 @@
+project_id,field_id,raw_value,normalized_value,value_status,source_system,source_record_ref,source_schema_version,source_created_at_utc,source_updated_at_utc,known_at_utc,applies_at_utc,collection_started_at_utc,evidence_excerpt,reviewer,reviewed_at_utc,conflict_status
