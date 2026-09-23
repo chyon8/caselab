@@ -1,0 +1,25 @@
+{
+  "retrieved_at": "2026-09-23T01:50:12.744Z",
+  "total": 4319,
+  "monthly": {
+    "2026-01": 568,
+    "2026-02": 526,
+    "2026-03": 576,
+    "2026-04": 576,
+    "2026-05": 548,
+    "2026-06": 529,
+    "2026-07": 543,
+    "2026-08": 453
+  },
+  "sources": {
+    "verified_initial": 859,
+    "unverified_initial": 2713,
+    "current_posting": 165,
+    "missing": 582
+  },
+  "observed_from": "2026-09-22T06:10:38.000Z",
+  "observed_to": "2026-09-22T06:23:37.000Z",
+  "corpus_hash": "d880335e40826db075df4c79e11a89996825ab1e33554661a651445d19829c00",
+  "outcomes_hash": "a66f7d5b2ef97b56d1e5fbb714827c546f8859345ecbbc88a8ba56060b795fb9",
+  "privacy_pass": "role-introduction-v2"
+}
