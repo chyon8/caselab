@@ -1,0 +1,115 @@
+{
+  "total": 4319,
+  "cumulative_recruited": 1932,
+  "raw_status_counts": {
+    "close_recruiting": 1407,
+    "completed": 360,
+    "contracted": 180,
+    "recruiting": 2,
+    "submitted": 2370
+  },
+  "coverage": {
+    "2026-01|unverified_initial|no_recruitment_date": 198,
+    "2026-01|unverified_initial|recruited": 192,
+    "2026-01|missing|no_recruitment_date": 43,
+    "2026-01|verified_initial|no_recruitment_date": 50,
+    "2026-01|verified_initial|recruited": 64,
+    "2026-01|current_posting|recruited": 21,
+    "2026-02|unverified_initial|no_recruitment_date": 178,
+    "2026-02|missing|no_recruitment_date": 73,
+    "2026-02|unverified_initial|recruited": 172,
+    "2026-02|verified_initial|no_recruitment_date": 32,
+    "2026-02|verified_initial|recruited": 44,
+    "2026-02|current_posting|recruited": 27,
+    "2026-03|missing|no_recruitment_date": 92,
+    "2026-03|verified_initial|no_recruitment_date": 46,
+    "2026-03|unverified_initial|no_recruitment_date": 158,
+    "2026-03|unverified_initial|recruited": 188,
+    "2026-03|current_posting|recruited": 32,
+    "2026-03|verified_initial|recruited": 60,
+    "2026-04|unverified_initial|no_recruitment_date": 193,
+    "2026-04|unverified_initial|recruited": 156,
+    "2026-04|current_posting|recruited": 25,
+    "2026-04|verified_initial|no_recruitment_date": 48,
+    "2026-04|missing|no_recruitment_date": 90,
+    "2026-04|verified_initial|recruited": 64,
+    "2026-05|missing|no_recruitment_date": 77,
+    "2026-05|verified_initial|no_recruitment_date": 60,
+    "2026-05|unverified_initial|no_recruitment_date": 184,
+    "2026-05|unverified_initial|recruited": 165,
+    "2026-05|verified_initial|recruited": 48,
+    "2026-05|current_posting|recruited": 14,
+    "2026-06|unverified_initial|no_recruitment_date": 163,
+    "2026-06|verified_initial|no_recruitment_date": 47,
+    "2026-06|unverified_initial|recruited": 167,
+    "2026-06|verified_initial|recruited": 71,
+    "2026-06|missing|no_recruitment_date": 68,
+    "2026-06|current_posting|recruited": 13,
+    "2026-07|unverified_initial|recruited": 146,
+    "2026-07|missing|no_recruitment_date": 81,
+    "2026-07|unverified_initial|no_recruitment_date": 176,
+    "2026-07|verified_initial|recruited": 68,
+    "2026-07|current_posting|recruited": 20,
+    "2026-07|verified_initial|no_recruitment_date": 52,
+    "2026-08|unverified_initial|no_recruitment_date": 159,
+    "2026-08|unverified_initial|recruited": 118,
+    "2026-08|verified_initial|recruited": 44,
+    "2026-08|verified_initial|no_recruitment_date": 61,
+    "2026-08|missing|no_recruitment_date": 58,
+    "2026-08|current_posting|recruited": 13
+  },
+  "metrics": {
+    "recruit14": {
+      "n": 4301,
+      "k": 1901,
+      "rate_pct": 44.2,
+      "ci95_pct": [
+        42.7,
+        45.7
+      ],
+      "excluded": {
+        "state_conflict": 18
+      }
+    },
+    "recruit30": {
+      "n": 4162,
+      "k": 1857,
+      "rate_pct": 44.6,
+      "ci95_pct": [
+        43.1,
+        46.1
+      ],
+      "excluded": {
+        "state_conflict": 18,
+        "immature": 139
+      }
+    },
+    "contract_from_submit90": {
+      "n": 3234,
+      "k": 406,
+      "rate_pct": 12.6,
+      "ci95_pct": [
+        11.5,
+        13.7
+      ],
+      "excluded": {
+        "invalid_contract_date": 7,
+        "immature": 1078
+      }
+    },
+    "contract_from_recruit90": {
+      "n": 1465,
+      "k": 405,
+      "rate_pct": 27.6,
+      "ci95_pct": [
+        25.4,
+        30
+      ],
+      "excluded": {
+        "not_recruited": 2387,
+        "invalid_contract_date": 7,
+        "immature": 460
+      }
+    }
+  }
+}
