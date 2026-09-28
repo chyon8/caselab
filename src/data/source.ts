@@ -14,6 +14,7 @@ import type {
   ProjectQuery,
   ProjectStatus,
   ReportStats,
+  TargetDemandStats,
   SimilarProject,
   SimilarStats,
 } from "./types";
@@ -83,6 +84,7 @@ export interface DataSource {
   searchSimilarQnaPool(vector: number[], limit?: number, scope?: string): Promise<PoolQna[]>;
   /** periodDays = 모집 전환일 기준 최근 N일. null/undefined면 기간 전체 */
   getReportStats(periodDays?: number | null): Promise<ReportStats>;
+  getTargetDemandStats(periodDays?: number | null): Promise<TargetDemandStats>;
   /** 저지원(지원 1~5건) 프로젝트 실물 목록 한 페이지. 집계와 달리 페이지를 넘긴다 */
   getLowProposalProjects(periodDays?: number | null, page?: number): Promise<LowProposalPage>;
   /** 매니저별 성과 지표 — 볼 권한이 있는 계정에서만 호출한다(REPORT_MANAGER_EMAILS) */
@@ -170,6 +172,19 @@ class MockDataSource implements DataSource {
 
   async getReportStats(): Promise<ReportStats> {
     return EMPTY_STATS;
+  }
+
+  async getTargetDemandStats(): Promise<TargetDemandStats> {
+    return {
+      total: 0,
+      classified: 0,
+      decided: 0,
+      contracted: 0,
+      contractRate: 0,
+      coverage: { from: null, to: null },
+      byVolume: [],
+      byContractRate: [],
+    };
   }
 
   async getLowProposalProjects(): Promise<LowProposalPage> {

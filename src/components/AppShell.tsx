@@ -8,6 +8,7 @@ import styles from "./AppShell.module.css";
 const NAV_ITEMS = [
   { label: "전체 프로젝트", href: "/" },
   { label: "리포트", href: "/report" },
+  { label: "수요 리포트", href: "/report/target-demand" },
   { label: "설정", href: "/settings" },
 ];
 
@@ -37,7 +38,9 @@ export default function AppShell({
   const isActive = (href: string) =>
     href === "/"
       ? pathname === "/" || pathname.startsWith("/projects")
-      : pathname === href;
+      : href === "/report"
+        ? pathname === href
+        : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <div className={styles.shell}>

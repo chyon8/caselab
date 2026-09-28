@@ -5,6 +5,7 @@ import {
   LOW_PROPOSAL_PAGE,
   REPORT_MONTHS,
 } from "@/features/report/period";
+import { TARGET_DEMAND_CANDIDATES } from "@/features/report/target-demand-candidates";
 import type { PoolQna } from "@/lib/review-tips";
 import {
   daysBetween,
@@ -39,6 +40,8 @@ import type {
   QnaItem,
   QnaSummary,
   ReportStats,
+  TargetDemandCandidate,
+  TargetDemandStats,
   SimilarProject,
   SimilarStats,
   TimelineEvent,
@@ -897,6 +900,108 @@ export class PostgresDataSource implements DataSource {
         decreased: Number(delta?.decreased ?? 0),
         zeroExcluded: Number(delta?.zero_excluded ?? 0),
       },
+    };
+  }
+
+  /** 원문에서 먼저 고정한 업종·업무 문제·시스템 조합을 성과와 결합한다. */
+  async getTargetDemandStats(periodDays?: number | null): Promise<TargetDemandStats> {
+    const days = Number.isInteger(periodDays) && (periodDays as number) > 0 ? periodDays : null;
+    const window = days ? `AND p.recruit_started_at >= now() - interval '${days} days'` : "";
+    const values = TARGET_DEMAND_CANDIDATES.map((_, index) => `($${index * 2 + 1}, $${index * 2 + 2})`).join(", ");
+    const params = TARGET_DEMAND_CANDIDATES.flatMap((candidate) => [candidate.id, candidate.pattern]);
+    const rows = await query<{
+      candidate_id: string;
+      total: string;
+      decided: string;
+      contracted: string;
+      all_total: string;
+      classified: string;
+      all_decided: string;
+      all_contracted: string;
+      from_at: string | null;
+      to_at: string | null;
+      examples: TargetDemandCandidate["examples"] | null;
+    }>(
+      `WITH candidates(candidate_id, pattern) AS (VALUES ${values}),
+            base AS MATERIALIZED (
+              SELECT p.id::text AS id, p.title, p.status, p.stage, p.contract_amount,
+                     p.recruit_started_at,
+                     regexp_replace(lower(concat_ws(' ', p.title, p.category, p.client_name, p.posting_raw)), E'\\s+', ' ', 'g') AS body,
+                     p.posting_raw
+                FROM projects p
+               WHERE p.deleted_at IS NULL AND p.hidden = false
+                 AND p.recruit_started_at IS NOT NULL ${window}
+            ),
+            matched AS (
+              SELECT DISTINCT b.id
+                FROM base b JOIN candidates c ON b.body ~* c.pattern
+            )
+       SELECT c.candidate_id,
+              count(b.id) AS total,
+              count(b.id) FILTER (WHERE b.stage >= 3 OR b.status = '완료(취소)') AS decided,
+              count(b.id) FILTER (WHERE b.stage >= 3 AND b.status <> '완료(취소)') AS contracted,
+              (SELECT count(*) FROM base) AS all_total,
+              (SELECT count(*) FROM matched) AS classified,
+              (SELECT count(*) FILTER (WHERE stage >= 3 OR status = '완료(취소)') FROM base b2 JOIN matched m ON m.id = b2.id) AS all_decided,
+              (SELECT count(*) FILTER (WHERE stage >= 3 AND status <> '완료(취소)') FROM base b3 JOIN matched m ON m.id = b3.id) AS all_contracted,
+              (SELECT min(recruit_started_at) FROM base) AS from_at,
+              (SELECT max(recruit_started_at) FROM base) AS to_at,
+              COALESCE((
+                SELECT json_agg(example)
+                  FROM (
+                    SELECT b4.id, b4.title, left(regexp_replace(b4.posting_raw, E'\\s+', ' ', 'g'), 420) AS excerpt, b4.status
+                      FROM base b4
+                     WHERE b4.body ~* c.pattern
+                     ORDER BY b4.recruit_started_at DESC
+                     LIMIT 3
+                  ) AS example
+              ), '[]'::json) AS examples
+         FROM candidates c
+         LEFT JOIN base b ON b.body ~* c.pattern
+        GROUP BY c.candidate_id, c.pattern
+        ORDER BY count(b.id) DESC`,
+      params,
+    );
+
+    const definitions = new Map(TARGET_DEMAND_CANDIDATES.map((candidate) => [candidate.id, candidate]));
+    const toCandidate = (row: (typeof rows)[number]): TargetDemandCandidate => {
+      const definition = definitions.get(row.candidate_id);
+      if (!definition) throw new Error(`알 수 없는 타깃 후보: ${row.candidate_id}`);
+      const total = Number(row.total);
+      const decided = Number(row.decided);
+      const contracted = Number(row.contracted);
+      return {
+        id: definition.id,
+        title: definition.title,
+        industry: definition.industry,
+        problem: definition.problem,
+        system: definition.system,
+        inclusion: definition.inclusion,
+        exclusion: definition.exclusion,
+        total,
+        decided,
+        contracted,
+        contractRate: decided ? Math.round((contracted / decided) * 1000) / 10 : 0,
+        lowSample: decided < 20,
+        examples: row.examples ?? [],
+      };
+    };
+    const all = rows.map(toCandidate).filter((candidate) => candidate.total >= 5);
+    const first = rows[0];
+    return {
+      total: Number(first?.all_total ?? 0),
+      classified: Number(first?.classified ?? 0),
+      decided: Number(first?.all_decided ?? 0),
+      contracted: Number(first?.all_contracted ?? 0),
+      contractRate: Number(first?.all_decided)
+        ? Math.round((Number(first?.all_contracted) / Number(first?.all_decided)) * 1000) / 10
+        : 0,
+      coverage: { from: first?.from_at ?? null, to: first?.to_at ?? null },
+      byVolume: [...all].sort((a, b) => b.total - a.total || b.decided - a.decided),
+      byContractRate: [...all]
+        .filter((row) => row.decided >= 20)
+        .sort((a, b) => b.contractRate - a.contractRate || b.decided - a.decided)
+        ,
     };
   }
 

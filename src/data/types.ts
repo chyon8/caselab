@@ -398,6 +398,41 @@ export interface ReportStats {
   budgetDelta: { increased: number; same: number; decreased: number; zeroExcluded: number };
 }
 
+/** 공고 원문에서 찾은 구체적인 업종·업무 문제·시스템 후보 */
+export interface TargetDemandExample {
+  id: string;
+  title: string;
+  excerpt: string;
+  status: string;
+}
+
+export interface TargetDemandCandidate {
+  id: string;
+  title: string;
+  industry: string;
+  problem: string;
+  system: string;
+  inclusion: string;
+  exclusion: string;
+  total: number;
+  decided: number;
+  contracted: number;
+  contractRate: number;
+  lowSample: boolean;
+  examples: TargetDemandExample[];
+}
+
+export interface TargetDemandStats {
+  total: number;
+  classified: number;
+  decided: number;
+  contracted: number;
+  contractRate: number;
+  coverage: { from: string | null; to: string | null };
+  byVolume: TargetDemandCandidate[];
+  byContractRate: TargetDemandCandidate[];
+}
+
 /** 지원자가 거의 없었던 프로젝트 한 건 — 비율만 보면 "어떤 건이 그랬나"를 못 본다 */
 export interface LowProposalProject {
   id: string;

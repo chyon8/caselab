@@ -1,0 +1,848 @@
+{
+  "generated_at": "2026-09-28T03:47:25.844Z",
+  "as_of": "2026-09-22T06:23:37.000Z",
+  "corpus": {
+    "total": 4319,
+    "usable_text": 2757
+  },
+  "candidates": [
+    {
+      "id": "commerce-order-fulfillment",
+      "definition": {
+        "target": "온라인 판매사업자의 다채널 주문·재고·출고 통합 관리 시스템",
+        "subject": "자사몰·오픈마켓 등 온라인 판매사업자",
+        "problem": "여러 판매 채널의 주문, 재고, 발주·송장·출고 또는 정산을 수기·엑셀로 처리함",
+        "system": "채널 API 연동 기반 주문·재고·출고 관리 시스템",
+        "inclusion": "업종 표현과 해당 운영 흐름 표현이 모두 원문에 명시된 공고",
+        "exclusion": "업종 또는 운영 흐름이 한쪽만 언급된 공고, 일반 차량/쇼핑몰 배송 언급, 환자 대상 소비자 서비스만인 공고"
+      },
+      "count": 59,
+      "unique_text_count": 54,
+      "months": {
+        "2026-01": 6,
+        "2026-02": 13,
+        "2026-03": 8,
+        "2026-04": 9,
+        "2026-05": 3,
+        "2026-06": 4,
+        "2026-07": 9,
+        "2026-08": 7
+      },
+      "metrics": {
+        "recruited_within_14_days": {
+          "candidate": {
+            "observed": 33,
+            "successes": 7,
+            "rate_pct": 21.2,
+            "ci95_pct": [
+              10.7,
+              37.8
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 1428,
+            "successes": null,
+            "rate_pct": 27.6,
+            "ci95_pct": null
+          },
+          "difference_pp": -6.4,
+          "difference_ci95_pp": [
+            -19.6,
+            12.9
+          ]
+        },
+        "contracted_within_90_days_from_submission": {
+          "candidate": {
+            "observed": 42,
+            "successes": 3,
+            "rate_pct": 7.1,
+            "ci95_pct": [
+              2.5,
+              19
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 1878,
+            "successes": null,
+            "rate_pct": 17.5,
+            "ci95_pct": null
+          },
+          "difference_pp": -10.3,
+          "difference_ci95_pp": [
+            -17.2,
+            3.7
+          ]
+        },
+        "contracted_within_90_days_from_recruitment": {
+          "candidate": {
+            "observed": 24,
+            "successes": 3,
+            "rate_pct": 12.5,
+            "ci95_pct": [
+              4.3,
+              31
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 1042,
+            "successes": null,
+            "rate_pct": 28.3,
+            "ci95_pct": null
+          },
+          "difference_pp": -15.8,
+          "difference_ci95_pp": [
+            -27.7,
+            6.3
+          ]
+        }
+      },
+      "anon_ids": [
+        "D00233",
+        "D00296",
+        "D00339",
+        "D00362",
+        "D00381",
+        "D00385",
+        "D00569",
+        "D00607",
+        "D00648",
+        "D00652",
+        "D00653",
+        "D00771",
+        "D00866",
+        "D00936",
+        "D00983",
+        "D01021",
+        "D01036",
+        "D01071",
+        "D01077",
+        "D01419",
+        "D01431",
+        "D01434",
+        "D01440",
+        "D01492",
+        "D01596",
+        "D01597",
+        "D01623",
+        "D01717",
+        "D01791",
+        "D01818",
+        "D01830",
+        "D01929",
+        "D01962",
+        "D02044",
+        "D02092",
+        "D02094",
+        "D02404",
+        "D02553",
+        "D02764",
+        "D02932",
+        "D02999",
+        "D03043",
+        "D03302",
+        "D03349",
+        "D03394",
+        "D03430",
+        "D03443",
+        "D03484",
+        "D03724",
+        "D03760",
+        "D03811",
+        "D03812",
+        "D03874",
+        "D03886",
+        "D04033",
+        "D04046",
+        "D04174",
+        "D04281",
+        "D04308"
+      ]
+    },
+    {
+      "id": "freight-dispatch-operations",
+      "definition": {
+        "target": "화물·포워딩·운송 사업자의 배차·운송 진행 관리 시스템",
+        "subject": "물류·운송",
+        "problem": "배차, 운행·상하차·배송 진행, 운송 증빙 또는 운임·정산이 분산·수작업으로 처리됨",
+        "system": "운송 운영용 웹·앱·관리 시스템",
+        "inclusion": "업종 표현과 해당 운영 흐름 표현이 모두 원문에 명시된 공고",
+        "exclusion": "업종 또는 운영 흐름이 한쪽만 언급된 공고, 일반 차량/쇼핑몰 배송 언급, 환자 대상 소비자 서비스만인 공고"
+      },
+      "count": 9,
+      "unique_text_count": 9,
+      "months": {
+        "2026-01": 3,
+        "2026-02": 2,
+        "2026-03": 1,
+        "2026-04": 1,
+        "2026-06": 1,
+        "2026-07": 1
+      },
+      "metrics": {
+        "recruited_within_14_days": {
+          "candidate": {
+            "observed": 6,
+            "successes": 2,
+            "rate_pct": 33.3,
+            "ci95_pct": [
+              9.7,
+              70
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 662,
+            "successes": null,
+            "rate_pct": 25.1,
+            "ci95_pct": null
+          },
+          "difference_pp": 8.2,
+          "difference_ci95_pp": [
+            -19.1,
+            48.5
+          ]
+        },
+        "contracted_within_90_days_from_submission": {
+          "candidate": {
+            "observed": 8,
+            "successes": 2,
+            "rate_pct": 25,
+            "ci95_pct": [
+              7.1,
+              59.1
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 1261,
+            "successes": null,
+            "rate_pct": 16.4,
+            "ci95_pct": null
+          },
+          "difference_pp": 8.6,
+          "difference_ci95_pp": [
+            -12.2,
+            45.6
+          ]
+        },
+        "contracted_within_90_days_from_recruitment": {
+          "candidate": {
+            "observed": 5,
+            "successes": 2,
+            "rate_pct": 40,
+            "ci95_pct": [
+              11.8,
+              76.9
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 583,
+            "successes": null,
+            "rate_pct": 26.8,
+            "ci95_pct": null
+          },
+          "difference_pp": 13.2,
+          "difference_ci95_pp": [
+            -19.6,
+            54.7
+          ]
+        }
+      },
+      "anon_ids": [
+        "D00035",
+        "D00043",
+        "D00235",
+        "D00769",
+        "D00920",
+        "D01484",
+        "D02113",
+        "D03210",
+        "D03594"
+      ]
+    },
+    {
+      "id": "manufacturing-production-quality",
+      "definition": {
+        "target": "제조 현장의 생산·품질·설비 기록 및 관리 시스템",
+        "subject": "제조 현장",
+        "problem": "생산·검사·불량·설비 또는 자재 흐름을 수기·엑셀·분산 데이터로 관리함",
+        "system": "생산·품질·설비 관리 시스템(MES·현장 앱·대시보드 포함)",
+        "inclusion": "업종 표현과 해당 운영 흐름 표현이 모두 원문에 명시된 공고",
+        "exclusion": "업종 또는 운영 흐름이 한쪽만 언급된 공고, 일반 차량/쇼핑몰 배송 언급, 환자 대상 소비자 서비스만인 공고"
+      },
+      "count": 14,
+      "unique_text_count": 14,
+      "months": {
+        "2026-01": 1,
+        "2026-03": 2,
+        "2026-04": 3,
+        "2026-06": 3,
+        "2026-07": 3,
+        "2026-08": 2
+      },
+      "metrics": {
+        "recruited_within_14_days": {
+          "candidate": {
+            "observed": 6,
+            "successes": 3,
+            "rate_pct": 50,
+            "ci95_pct": [
+              18.8,
+              81.2
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 398,
+            "successes": null,
+            "rate_pct": 24,
+            "ci95_pct": null
+          },
+          "difference_pp": 26,
+          "difference_ci95_pp": [
+            -9.7,
+            61.7
+          ]
+        },
+        "contracted_within_90_days_from_submission": {
+          "candidate": {
+            "observed": 7,
+            "successes": 1,
+            "rate_pct": 14.3,
+            "ci95_pct": [
+              2.6,
+              51.3
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 575,
+            "successes": null,
+            "rate_pct": 18.4,
+            "ci95_pct": null
+          },
+          "difference_pp": -4.1,
+          "difference_ci95_pp": [
+            -19.9,
+            37
+          ]
+        },
+        "contracted_within_90_days_from_recruitment": {
+          "candidate": {
+            "observed": 6,
+            "successes": 1,
+            "rate_pct": 16.7,
+            "ci95_pct": [
+              3,
+              56.4
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 337,
+            "successes": null,
+            "rate_pct": 28.4,
+            "ci95_pct": null
+          },
+          "difference_pp": -11.7,
+          "difference_ci95_pp": [
+            -30.9,
+            33.5
+          ]
+        }
+      },
+      "anon_ids": [
+        "D00284",
+        "D01139",
+        "D01582",
+        "D01714",
+        "D01726",
+        "D01873",
+        "D03047",
+        "D03275",
+        "D03313",
+        "D03480",
+        "D03590",
+        "D03598",
+        "D03876",
+        "D04243"
+      ]
+    },
+    {
+      "id": "manufacturing-erp-planning",
+      "definition": {
+        "target": "제조사의 수주·자재·생산계획 통합 ERP/MES",
+        "subject": "제조사·공장",
+        "problem": "수주·BOM·자재·생산계획·출하가 엑셀 또는 노후 시스템에 분산됨",
+        "system": "제조 ERP/MES 또는 생산계획 통합 시스템",
+        "inclusion": "업종 표현과 해당 운영 흐름 표현이 모두 원문에 명시된 공고",
+        "exclusion": "업종 또는 운영 흐름이 한쪽만 언급된 공고, 일반 차량/쇼핑몰 배송 언급, 환자 대상 소비자 서비스만인 공고"
+      },
+      "count": 14,
+      "unique_text_count": 14,
+      "months": {
+        "2026-01": 1,
+        "2026-02": 1,
+        "2026-03": 3,
+        "2026-06": 3,
+        "2026-07": 4,
+        "2026-08": 2
+      },
+      "metrics": {
+        "recruited_within_14_days": {
+          "candidate": {
+            "observed": 7,
+            "successes": 3,
+            "rate_pct": 42.9,
+            "ci95_pct": [
+              15.8,
+              75
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 613,
+            "successes": null,
+            "rate_pct": 34.9,
+            "ci95_pct": null
+          },
+          "difference_pp": 8,
+          "difference_ci95_pp": [
+            -23.3,
+            44.4
+          ]
+        },
+        "contracted_within_90_days_from_submission": {
+          "candidate": {
+            "observed": 6,
+            "successes": 2,
+            "rate_pct": 33.3,
+            "ci95_pct": [
+              9.7,
+              70
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 692,
+            "successes": null,
+            "rate_pct": 22.1,
+            "ci95_pct": null
+          },
+          "difference_pp": 11.2,
+          "difference_ci95_pp": [
+            -17.1,
+            52.5
+          ]
+        },
+        "contracted_within_90_days_from_recruitment": {
+          "candidate": {
+            "observed": 5,
+            "successes": 2,
+            "rate_pct": 40,
+            "ci95_pct": [
+              11.8,
+              76.9
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 255,
+            "successes": null,
+            "rate_pct": 29.8,
+            "ci95_pct": null
+          },
+          "difference_pp": 10.2,
+          "difference_ci95_pp": [
+            -24.2,
+            53.3
+          ]
+        }
+      },
+      "anon_ids": [
+        "D00485",
+        "D00990",
+        "D01139",
+        "D01447",
+        "D01582",
+        "D03047",
+        "D03275",
+        "D03313",
+        "D03480",
+        "D03590",
+        "D03598",
+        "D03712",
+        "D03876",
+        "D04243"
+      ]
+    },
+    {
+      "id": "provider-record-integration",
+      "definition": {
+        "target": "의료 제공기관의 환자 기록·접수·검사 연동 자동화",
+        "subject": "병원·의원·치과·약국 등 의료 제공기관",
+        "problem": "환자 정보·접수·진료·검사·청구가 기존 전산 또는 별도 프로그램에 분산됨",
+        "system": "전자차트/접수/검사 프로그램 연동 및 업무 자동화",
+        "inclusion": "업종 표현과 해당 운영 흐름 표현이 모두 원문에 명시된 공고",
+        "exclusion": "업종 또는 운영 흐름이 한쪽만 언급된 공고, 일반 차량/쇼핑몰 배송 언급, 환자 대상 소비자 서비스만인 공고"
+      },
+      "count": 7,
+      "unique_text_count": 7,
+      "months": {
+        "2026-01": 1,
+        "2026-02": 2,
+        "2026-04": 2,
+        "2026-05": 1,
+        "2026-08": 1
+      },
+      "metrics": {
+        "recruited_within_14_days": {
+          "candidate": {
+            "observed": 4,
+            "successes": 2,
+            "rate_pct": 50,
+            "ci95_pct": [
+              15,
+              85
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 487,
+            "successes": null,
+            "rate_pct": 42.1,
+            "ci95_pct": null
+          },
+          "difference_pp": 7.9,
+          "difference_ci95_pp": [
+            -29.9,
+            45.7
+          ]
+        },
+        "contracted_within_90_days_from_submission": {
+          "candidate": {
+            "observed": 6,
+            "successes": 2,
+            "rate_pct": 33.3,
+            "ci95_pct": [
+              9.7,
+              70
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 1058,
+            "successes": null,
+            "rate_pct": 15.6,
+            "ci95_pct": null
+          },
+          "difference_pp": 17.8,
+          "difference_ci95_pp": [
+            -9.2,
+            57.8
+          ]
+        },
+        "contracted_within_90_days_from_recruitment": {
+          "candidate": {
+            "observed": 4,
+            "successes": 2,
+            "rate_pct": 50,
+            "ci95_pct": [
+              15,
+              85
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 284,
+            "successes": null,
+            "rate_pct": 23.5,
+            "ci95_pct": null
+          },
+          "difference_pp": 26.5,
+          "difference_ci95_pp": [
+            -14.4,
+            67.4
+          ]
+        }
+      },
+      "anon_ids": [
+        "D00330",
+        "D00678",
+        "D00715",
+        "D01898",
+        "D01966",
+        "D02612",
+        "D04041"
+      ]
+    },
+    {
+      "id": "academy-parent-operations",
+      "definition": {
+        "target": "학원·교육기관의 학생 출결·성적·학부모 소통 운영 시스템",
+        "subject": "학원·교육기관",
+        "problem": "학생 출결·성적·통학 또는 학부모 소통을 분산·수기 처리함",
+        "system": "학원 관리자 웹과 학생·학부모·강사용 운영 시스템",
+        "inclusion": "업종 표현과 해당 운영 흐름 표현이 모두 원문에 명시된 공고",
+        "exclusion": "업종 또는 운영 흐름이 한쪽만 언급된 공고, 일반 차량/쇼핑몰 배송 언급, 환자 대상 소비자 서비스만인 공고"
+      },
+      "count": 10,
+      "unique_text_count": 10,
+      "months": {
+        "2026-01": 5,
+        "2026-02": 1,
+        "2026-03": 2,
+        "2026-07": 2
+      },
+      "metrics": {
+        "recruited_within_14_days": {
+          "candidate": {
+            "observed": 6,
+            "successes": 3,
+            "rate_pct": 50,
+            "ci95_pct": [
+              18.8,
+              81.2
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 684,
+            "successes": null,
+            "rate_pct": 26.3,
+            "ci95_pct": null
+          },
+          "difference_pp": 23.7,
+          "difference_ci95_pp": [
+            -11.2,
+            58.6
+          ]
+        },
+        "contracted_within_90_days_from_submission": {
+          "candidate": {
+            "observed": 8,
+            "successes": 2,
+            "rate_pct": 25,
+            "ci95_pct": [
+              7.1,
+              59.1
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 921,
+            "successes": null,
+            "rate_pct": 19.3,
+            "ci95_pct": null
+          },
+          "difference_pp": 5.7,
+          "difference_ci95_pp": [
+            -15.8,
+            43.3
+          ]
+        },
+        "contracted_within_90_days_from_recruitment": {
+          "candidate": {
+            "observed": 6,
+            "successes": 2,
+            "rate_pct": 33.3,
+            "ci95_pct": [
+              9.7,
+              70
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 467,
+            "successes": null,
+            "rate_pct": 29.6,
+            "ci95_pct": null
+          },
+          "difference_pp": 3.8,
+          "difference_ci95_pp": [
+            -25,
+            45.5
+          ]
+        }
+      },
+      "anon_ids": [
+        "D00076",
+        "D00263",
+        "D00287",
+        "D00384",
+        "D00557",
+        "D00616",
+        "D01338",
+        "D01579",
+        "D03401",
+        "D03421"
+      ]
+    },
+    {
+      "id": "academy-learning-operations",
+      "definition": {
+        "target": "학원의 학생 학습이력·오답·상담 관리 시스템",
+        "subject": "학원·교육기관",
+        "problem": "학생별 문제풀이·오답·상담 이력을 인력 중심 또는 분산 데이터로 관리함",
+        "system": "학생·강사용 학습 및 상담 관리 시스템",
+        "inclusion": "업종 표현과 해당 운영 흐름 표현이 모두 원문에 명시된 공고",
+        "exclusion": "업종 또는 운영 흐름이 한쪽만 언급된 공고, 일반 차량/쇼핑몰 배송 언급, 환자 대상 소비자 서비스만인 공고"
+      },
+      "count": 5,
+      "unique_text_count": 5,
+      "months": {
+        "2026-01": 1,
+        "2026-02": 1,
+        "2026-03": 1,
+        "2026-05": 1,
+        "2026-07": 1
+      },
+      "metrics": {
+        "recruited_within_14_days": {
+          "candidate": {
+            "observed": 4,
+            "successes": 2,
+            "rate_pct": 50,
+            "ci95_pct": [
+              15,
+              85
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 637,
+            "successes": null,
+            "rate_pct": 23.9,
+            "ci95_pct": null
+          },
+          "difference_pp": 26.1,
+          "difference_ci95_pp": [
+            -12.2,
+            64.4
+          ]
+        },
+        "contracted_within_90_days_from_submission": {
+          "candidate": {
+            "observed": 4,
+            "successes": 1,
+            "rate_pct": 25,
+            "ci95_pct": [
+              4.6,
+              69.9
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 835,
+            "successes": null,
+            "rate_pct": 21.5,
+            "ci95_pct": null
+          },
+          "difference_pp": 3.5,
+          "difference_ci95_pp": [
+            -21.6,
+            53.1
+          ]
+        },
+        "contracted_within_90_days_from_recruitment": {
+          "candidate": {
+            "observed": 2,
+            "successes": 1,
+            "rate_pct": 50,
+            "ci95_pct": [
+              9.5,
+              90.5
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 169,
+            "successes": null,
+            "rate_pct": 33.3,
+            "ci95_pct": null
+          },
+          "difference_pp": 16.7,
+          "difference_ci95_pp": [
+            -33.2,
+            66.6
+          ]
+        }
+      },
+      "anon_ids": [
+        "D00109",
+        "D00616",
+        "D01207",
+        "D02499",
+        "D03421"
+      ]
+    },
+    {
+      "id": "franchise-pos-consolidation",
+      "definition": {
+        "target": "프랜차이즈 본사의 가맹점 POS 판매데이터 통합 시스템",
+        "subject": "프랜차이즈 본사·가맹점",
+        "problem": "가맹점별 POS 주문·판매 데이터가 제각각이라 본사가 통합 수집·분석하지 못함",
+        "system": "POS 연동 기반 본사 통합 관리 시스템",
+        "inclusion": "업종 표현과 해당 운영 흐름 표현이 모두 원문에 명시된 공고",
+        "exclusion": "업종 또는 운영 흐름이 한쪽만 언급된 공고, 일반 차량/쇼핑몰 배송 언급, 환자 대상 소비자 서비스만인 공고"
+      },
+      "count": 3,
+      "unique_text_count": 3,
+      "months": {
+        "2026-03": 1,
+        "2026-07": 1,
+        "2026-08": 1
+      },
+      "metrics": {
+        "recruited_within_14_days": {
+          "candidate": {
+            "observed": 2,
+            "successes": 0,
+            "rate_pct": 0,
+            "ci95_pct": [
+              0,
+              65.8
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 284,
+            "successes": null,
+            "rate_pct": 25.7,
+            "ci95_pct": null
+          },
+          "difference_pp": -25.7,
+          "difference_ci95_pp": [
+            -30.8,
+            45.2
+          ]
+        },
+        "contracted_within_90_days_from_submission": {
+          "candidate": {
+            "observed": 1,
+            "successes": 0,
+            "rate_pct": 0,
+            "ci95_pct": [
+              0,
+              79.3
+            ]
+          },
+          "matched_month_source_comparison": {
+            "observed": 254,
+            "successes": null,
+            "rate_pct": 13,
+            "ci95_pct": null
+          },
+          "difference_pp": -13,
+          "difference_ci95_pp": [
+            -17.1,
+            70.4
+          ]
+        },
+        "contracted_within_90_days_from_recruitment": {
+          "candidate": {
+            "observed": 0,
+            "successes": 0,
+            "rate_pct": null,
+            "ci95_pct": null
+          },
+          "matched_month_source_comparison": {
+            "observed": 0,
+            "successes": null,
+            "rate_pct": 0,
+            "ci95_pct": null
+          },
+          "difference_pp": null,
+          "difference_ci95_pp": null
+        }
+      },
+      "anon_ids": [
+        "D01304",
+        "D03385",
+        "D04281"
+      ]
+    }
+  ]
+}
