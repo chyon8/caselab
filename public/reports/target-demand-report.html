@@ -1,0 +1,270 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>타깃 수요 보고서</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #ffffff;
+  --panel: #f5f5f7;
+  --ink: #1d1d1f;
+  --muted: #6e6e73;
+  --faint: #86868b;
+  --rule: #e0e0e0;
+  --accent: #0066cc;
+  --accent-soft: #cfe1f5;
+  --up: #1a7f37;
+  --up-soft: #d6efdc;
+  --down: #c4314b;
+  --down-soft: #f6d9de;
+  --ci: #b8b8bd;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #111113; --panel: #1f1f22; --ink: #f5f5f7; --muted: #a1a1a6; --faint: #7d7d82;
+    --rule: #333336; --accent: #2997ff; --accent-soft: #1d3a5c;
+    --up: #45c46b; --up-soft: #1c3a25; --down: #ff6b81; --down-soft: #4a2229; --ci: #5a5a5f;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111113; --panel: #1f1f22; --ink: #f5f5f7; --muted: #a1a1a6; --faint: #7d7d82;
+  --rule: #333336; --accent: #2997ff; --accent-soft: #1d3a5c;
+  --up: #45c46b; --up-soft: #1c3a25; --down: #ff6b81; --down-soft: #4a2229; --ci: #5a5a5f;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  font-size: 14px; line-height: 1.5; padding-inline: 20px; padding-block: 36px 56px;
+}
+.page { max-width: 1180px; margin: 0 auto; display: grid; gap: 36px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+header { display: grid; gap: 10px; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: var(--muted); }
+h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+.scope { color: var(--muted); max-width: 820px; }
+.kpis { display: flex; flex-wrap: wrap; gap: 12px 40px; padding-top: 18px; border-top: 1px solid var(--rule); margin-top: 8px; }
+.kpi { display: grid; gap: 2px; }
+.kpi strong { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.kpi span { font-size: 12px; color: var(--muted); }
+
+.findings { background: var(--panel); border-radius: 14px; padding: 22px 24px; display: grid; gap: 12px; }
+.findings h2 { font-size: 15px; font-weight: 700; }
+.findings ol { margin: 0; padding-left: 20px; display: grid; gap: 8px; max-width: 980px; }
+.findings b { font-weight: 700; }
+.tag { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.tag.up { background: var(--up-soft); color: var(--up); }
+.tag.down { background: var(--down-soft); color: var(--down); }
+
+section { display: grid; gap: 16px; }
+.sec-head { display: grid; gap: 4px; padding-bottom: 10px; border-bottom: 2px solid var(--ink); }
+.sec-head h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+.sec-head p { margin: 0; color: var(--muted); max-width: 860px; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+.col { display: grid; gap: 10px; min-width: 0; }
+.col h3 { font-size: 15px; font-weight: 700; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.col h3 small { font-size: 12px; font-weight: 400; color: var(--muted); }
+.sub { font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 6px; }
+
+ul.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.row, .axis { display: grid; grid-template-columns: 22px minmax(0, 1.25fr) minmax(0, 1fr) 68px; gap: 10px; align-items: center; min-height: 26px; }
+.row .rk { font-size: 11px; color: var(--faint); text-align: right; font-variant-numeric: tabular-nums; }
+.row .lb { font-size: 13px; overflow-wrap: anywhere; }
+.row.two .lb, .row.ci .lb { line-height: 1.3; padding-block: 3px; }
+.row .lb em { display: block; font-style: normal; font-size: 11px; color: var(--muted); }
+.row .val { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; font-size: 13px; }
+.row .val small { display: block; font-weight: 400; font-size: 11px; color: var(--faint); line-height: 1.1; }
+.bar { height: 10px; background: var(--panel); border-radius: 999px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: var(--w); background: var(--accent); border-radius: 999px; }
+
+.plot { position: relative; height: 18px; }
+.plot .avg { position: absolute; top: -4px; bottom: -4px; left: var(--x); width: 0; border-left: 1px dashed var(--muted); }
+.plot s { position: absolute; top: 8px; height: 2px; left: var(--a); width: calc(var(--b) - var(--a)); background: var(--ci); text-decoration: none; }
+.plot u { position: absolute; top: 4px; width: 10px; height: 10px; margin-left: -5px; left: var(--x); border-radius: 50%; background: var(--ink); text-decoration: none; }
+.row.up .plot u { background: var(--up); }
+.row.up .plot s { background: var(--up); opacity: 0.45; }
+.row.up .val { color: var(--up); }
+.row.down .plot u { background: var(--down); }
+.row.down .plot s { background: var(--down); opacity: 0.45; }
+.row.down .val { color: var(--down); }
+.row.ci, .axis.ci { grid-template-columns: 22px minmax(0, 1fr) minmax(0, 1.3fr) 60px; }
+.axis { min-height: 18px; }
+.axis .plot { height: 14px; }
+.axis .plot em { position: absolute; left: var(--x); transform: translateX(-50%); font-style: normal; font-size: 10px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.axis .plot em:first-child { transform: none; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; vertical-align: middle; margin-right: 6px; }
+.lg-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ink); }
+.lg-ci { width: 22px; height: 2px; background: var(--ci); }
+.lg-avg { width: 0; height: 12px; border-left: 1px dashed var(--muted); }
+.lg-up { width: 9px; height: 9px; border-radius: 50%; background: var(--up); }
+.lg-down { width: 9px; height: 9px; border-radius: 50%; background: var(--down); }
+.gap { height: 1px; background: var(--rule); margin: 6px 0; }
+
+.quad { display: grid; grid-template-columns: auto 1fr 1fr; gap: 8px; }
+.q-axis { font-size: 12px; font-weight: 600; color: var(--muted); display: flex; align-items: center; justify-content: center; }
+.q-axis.y { width: 64px; text-align: center; line-height: 1.35; }
+.q-head { font-size: 12px; font-weight: 600; color: var(--muted); text-align: center; padding-bottom: 2px; }
+.cell { border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; align-content: start; background: var(--panel); }
+.cell.best { background: var(--accent-soft); }
+.cell h4 { margin: 0; font-size: 14px; font-weight: 700; }
+.cell h4 small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: grid; gap: 0; padding: 5px 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--rule); }
+.chip b { font-size: 13px; font-weight: 600; }
+.chip span { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.up { border-color: var(--up); }
+.chip.up span { color: var(--up); }
+.chip.down { border-color: var(--down); }
+.chip.down span { color: var(--down); }
+.row .lb em.after { display: block; font-size: 11px; color: var(--faint); margin-top: 1px; }
+.row.trend { grid-template-columns: 22px minmax(0, 1.25fr) minmax(0, 1fr) 52px; }
+.div { position: relative; height: 12px; }
+.div b { position: absolute; left: 50%; top: -3px; bottom: -3px; border-left: 1px solid var(--muted); }
+.div i { position: absolute; top: 2px; height: 8px; left: var(--a); width: calc(var(--b) - var(--a)); border-radius: 3px; }
+.row.rise .div i { background: var(--accent); }
+.row.fall .div i { background: var(--faint); }
+.row.rise .val { color: var(--accent); }
+.row.fall .val { color: var(--muted); }
+@media (max-width: 640px) {
+  .quad { grid-template-columns: 1fr; }
+  .q-axis, .q-head { display: none; }
+}
+
+footer { border-top: 1px solid var(--rule); padding-top: 16px; display: grid; gap: 8px; color: var(--muted); font-size: 12px; }
+footer dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; max-width: 980px; }
+footer dt { font-weight: 600; color: var(--ink); }
+footer dd { margin: 0; }
+
+@media (max-width: 860px) {
+  .cols { grid-template-columns: 1fr; }
+  h1 { font-size: 27px; }
+}
+@media (max-width: 480px) {
+  .row, .axis, .row.ci, .axis.ci { grid-template-columns: 18px minmax(0, 1.2fr) minmax(0, 1fr) 54px; gap: 6px; }
+  .kpi strong { font-size: 23px; }
+}
+</style>
+
+<div class="page">
+  <header>
+    <div class="eyebrow">위시켓 외주 공고 분석 · 마케팅 타깃 후보</div>
+    <h1>어떤 업종의 어떤 시스템 수요가 많고, 어디서 계약이 잘 되는가</h1>
+    <p class="scope">모집 전환된 외주 공고 중 원문에 업종이 명시된 공고를 대상으로 했습니다. 기간은 모집일 2024.11.11 ~ 2026.09.28(약 23개월)입니다. 대분류는 <b>업종군</b>, 소분류는 <b>업종군 × 시스템 유형</b>입니다. 같은 프로젝트를 다시 올린 공고는 1건으로 셉니다.</p>
+    <div class="kpis">
+      <div class="kpi"><strong>2,902</strong><span>분석 대상 공고</span></div>
+      <div class="kpi"><strong>2,366</strong><span>업종·시스템 분류된 고유 수요</span></div>
+      <div class="kpi"><strong>33 · 38</strong><span>업종군 · 시스템 유형</span></div>
+      <div class="kpi"><strong>686</strong><span>계약 도달 (결판 2,231건 중)</span></div>
+      <div class="kpi"><strong>30.7%</strong><span>평균 계약률</span></div>
+    </div>
+  </header>
+
+  <div class="findings">
+    <h2>핵심 요약</h2>
+    <ol>
+      <li><b>모집은 이커머스가 압도적입니다.</b> 이커머스·온라인판매 업종군이 279건(11.8%)으로 2위 제조(134건)의 두 배입니다. 안에서는 자사몰 93건, 주문수집·재고 53건, 오픈마켓·중개 42건으로 나뉩니다.</li>
+      <li><b>소분류 상위는 자사몰(93), 온라인교육 LMS(65), 여행·숙박 예약 플랫폼(59)입니다.</b> 제조는 홈페이지(28)·장비 연동(25)·MES(22)로 흩어져 있어 소분류 순위는 낮지만, 업종 전체로는 2위입니다.</li>
+      <li><b>모집이 많다고 계약률이 높지는 않습니다.</b> 여행·숙박 업종군은 모집 7위지만 계약률 20.4%로 평균보다 <span class="tag down">낮음</span>입니다. 피트니스·스포츠 15.0%도 <span class="tag down">낮음</span>입니다. 자동차 업종군은 48.1%로 <span class="tag up">높음</span>입니다.</li>
+      <li><b>소분류에서 평균과 확실히 다른 조합은 4개뿐입니다.</b> 건설·시설관리 × 서비스 매칭(50%)과 학교 × LMS(60%)는 <span class="tag up">높음</span>, 마케팅·광고 × 리워드·마케팅 도구(6.7%)와 병의원 × 서비스 매칭(10%)은 <span class="tag down">낮음</span>입니다. 나머지 차이는 표본이 작아 우연 범위 안에 있습니다.</li>
+      <li><b>계약금액은 이커머스(15.0억) 다음이 물류·제조(각 8.5억)입니다.</b> 물류는 모집 8위지만 건당 중앙값이 1,750만원으로 커서 금액 기여가 큽니다.</li>
+      <li><b>월평균 수요는 전체적으로 평탄(+3%)하지만 업종별로 엇갈립니다.</b> 병의원(+44%)·제조(+39%)·학원(+39%)은 늘었고, 가상자산(−52%)·온라인교육(−41%)은 줄었습니다. 1위 이커머스도 −10%입니다.</li>
+    </ol>
+  </div>
+
+  <section>
+    <div class="sec-head">
+      <h2>1. 모집 — 어디에 수요가 많은가</h2>
+      <p>고유 수요 건수 기준입니다. 막대 길이는 각 목록의 1위 대비 비율이고, 대분류 옆 %는 전체 2,366건 중 비중입니다.</p>
+    </div>
+    <div class="cols">
+      <div class="col">
+        <h3>대분류 · 업종군 <small>전체 33개</small></h3>
+        <ul class="list"><li class="row"><span class="rk">1</span><span class="lb">이커머스·온라인판매</span><span class="bar"><i style="--w:100.0%"></i></span><span class="val">279<small>11.8%</small></span></li><li class="row"><span class="rk">2</span><span class="lb">제조</span><span class="bar"><i style="--w:48.0%"></i></span><span class="val">134<small>5.7%</small></span></li><li class="row"><span class="rk">3</span><span class="lb">병의원·약국·의료관광</span><span class="bar"><i style="--w:41.6%"></i></span><span class="val">116<small>4.9%</small></span></li><li class="row"><span class="rk">4</span><span class="lb">건설·인테리어·시설관리</span><span class="bar"><i style="--w:39.4%"></i></span><span class="val">110<small>4.6%</small></span></li><li class="row"><span class="rk">5</span><span class="lb">미디어·콘텐츠·출판</span><span class="bar"><i style="--w:39.1%"></i></span><span class="val">109<small>4.6%</small></span></li><li class="row"><span class="rk">6</span><span class="lb">헬스케어·돌봄·상담</span><span class="bar"><i style="--w:36.6%"></i></span><span class="val">102<small>4.3%</small></span></li><li class="row"><span class="rk">7</span><span class="lb">여행·숙박·레저·공간</span><span class="bar"><i style="--w:34.8%"></i></span><span class="val">97<small>4.1%</small></span></li><li class="row"><span class="rk">8</span><span class="lb">물류·운송·모빌리티</span><span class="bar"><i style="--w:33.3%"></i></span><span class="val">93<small>3.9%</small></span></li><li class="row"><span class="rk">9</span><span class="lb">피트니스·스포츠·골프</span><span class="bar"><i style="--w:30.8%"></i></span><span class="val">86<small>3.6%</small></span></li><li class="row"><span class="rk">10</span><span class="lb">학원·과외·교육서비스</span><span class="bar"><i style="--w:30.5%"></i></span><span class="val">85<small>3.6%</small></span></li><li class="row"><span class="rk">11</span><span class="lb">금융·보험·핀테크</span><span class="bar"><i style="--w:29.7%"></i></span><span class="val">83<small>3.5%</small></span></li><li class="row"><span class="rk">12</span><span class="lb">온라인교육·기업교육</span><span class="bar"><i style="--w:29.4%"></i></span><span class="val">82<small>3.5%</small></span></li><li class="row"><span class="rk">13</span><span class="lb">부동산·주거</span><span class="bar"><i style="--w:25.1%"></i></span><span class="val">70<small>3.0%</small></span></li><li class="row"><span class="rk">14</span><span class="lb">도매·유통·무역</span><span class="bar"><i style="--w:24.4%"></i></span><span class="val">68<small>2.9%</small></span></li><li class="row"><span class="rk">15</span><span class="lb">커뮤니티·생활앱</span><span class="bar"><i style="--w:24.4%"></i></span><span class="val">68<small>2.9%</small></span></li><li class="row"><span class="rk">16</span><span class="lb">법률·세무·컨설팅</span><span class="bar"><i style="--w:22.9%"></i></span><span class="val">64<small>2.7%</small></span></li><li class="row"><span class="rk">17</span><span class="lb">IT·통신·보안</span><span class="bar"><i style="--w:22.6%"></i></span><span class="val">63<small>2.7%</small></span></li><li class="row"><span class="rk">18</span><span class="lb">가상자산·블록체인</span><span class="bar"><i style="--w:22.2%"></i></span><span class="val">62<small>2.6%</small></span></li><li class="row"><span class="rk">19</span><span class="lb">자동차</span><span class="bar"><i style="--w:21.1%"></i></span><span class="val">59<small>2.5%</small></span></li><li class="row"><span class="rk">20</span><span class="lb">마케팅·광고</span><span class="bar"><i style="--w:19.0%"></i></span><span class="val">53<small>2.2%</small></span></li><li class="row"><span class="rk">21</span><span class="lb">의료기기·제약·연구</span><span class="bar"><i style="--w:17.9%"></i></span><span class="val">50<small>2.1%</small></span></li><li class="row"><span class="rk">22</span><span class="lb">외식·F&amp;B</span><span class="bar"><i style="--w:17.2%"></i></span><span class="val">48<small>2.0%</small></span></li><li class="row"><span class="rk">23</span><span class="lb">공공기관·협회·국방</span><span class="bar"><i style="--w:17.2%"></i></span><span class="val">48<small>2.0%</small></span></li><li class="row"><span class="rk">24</span><span class="lb">뷰티·미용</span><span class="bar"><i style="--w:15.4%"></i></span><span class="val">43<small>1.8%</small></span></li><li class="row"><span class="rk">25</span><span class="lb">매장·프랜차이즈·무인점포</span><span class="bar"><i style="--w:15.1%"></i></span><span class="val">42<small>1.8%</small></span></li><li class="row"><span class="rk">26</span><span class="lb">행사·공연·웨딩·사진</span><span class="bar"><i style="--w:14.7%"></i></span><span class="val">41<small>1.7%</small></span></li><li class="row"><span class="rk">27</span><span class="lb">에너지·환경</span><span class="bar"><i style="--w:12.2%"></i></span><span class="val">34<small>1.4%</small></span></li><li class="row"><span class="rk">28</span><span class="lb">데이팅·결혼정보</span><span class="bar"><i style="--w:12.2%"></i></span><span class="val">34<small>1.4%</small></span></li><li class="row"><span class="rk">29</span><span class="lb">반려동물</span><span class="bar"><i style="--w:11.8%"></i></span><span class="val">33<small>1.4%</small></span></li><li class="row"><span class="rk">30</span><span class="lb">인쇄·굿즈·주문제작</span><span class="bar"><i style="--w:11.1%"></i></span><span class="val">31<small>1.3%</small></span></li><li class="row"><span class="rk">31</span><span class="lb">학교·공교육</span><span class="bar"><i style="--w:11.1%"></i></span><span class="val">31<small>1.3%</small></span></li><li class="row"><span class="rk">32</span><span class="lb">HR·채용</span><span class="bar"><i style="--w:9.3%"></i></span><span class="val">26<small>1.1%</small></span></li><li class="row"><span class="rk">33</span><span class="lb">게임</span><span class="bar"><i style="--w:7.9%"></i></span><span class="val">22<small>0.9%</small></span></li></ul>
+      </div>
+      <div class="col">
+        <h3>소분류 · 업종군 × 시스템 유형 <small>상위 15개</small></h3>
+        <ul class="list"><li class="row two"><span class="rk">1</span><span class="lb"><em>이커머스·온라인판매</em>자사몰·쇼핑몰</span><span class="bar"><i style="--w:100.0%"></i></span><span class="val">93</span></li><li class="row two"><span class="rk">2</span><span class="lb"><em>온라인교육·기업교육</em>LMS·교육 플랫폼</span><span class="bar"><i style="--w:69.9%"></i></span><span class="val">65</span></li><li class="row two"><span class="rk">3</span><span class="lb"><em>여행·숙박·레저·공간</em>예약·예매 플랫폼</span><span class="bar"><i style="--w:63.4%"></i></span><span class="val">59</span></li><li class="row two"><span class="rk">4</span><span class="lb"><em>이커머스·온라인판매</em>주문수집·재고·물류 운영</span><span class="bar"><i style="--w:57.0%"></i></span><span class="val">53</span></li><li class="row two"><span class="rk">5</span><span class="lb"><em>이커머스·온라인판매</em>오픈마켓·중고·거래 중개</span><span class="bar"><i style="--w:45.2%"></i></span><span class="val">42</span></li><li class="row two"><span class="rk">6</span><span class="lb"><em>데이팅·결혼정보</em>소개팅·소셜 매칭</span><span class="bar"><i style="--w:36.6%"></i></span><span class="val">34</span></li><li class="row two"><span class="rk">7</span><span class="lb"><em>미디어·콘텐츠·출판</em>콘텐츠·구독·스트리밍</span><span class="bar"><i style="--w:35.5%"></i></span><span class="val">33</span></li><li class="row two"><span class="rk">8</span><span class="lb"><em>헬스케어·돌봄·상담</em>서비스 매칭·중개 플랫폼</span><span class="bar"><i style="--w:33.3%"></i></span><span class="val">31</span></li><li class="row two"><span class="rk">9</span><span class="lb"><em>가상자산·블록체인</em>자동매매·시세 봇</span><span class="bar"><i style="--w:33.3%"></i></span><span class="val">31</span></li><li class="row two"><span class="rk">10</span><span class="lb"><em>마케팅·광고</em>멤버십·리워드·마케팅 도구</span><span class="bar"><i style="--w:33.3%"></i></span><span class="val">31</span></li><li class="row two"><span class="rk">11</span><span class="lb"><em>외식·F&amp;B</em>매장 운영·주문·POS</span><span class="bar"><i style="--w:30.1%"></i></span><span class="val">28</span></li><li class="row two"><span class="rk">12</span><span class="lb"><em>물류·운송·모빌리티</em>배차·운송관리</span><span class="bar"><i style="--w:30.1%"></i></span><span class="val">28</span></li><li class="row two"><span class="rk">13</span><span class="lb"><em>학원·과외·교육서비스</em>학원·교습소 운영관리</span><span class="bar"><i style="--w:30.1%"></i></span><span class="val">28</span></li><li class="row two"><span class="rk">14</span><span class="lb"><em>제조</em>홈페이지·랜딩(소개·문의)</span><span class="bar"><i style="--w:30.1%"></i></span><span class="val">28</span></li><li class="row two"><span class="rk">15</span><span class="lb"><em>인쇄·굿즈·주문제작</em>주문제작 견적·주문 플랫폼</span><span class="bar"><i style="--w:29.0%"></i></span><span class="val">27</span></li></ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>2. 계약률 — 어디서 계약이 잘 되는가</h2>
+      <p>계약률 = 계약 ÷ 결판(계약 또는 취소로 결론 난 수요)입니다. 점은 계약률, 가로선은 95% 신뢰구간, 점선은 평균 30.7%입니다. 구간이 평균선에 걸리지 않을 때만 색으로 표시했습니다.</p>
+      <div class="legend">
+        <span><i class="lg-dot"></i>계약률</span><span><i class="lg-ci"></i>95% 범위</span><span><i class="lg-avg"></i>평균 30.7%</span>
+        <span><i class="lg-up"></i>평균보다 확실히 높음</span><span><i class="lg-down"></i>평균보다 확실히 낮음</span>
+      </div>
+    </div>
+    <div class="cols">
+      <div class="col">
+        <h3>대분류 · 업종군 <small>계약률 높은 순, 전체 33개</small></h3>
+        <div class="axis ci"><span class="rk"></span><span class="lb"></span><span class="plot"><em style="--x:0%">0%</em><em style="--x:28.57142857142857%">20%</em><em style="--x:57.14285714285714%">40%</em><em style="--x:85.71428571428571%">60%</em></span><span class="val"></span></div>
+        <ul class="list"><li class="row ci up"><span class="rk">1</span><span class="lb">자동차</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:50.57142857142857%;--b:87.28571428571429%"></s><u style="--x:68.71428571428572%"></u></span><span class="val">48.1%<small>26/54</small></span></li><li class="row ci "><span class="rk">2</span><span class="lb">학교·공교육</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:37.857142857142854%;--b:87%"></s><u style="--x:61.285714285714285%"></u></span><span class="val">42.9%<small>12/28</small></span></li><li class="row ci "><span class="rk">3</span><span class="lb">인쇄·굿즈·주문제작</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:37.71428571428571%;--b:84.57142857142857%"></s><u style="--x:59.857142857142854%"></u></span><span class="val">41.9%<small>13/31</small></span></li><li class="row ci "><span class="rk">4</span><span class="lb">데이팅·결혼정보</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:36.42857142857142%;--b:82.42857142857143%"></s><u style="--x:58.00000000000001%"></u></span><span class="val">40.6%<small>13/32</small></span></li><li class="row ci "><span class="rk">5</span><span class="lb">온라인교육·기업교육</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:42.285714285714285%;--b:72.57142857142857%"></s><u style="--x:56.714285714285715%"></u></span><span class="val">39.7%<small>31/78</small></span></li><li class="row ci "><span class="rk">6</span><span class="lb">학원·과외·교육서비스</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:41.14285714285714%;--b:71.00000000000001%"></s><u style="--x:55.42857142857143%"></u></span><span class="val">38.8%<small>31/80</small></span></li><li class="row ci "><span class="rk">7</span><span class="lb">행사·공연·웨딩·사진</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:35.57142857142857%;--b:77.28571428571429%"></s><u style="--x:55.00000000000001%"></u></span><span class="val">38.5%<small>15/39</small></span></li><li class="row ci "><span class="rk">8</span><span class="lb">금융·보험·핀테크</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:38.42857142857143%;--b:68.14285714285715%"></s><u style="--x:52.42857142857144%"></u></span><span class="val">36.7%<small>29/79</small></span></li><li class="row ci "><span class="rk">9</span><span class="lb">물류·운송·모빌리티</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:38.285714285714285%;--b:66.14285714285714%"></s><u style="--x:51.42857142857142%"></u></span><span class="val">36.0%<small>32/89</small></span></li><li class="row ci "><span class="rk">10</span><span class="lb">건설·인테리어·시설관리</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:38.57142857142858%;--b:64.42857142857143%"></s><u style="--x:50.857142857142854%"></u></span><span class="val">35.6%<small>37/104</small></span></li><li class="row ci "><span class="rk">11</span><span class="lb">의료기기·제약·연구</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:32.42857142857143%;--b:70.28571428571428%"></s><u style="--x:49.71428571428571%"></u></span><span class="val">34.8%<small>16/46</small></span></li><li class="row ci "><span class="rk">12</span><span class="lb">미디어·콘텐츠·출판</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:37.28571428571429%;--b:63.28571428571428%"></s><u style="--x:49.57142857142858%"></u></span><span class="val">34.7%<small>35/101</small></span></li><li class="row ci "><span class="rk">13</span><span class="lb">법률·세무·컨설팅</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:33.85714285714286%;--b:67.14285714285714%"></s><u style="--x:49.14285714285714%"></u></span><span class="val">34.4%<small>21/61</small></span></li><li class="row ci "><span class="rk">14</span><span class="lb">헬스케어·돌봄·상담</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:35.285714285714285%;--b:61.71428571428572%"></s><u style="--x:47.57142857142857%"></u></span><span class="val">33.3%<small>32/96</small></span></li><li class="row ci "><span class="rk">15</span><span class="lb">가상자산·블록체인</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:31.857142857142858%;--b:64.71428571428571%"></s><u style="--x:46.857142857142854%"></u></span><span class="val">32.8%<small>20/61</small></span></li><li class="row ci "><span class="rk">16</span><span class="lb">HR·채용</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:24.57142857142857%;--b:73.71428571428572%"></s><u style="--x:45.714285714285715%"></u></span><span class="val">32.0%<small>8/25</small></span></li><li class="row ci "><span class="rk">17</span><span class="lb">커뮤니티·생활앱</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:30.85714285714286%;--b:62.857142857142854%"></s><u style="--x:45.285714285714285%"></u></span><span class="val">31.7%<small>20/63</small></span></li><li class="row ci "><span class="rk">18</span><span class="lb">게임</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:20.714285714285715%;--b:74.14285714285714%"></s><u style="--x:42.857142857142854%"></u></span><span class="val">30.0%<small>6/20</small></span></li><li class="row ci "><span class="rk">19</span><span class="lb">이커머스·온라인판매</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:35%;--b:50.57142857142857%"></s><u style="--x:42.42857142857142%"></u></span><span class="val">29.7%<small>79/266</small></span></li><li class="row ci "><span class="rk">20</span><span class="lb">IT·통신·보안</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:28.000000000000004%;--b:59.857142857142854%"></s><u style="--x:42.142857142857146%"></u></span><span class="val">29.5%<small>18/61</small></span></li><li class="row ci "><span class="rk">21</span><span class="lb">제조</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:31.142857142857146%;--b:53.714285714285715%"></s><u style="--x:41.42857142857143%"></u></span><span class="val">29.0%<small>36/124</small></span></li><li class="row ci "><span class="rk">22</span><span class="lb">외식·F&amp;B</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:24.142857142857142%;--b:59.71428571428571%"></s><u style="--x:39.57142857142857%"></u></span><span class="val">27.7%<small>13/47</small></span></li><li class="row ci "><span class="rk">23</span><span class="lb">공공기관·협회·국방</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:23.28571428571429%;--b:59.71428571428571%"></s><u style="--x:39%"></u></span><span class="val">27.3%<small>12/44</small></span></li><li class="row ci "><span class="rk">24</span><span class="lb">부동산·주거</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:24.857142857142854%;--b:54.285714285714285%"></s><u style="--x:37.857142857142854%"></u></span><span class="val">26.5%<small>18/68</small></span></li><li class="row ci "><span class="rk">25</span><span class="lb">뷰티·미용</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:20.285714285714285%;--b:57.42857142857143%"></s><u style="--x:35.714285714285715%"></u></span><span class="val">25.0%<small>10/40</small></span></li><li class="row ci "><span class="rk">26</span><span class="lb">병의원·약국·의료관광</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:24.714285714285715%;--b:47.85714285714286%"></s><u style="--x:35%"></u></span><span class="val">24.5%<small>26/106</small></span></li><li class="row ci "><span class="rk">27</span><span class="lb">매장·프랜차이즈·무인점포</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:19.714285714285715%;--b:56.14285714285714%"></s><u style="--x:34.857142857142854%"></u></span><span class="val">24.4%<small>10/41</small></span></li><li class="row ci "><span class="rk">28</span><span class="lb">에너지·환경</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:16.28571428571429%;--b:56.85714285714285%"></s><u style="--x:32.28571428571429%"></u></span><span class="val">22.6%<small>7/31</small></span></li><li class="row ci "><span class="rk">29</span><span class="lb">도매·유통·무역</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:18.142857142857142%;--b:46.57142857142858%"></s><u style="--x:30%"></u></span><span class="val">21.0%<small>13/62</small></span></li><li class="row ci down"><span class="rk">30</span><span class="lb">여행·숙박·레저·공간</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:19.28571428571429%;--b:42.42857142857142%"></s><u style="--x:29.142857142857142%"></u></span><span class="val">20.4%<small>19/93</small></span></li><li class="row ci "><span class="rk">31</span><span class="lb">마케팅·광고</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:16%;--b:47.14285714285714%"></s><u style="--x:28.57142857142857%"></u></span><span class="val">20.0%<small>10/50</small></span></li><li class="row ci "><span class="rk">32</span><span class="lb">반려동물</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:13.142857142857142%;--b:51.857142857142854%"></s><u style="--x:27.714285714285715%"></u></span><span class="val">19.4%<small>6/31</small></span></li><li class="row ci down"><span class="rk">33</span><span class="lb">피트니스·스포츠·골프</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:12.571428571428573%;--b:34.857142857142854%"></s><u style="--x:21.428571428571427%"></u></span><span class="val">15.0%<small>12/80</small></span></li></ul>
+      </div>
+      <div class="col">
+        <h3>소분류 · 업종군 × 시스템 유형 <small>결판 10건 이상 55개 중</small></h3>
+        <div class="sub">계약률 상위 8</div>
+        <div class="axis ci"><span class="rk"></span><span class="lb"></span><span class="plot"><em style="--x:0%">0%</em><em style="--x:28.57142857142857%">20%</em><em style="--x:57.14285714285714%">40%</em><em style="--x:85.71428571428571%">60%</em></span><span class="val"></span></div>
+        <ul class="list"><li class="row ci up"><span class="rk">1</span><span class="lb"><em>학교·공교육</em>LMS·교육 플랫폼</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:44.714285714285715%;--b:100%"></s><u style="--x:85.71428571428571%"></u></span><span class="val">60.0%<small>6/10</small></span></li><li class="row ci up"><span class="rk">2</span><span class="lb"><em>건설·인테리어·시설관리</em>서비스 매칭·중개 플랫폼</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:44.857142857142854%;--b:97.99999999999999%"></s><u style="--x:71.42857142857143%"></u></span><span class="val">50.0%<small>12/24</small></span></li><li class="row ci "><span class="rk">3</span><span class="lb"><em>커뮤니티·생활앱</em>콘텐츠·구독·스트리밍</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:33.85714285714286%;--b:100%"></s><u style="--x:71.42857142857143%"></u></span><span class="val">50.0%<small>5/10</small></span></li><li class="row ci "><span class="rk">4</span><span class="lb"><em>학원·과외·교육서비스</em>LMS·교육 플랫폼</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:41.714285714285715%;--b:95.71428571428572%"></s><u style="--x:68.28571428571428%"></u></span><span class="val">47.8%<small>11/23</small></span></li><li class="row ci "><span class="rk">5</span><span class="lb"><em>법률·세무·컨설팅</em>ERP·사내 업무시스템</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:35.42857142857143%;--b:99.85714285714286%"></s><u style="--x:66.71428571428571%"></u></span><span class="val">46.7%<small>7/15</small></span></li><li class="row ci "><span class="rk">6</span><span class="lb"><em>물류·운송·모빌리티</em>장비·IoT 연동·관제</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:30.428571428571427%;--b:100%"></s><u style="--x:65%"></u></span><span class="val">45.5%<small>5/11</small></span></li><li class="row ci "><span class="rk">7</span><span class="lb"><em>자동차</em>예약·예매 플랫폼</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:30.428571428571427%;--b:100%"></s><u style="--x:65%"></u></span><span class="val">45.5%<small>5/11</small></span></li><li class="row ci "><span class="rk">8</span><span class="lb"><em>인쇄·굿즈·주문제작</em>주문제작 견적·주문 플랫폼</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:39.42857142857143%;--b:89.57142857142858%"></s><u style="--x:63.42857142857142%"></u></span><span class="val">44.4%<small>12/27</small></span></li></ul>
+        <div class="gap"></div>
+        <div class="sub">계약률 하위 6</div>
+        <ul class="list"><li class="row ci "><span class="rk">50</span><span class="lb"><em>피트니스·스포츠·골프</em>예약·예매 플랫폼</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:6.142857142857142%;--b:60.285714285714285%"></s><u style="--x:22%"></u></span><span class="val">15.4%<small>2/13</small></span></li><li class="row ci down"><span class="rk">51</span><span class="lb"><em>병의원·약국·의료관광</em>서비스 매칭·중개 플랫폼</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:4%;--b:43%"></s><u style="--x:14.285714285714285%"></u></span><span class="val">10.0%<small>2/20</small></span></li><li class="row ci "><span class="rk">52</span><span class="lb"><em>법률·세무·컨설팅</em>서비스 매칭·중개 플랫폼</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:2.571428571428571%;--b:57.71428571428571%"></s><u style="--x:14.285714285714285%"></u></span><span class="val">10.0%<small>1/10</small></span></li><li class="row ci "><span class="rk">53</span><span class="lb"><em>이커머스·온라인판매</em>AI 생성·변환 서비스</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:2.571428571428571%;--b:57.71428571428571%"></s><u style="--x:14.285714285714285%"></u></span><span class="val">10.0%<small>1/10</small></span></li><li class="row ci "><span class="rk">54</span><span class="lb"><em>IT·통신·보안</em>홈페이지·랜딩(소개·문의)</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:1.8571428571428572%;--b:45%"></s><u style="--x:10.142857142857142%"></u></span><span class="val">7.1%<small>1/14</small></span></li><li class="row ci down"><span class="rk">55</span><span class="lb"><em>마케팅·광고</em>멤버십·리워드·마케팅 도구</span><span class="plot"><b class="avg" style="--x:43.857142857142854%"></b><s style="--a:2.571428571428571%;--b:30.428571428571427%"></s><u style="--x:9.571428571428571%"></u></span><span class="val">6.7%<small>2/30</small></span></li></ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>3. 우선순위 — 모집량 × 계약률</h2>
+      <p>업종군을 모집량(평균 72건 기준)과 계약률(평균 30.7% 기준)로 나눈 4칸입니다. 테두리 색은 계약률이 평균과 통계적으로 확실히 다른 업종군입니다(초록 높음, 빨강 낮음). 색이 없는 업종군은 평균과 구분되지 않습니다.</p>
+    </div>
+    <div class="quad">
+      <div></div>
+      <div class="q-head">모집량 평균 이상</div>
+      <div class="q-head">모집량 평균 미만</div>
+      <div class="q-axis y">계약률<br>평균 이상</div>
+      <div class="cell best"><h4>우선 공략<small>수요가 많고 계약도 평균 이상</small></h4><ul class="chips"><li class="chip "><b>건설·인테리어·시설관리</b><span>110건 · 35.6%</span></li><li class="chip "><b>미디어·콘텐츠·출판</b><span>109건 · 34.7%</span></li><li class="chip "><b>헬스케어·돌봄·상담</b><span>102건 · 33.3%</span></li><li class="chip "><b>물류·운송·모빌리티</b><span>93건 · 36.0%</span></li><li class="chip "><b>학원·과외·교육서비스</b><span>85건 · 38.8%</span></li><li class="chip "><b>금융·보험·핀테크</b><span>83건 · 36.7%</span></li><li class="chip "><b>온라인교육·기업교육</b><span>82건 · 39.7%</span></li></ul></div>
+      <div class="cell"><h4>틈새 공략<small>규모는 작지만 계약률 평균 이상</small></h4><ul class="chips"><li class="chip "><b>커뮤니티·생활앱</b><span>68건 · 31.7%</span></li><li class="chip "><b>법률·세무·컨설팅</b><span>64건 · 34.4%</span></li><li class="chip "><b>가상자산·블록체인</b><span>62건 · 32.8%</span></li><li class="chip up"><b>자동차</b><span>59건 · 48.1%</span></li><li class="chip "><b>의료기기·제약·연구</b><span>50건 · 34.8%</span></li><li class="chip "><b>행사·공연·웨딩·사진</b><span>41건 · 38.5%</span></li><li class="chip "><b>데이팅·결혼정보</b><span>34건 · 40.6%</span></li><li class="chip "><b>인쇄·굿즈·주문제작</b><span>31건 · 41.9%</span></li><li class="chip "><b>학교·공교육</b><span>31건 · 42.9%</span></li><li class="chip "><b>HR·채용</b><span>26건 · 32.0%</span></li></ul></div>
+      <div class="q-axis y">계약률<br>평균 미만</div>
+      <div class="cell"><h4>전환 개선 필요<small>수요는 많지만 계약률 평균 미만</small></h4><ul class="chips"><li class="chip "><b>이커머스·온라인판매</b><span>279건 · 29.7%</span></li><li class="chip "><b>제조</b><span>134건 · 29.0%</span></li><li class="chip "><b>병의원·약국·의료관광</b><span>116건 · 24.5%</span></li><li class="chip down"><b>여행·숙박·레저·공간</b><span>97건 · 20.4%</span></li><li class="chip down"><b>피트니스·스포츠·골프</b><span>86건 · 15.0%</span></li></ul></div>
+      <div class="cell"><h4>후순위<small>수요도 적고 계약률도 평균 미만</small></h4><ul class="chips"><li class="chip "><b>부동산·주거</b><span>70건 · 26.5%</span></li><li class="chip "><b>도매·유통·무역</b><span>68건 · 21.0%</span></li><li class="chip "><b>IT·통신·보안</b><span>63건 · 29.5%</span></li><li class="chip "><b>마케팅·광고</b><span>53건 · 20.0%</span></li><li class="chip "><b>외식·F&amp;B</b><span>48건 · 27.7%</span></li><li class="chip "><b>공공기관·협회·국방</b><span>48건 · 27.3%</span></li><li class="chip "><b>뷰티·미용</b><span>43건 · 25.0%</span></li><li class="chip "><b>매장·프랜차이즈·무인점포</b><span>42건 · 24.4%</span></li><li class="chip "><b>에너지·환경</b><span>34건 · 22.6%</span></li><li class="chip "><b>반려동물</b><span>33건 · 19.4%</span></li><li class="chip "><b>게임</b><span>22건 · 30.0%</span></li></ul></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>4. 계약금액과 수요 추세</h2>
+      <p>왼쪽은 계약금액이 확인된 660건, 합계 136.2억원의 업종군별 합계입니다. 오른쪽은 고유 수요 50건 이상 업종군의 월평균 수요 변화로, 2025.09.28을 기준으로 앞뒤 구간(약 10.5개월 대 12개월)을 월평균으로 맞춰 비교했습니다. 전체 월평균은 103건에서 106건으로 +3%입니다.</p>
+    </div>
+    <div class="cols">
+      <div class="col">
+        <h3>계약금액 합계 <small>상위 12개 업종군</small></h3>
+        <ul class="list"><li class="row"><span class="rk">1</span><span class="lb">이커머스·온라인판매<em class="after">건당 중앙값 1,000만 · 78건</em></span><span class="bar"><i style="--w:100.0%"></i></span><span class="val">15.0억</span></li><li class="row"><span class="rk">2</span><span class="lb">물류·운송·모빌리티<em class="after">건당 중앙값 1,750만 · 32건</em></span><span class="bar"><i style="--w:56.5%"></i></span><span class="val">8.5억</span></li><li class="row"><span class="rk">3</span><span class="lb">제조<em class="after">건당 중앙값 1,000만 · 34건</em></span><span class="bar"><i style="--w:56.5%"></i></span><span class="val">8.5억</span></li><li class="row"><span class="rk">4</span><span class="lb">온라인교육·기업교육<em class="after">건당 중앙값 1,050만 · 30건</em></span><span class="bar"><i style="--w:51.8%"></i></span><span class="val">7.8억</span></li><li class="row"><span class="rk">5</span><span class="lb">학원·과외·교육서비스<em class="after">건당 중앙값 1,700만 · 30건</em></span><span class="bar"><i style="--w:46.8%"></i></span><span class="val">7.0억</span></li><li class="row"><span class="rk">6</span><span class="lb">건설·인테리어·시설관리<em class="after">건당 중앙값 1,091만 · 35건</em></span><span class="bar"><i style="--w:46.4%"></i></span><span class="val">7.0억</span></li><li class="row"><span class="rk">7</span><span class="lb">금융·보험·핀테크<em class="after">건당 중앙값 1,440만 · 29건</em></span><span class="bar"><i style="--w:44.3%"></i></span><span class="val">6.7억</span></li><li class="row"><span class="rk">8</span><span class="lb">헬스케어·돌봄·상담<em class="after">건당 중앙값 1,450만 · 30건</em></span><span class="bar"><i style="--w:40.8%"></i></span><span class="val">6.1억</span></li><li class="row"><span class="rk">9</span><span class="lb">병의원·약국·의료관광<em class="after">건당 중앙값 800만 · 25건</em></span><span class="bar"><i style="--w:40.7%"></i></span><span class="val">6.1억</span></li><li class="row"><span class="rk">10</span><span class="lb">자동차<em class="after">건당 중앙값 1,568만 · 26건</em></span><span class="bar"><i style="--w:40.0%"></i></span><span class="val">6.0억</span></li><li class="row"><span class="rk">11</span><span class="lb">미디어·콘텐츠·출판<em class="after">건당 중앙값 1,360만 · 33건</em></span><span class="bar"><i style="--w:38.0%"></i></span><span class="val">5.7억</span></li><li class="row"><span class="rk">12</span><span class="lb">여행·숙박·레저·공간<em class="after">건당 중앙값 2,000만 · 19건</em></span><span class="bar"><i style="--w:31.8%"></i></span><span class="val">4.8억</span></li></ul>
+      </div>
+      <div class="col">
+        <h3>월평균 수요 변화 <small>최근 12개월 vs 이전</small></h3>
+        <div class="sub">증가 상위 6</div>
+        <ul class="list"><li class="row trend rise"><span class="rk">1</span><span class="lb">병의원·약국·의료관광<em class="after">월 4.2 → 6.0건</em></span><span class="div"><b></b><i style="--a:50%;--b:86.60068579631937%"></i></span><span class="val">+44%</span></li><li class="row trend rise"><span class="rk">2</span><span class="lb">커뮤니티·생활앱<em class="after">월 2.5 → 3.5건</em></span><span class="div"><b></b><i style="--a:50%;--b:85.06307016645204%"></i></span><span class="val">+42%</span></li><li class="row trend rise"><span class="rk">3</span><span class="lb">제조<em class="after">월 4.9 → 6.8건</em></span><span class="div"><b></b><i style="--a:50%;--b:82.24410817836191%"></i></span><span class="val">+39%</span></li><li class="row trend rise"><span class="rk">4</span><span class="lb">학원·과외·교육서비스<em class="after">월 3.1 → 4.3건</em></span><span class="div"><b></b><i style="--a:50%;--b:82.1586850878137%"></i></span><span class="val">+39%</span></li><li class="row trend rise"><span class="rk">5</span><span class="lb">금융·보험·핀테크<em class="after">월 3.2 → 4.1건</em></span><span class="div"><b></b><i style="--a:50%;--b:72.2948305733379%"></i></span><span class="val">+27%</span></li><li class="row trend rise"><span class="rk">6</span><span class="lb">IT·통신·보안<em class="after">월 2.5 → 3.1건</em></span><span class="div"><b></b><i style="--a:50%;--b:70.96826022600138%"></i></span><span class="val">+25%</span></li></ul>
+        <div class="gap"></div>
+        <div class="sub">감소 상위 6</div>
+        <ul class="list"><li class="row trend fall"><span class="rk">1</span><span class="lb">가상자산·블록체인<em class="after">월 3.8 → 1.8건</em></span><span class="div"><b></b><i style="--a:6.977823096355479%;--b:50%"></i></span><span class="val">-52%</span></li><li class="row trend fall"><span class="rk">2</span><span class="lb">온라인교육·기업교육<em class="after">월 4.6 → 2.8건</em></span><span class="div"><b></b><i style="--a:16.027266376489713%;--b:50%"></i></span><span class="val">-41%</span></li><li class="row trend fall"><span class="rk">3</span><span class="lb">도매·유통·무역<em class="after">월 3.4 → 2.7건</em></span><span class="div"><b></b><i style="--a:31.816010391416278%;--b:50%"></i></span><span class="val">-22%</span></li><li class="row trend fall"><span class="rk">4</span><span class="lb">부동산·주거<em class="after">월 3.4 → 2.8건</em></span><span class="div"><b></b><i style="--a:35.887844374213124%;--b:50%"></i></span><span class="val">-17%</span></li><li class="row trend fall"><span class="rk">5</span><span class="lb">의료기기·제약·연구<em class="after">월 2.4 → 2.1건</em></span><span class="div"><b></b><i style="--a:39.95967835700999%;--b:50%"></i></span><span class="val">-12%</span></li><li class="row trend fall"><span class="rk">6</span><span class="lb">이커머스·온라인판매<em class="after">월 13.1 → 11.8건</em></span><span class="div"><b></b><i style="--a:41.55300469810439%;--b:50%"></i></span><span class="val">-10%</span></li></ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <dl>
+      <dt>대상</dt><dd>모집 전환 공고 6,466건 중 원문에 업종이 명시된 2,902건(45%)입니다. 업종이 드러나지 않은 공고는 빠져 있으므로, 이 순위는 전체 시장 순위가 아니라 업종이 확인된 공고 안에서의 순위입니다. 판단이 모호하거나 개발 과업이 아닌 305건은 순위에서 제외했습니다.</dd>
+      <dt>분류</dt><dd>공고마다 세부 업종·업무·시스템을 판정한 뒤, 세부 업종 109종을 업종군 33개로, 세부 시스템 444종을 시스템 유형 38개로 묶었습니다. 판정은 AI가 했고 사람이 표본 검증하기 전 결과입니다.</dd>
+      <dt>계약</dt><dd>계약 = 계약 단계 이상 진행되고 취소되지 않은 수요, 결판 = 계약 또는 취소로 결론 난 수요입니다. 재등록 공고는 가장 많이 진행된 공고의 결과를 씁니다.</dd>
+      <dt>금액</dt><dd>계약에 도달하고 계약금액이 0보다 큰 수요만 합산했습니다. 계약금액 0원 계약의 정체는 운영팀에 확인 중입니다.</dd>
+      <dt>추세</dt><dd>재등록 공고는 처음 모집된 날짜를 기준으로 구간을 나눴습니다. 수요가 적은 업종군은 몇 건 차이로 비율이 크게 흔들려서 50건 이상만 표시했습니다.</dd>
+      <dt>해석</dt><dd>관찰 결과입니다. 특정 업종에 마케팅하면 계약이 늘어난다는 인과 관계를 뜻하지 않습니다.</dd>
+    </dl>
+  </footer>
+</div>

@@ -5,7 +5,7 @@ import {
   LOW_PROPOSAL_PAGE,
   REPORT_MONTHS,
 } from "@/features/report/period";
-import { TARGET_DEMAND_CANDIDATES } from "@/features/report/target-demand-candidates";
+import { getTargetDemandLedger } from "./target-demand-ledger";
 import type { PoolQna } from "@/lib/review-tips";
 import {
   daysBetween,
@@ -903,105 +903,165 @@ export class PostgresDataSource implements DataSource {
     };
   }
 
-  /** 원문에서 먼저 고정한 업종·업무 문제·시스템 조합을 성과와 결합한다. */
+  /**
+   * 원문 판독 원장(분석 대상 전체를 그룹·단건·모호·제외로 배정)을 성과와 결합한다.
+   * 집계 단위는 재등록을 합친 고유 수요이고, 성과는 기간 안에 모집된 공고 중 가장 앞선 결과를 쓴다.
+   */
   async getTargetDemandStats(periodDays?: number | null): Promise<TargetDemandStats> {
+    const MIN_DECIDED = 10;
+    const MIN_AMOUNTS = 5;
     const days = Number.isInteger(periodDays) && (periodDays as number) > 0 ? periodDays : null;
     const window = days ? `AND p.recruit_started_at >= now() - interval '${days} days'` : "";
-    const values = TARGET_DEMAND_CANDIDATES.map((_, index) => `($${index * 2 + 1}, $${index * 2 + 2})`).join(", ");
-    const params = TARGET_DEMAND_CANDIDATES.flatMap((candidate) => [candidate.id, candidate.pattern]);
-    const rows = await query<{
-      candidate_id: string;
-      total: string;
-      decided: string;
-      contracted: string;
-      all_total: string;
-      classified: string;
-      all_decided: string;
-      all_contracted: string;
-      from_at: string | null;
-      to_at: string | null;
-      examples: TargetDemandCandidate["examples"] | null;
-    }>(
-      `WITH candidates(candidate_id, pattern) AS (VALUES ${values}),
-            base AS MATERIALIZED (
-              SELECT p.id::text AS id, p.title, p.status, p.stage, p.contract_amount,
-                     p.recruit_started_at,
-                     regexp_replace(lower(concat_ws(' ', p.title, p.category, p.client_name, p.posting_raw)), E'\\s+', ' ', 'g') AS body,
-                     p.posting_raw
-                FROM projects p
-               WHERE p.deleted_at IS NULL AND p.hidden = false
-                 AND p.recruit_started_at IS NOT NULL ${window}
-            ),
-            matched AS (
-              SELECT DISTINCT b.id
-                FROM base b JOIN candidates c ON b.body ~* c.pattern
-            )
-       SELECT c.candidate_id,
-              count(b.id) AS total,
-              count(b.id) FILTER (WHERE b.stage >= 3 OR b.status = '완료(취소)') AS decided,
-              count(b.id) FILTER (WHERE b.stage >= 3 AND b.status <> '완료(취소)') AS contracted,
-              (SELECT count(*) FROM base) AS all_total,
-              (SELECT count(*) FROM matched) AS classified,
-              (SELECT count(*) FILTER (WHERE stage >= 3 OR status = '완료(취소)') FROM base b2 JOIN matched m ON m.id = b2.id) AS all_decided,
-              (SELECT count(*) FILTER (WHERE stage >= 3 AND status <> '완료(취소)') FROM base b3 JOIN matched m ON m.id = b3.id) AS all_contracted,
-              (SELECT min(recruit_started_at) FROM base) AS from_at,
-              (SELECT max(recruit_started_at) FROM base) AS to_at,
-              COALESCE((
-                SELECT json_agg(example)
-                  FROM (
-                    SELECT b4.id, b4.title, left(regexp_replace(b4.posting_raw, E'\\s+', ' ', 'g'), 420) AS excerpt, b4.status
-                      FROM base b4
-                     WHERE b4.body ~* c.pattern
-                     ORDER BY b4.recruit_started_at DESC
-                     LIMIT 3
-                  ) AS example
-              ), '[]'::json) AS examples
-         FROM candidates c
-         LEFT JOIN base b ON b.body ~* c.pattern
-        GROUP BY c.candidate_id, c.pattern
-        ORDER BY count(b.id) DESC`,
-      params,
-    );
+    const { units, evidence } = getTargetDemandLedger();
+    const count = (status: string) => units.filter((unit) => unit.status === status).length;
+    const processing = {
+      eligiblePostings: units.reduce((sum, unit) => sum + unit.ids.length, 0),
+      units: units.length,
+      group: count("group"),
+      single: count("single"),
+      ambiguous: count("ambiguous"),
+      excluded: count("excluded"),
+      groups: new Set(units.filter((unit) => unit.status === "group").map((unit) => unit.key)).size,
+      unassigned: units.filter((unit) => !["group", "single", "ambiguous", "excluded"].includes(unit.status)).length,
+      industries: new Set(units.map((unit) => unit.industry).filter(Boolean)).size,
+      industryGroups: new Set(units.map((unit) => unit.industryGroup).filter(Boolean)).size,
+      systems: new Set(units.map((unit) => unit.system).filter(Boolean)).size,
+      systemTypes: new Set(units.map((unit) => unit.systemType).filter(Boolean)).size,
+    };
+    const empty: TargetDemandStats = {
+      processing, minDecided: MIN_DECIDED, minAmounts: MIN_AMOUNTS,
+      total: 0, classified: 0, decided: 0, contracted: 0, contractRate: 0,
+      coverage: { from: null, to: null }, byVolume: [], byContractRate: [], byContractAmount: [],
+    };
+    const inScope = units.filter((unit) => unit.status === "group" || unit.status === "single");
+    if (!inScope.length) return empty;
 
-    const definitions = new Map(TARGET_DEMAND_CANDIDATES.map((candidate) => [candidate.id, candidate]));
-    const toCandidate = (row: (typeof rows)[number]): TargetDemandCandidate => {
-      const definition = definitions.get(row.candidate_id);
-      if (!definition) throw new Error(`알 수 없는 타깃 후보: ${row.candidate_id}`);
-      const total = Number(row.total);
-      const decided = Number(row.decided);
-      const contracted = Number(row.contracted);
+    const rows = await query<{
+      id: string;
+      title: string;
+      status: string;
+      stage: number;
+      recruit_started_at: string;
+      contract_amount: string | null;
+    }>(
+      `SELECT p.id::text AS id, p.title, p.status, p.stage, p.contract_amount,
+              to_char(p.recruit_started_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS recruit_started_at
+         FROM projects p
+        WHERE p.id::text = ANY($1::text[])
+          AND p.deleted_at IS NULL AND p.hidden = false
+          AND p.recruit_started_at IS NOT NULL ${window}`,
+      [inScope.flatMap((unit) => unit.ids)],
+    );
+    type Row = (typeof rows)[number];
+    const byId = new Map(rows.map((row) => [row.id, row]));
+    const isDecided = (row: Row) => row.stage >= 3 || row.status === "완료(취소)";
+    const isContracted = (row: Row) => row.stage >= 3 && row.status !== "완료(취소)";
+    const progress = (row: Row) => (isContracted(row) ? 2 : isDecided(row) ? 1 : 0);
+
+    /** 기간 안에 모집된 공고가 하나라도 있는 수요만 센다. 결과는 그중 가장 앞선 공고 기준. */
+    const scoped = inScope.flatMap((unit) => {
+      const inWindow = unit.ids.map((id) => byId.get(id)).filter((row): row is Row => Boolean(row));
+      if (!inWindow.length) return [];
+      const best = [...inWindow].sort((a, b) => progress(b) - progress(a) || b.recruit_started_at.localeCompare(a.recruit_started_at))[0];
+      return [{ unit, best, rows: inWindow }];
+    });
+
+    /** 계약률 95% Wilson 구간 — 결판 10~30건짜리 그룹끼리 순위를 비교할 때 겹치는지 보려고 */
+    const wilson = (k: number, n: number) => {
+      if (!n) return null;
+      const z = 1.96;
+      const p = k / n;
+      const denom = 1 + (z * z) / n;
+      const center = (p + (z * z) / (2 * n)) / denom;
+      const half = (z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n))) / denom;
+      return { low: Math.round((center - half) * 100), high: Math.round((center + half) * 100) };
+    };
+    /** 세부 표기별 건수 — 상위 분류 카드 안에서 무엇이 묶였는지 보여준다 */
+    const tally = (labels: string[]) => {
+      const counts = new Map<string, number>();
+      for (const label of labels) counts.set(label, (counts.get(label) ?? 0) + 1);
+      return [...counts].map(([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+    };
+    const toCandidate = (key: string, members: typeof scoped): TargetDemandCandidate => {
+      const { industryGroup = "", systemType = "" } = members[0].unit;
+      const decided = members.filter((member) => isDecided(member.best)).length;
+      const contracted = members.filter((member) => isContracted(member.best)).length;
+      const amounts = members
+        .filter((member) => isContracted(member.best))
+        .map((member) => Number(member.best.contract_amount ?? 0))
+        .filter((amount) => amount > 0)
+        .sort((a, b) => a - b);
+      const middle = Math.floor(amounts.length / 2);
+      const contractMedian = amounts.length === 0
+        ? null
+        : amounts.length % 2 === 1 ? amounts[middle] : (amounts[middle - 1] + amounts[middle]) / 2;
       return {
-        id: definition.id,
-        title: definition.title,
-        industry: definition.industry,
-        problem: definition.problem,
-        system: definition.system,
-        inclusion: definition.inclusion,
-        exclusion: definition.exclusion,
-        total,
+        id: key,
+        title: key,
+        industry: industryGroup,
+        system: systemType,
+        industries: tally(members.map((member) => member.unit.industry ?? "")),
+        systems: tally(members.map((member) => member.unit.system ?? "")),
+        problems: tally(members.map((member) => member.unit.problem ?? "")),
+        inclusion: "공고별로 판정한 세부 업종·시스템을 업종군과 시스템 유형으로 올렸을 때 둘 다 이 카드와 같은 공고. 서로 다른 발주처가 2곳 이상일 때만 그룹으로 둔다.",
+        exclusion: "업종이 원문에 명시되지 않은 공고, 기획·디자인 산출물만 요구한 공고, 업종·업무 맥락이 부족한 공고는 넣지 않았다. 같은 프로젝트의 재등록·분할 공고는 1건으로 센다.",
+        total: members.length,
+        postings: members.reduce((sum, member) => sum + member.rows.length, 0),
         decided,
         contracted,
         contractRate: decided ? Math.round((contracted / decided) * 1000) / 10 : 0,
-        lowSample: decided < 20,
-        examples: row.examples ?? [],
+        contractRateCi: wilson(contracted, decided),
+        contractAmountCount: amounts.length,
+        contractMedian,
+        contractMean: amounts.length ? Math.round(amounts.reduce((sum, amount) => sum + amount, 0) / amounts.length) : null,
+        lowSample: decided < MIN_DECIDED,
+        examples: members
+          .sort((a, b) => b.best.recruit_started_at.localeCompare(a.best.recruit_started_at))
+          .flatMap((member) => [member.best, ...member.rows.filter((row) => row.id !== member.best.id)].map((row) => {
+            const quote = evidence.get(row.id) ?? { industry: "", problem: "", system: "" };
+            return {
+              id: row.id,
+              title: row.title,
+              excerpt: [quote.industry, quote.problem, quote.system].filter(Boolean).join(" · "),
+              status: row.status,
+              evidence: quote,
+              detail: member.unit.detailKey ?? "",
+              duplicateOf: row.id === member.best.id ? null : member.best.id,
+            };
+          })),
       };
     };
-    const all = rows.map(toCandidate).filter((candidate) => candidate.total >= 5);
-    const first = rows[0];
+
+    const grouped = new Map<string, typeof scoped>();
+    for (const member of scoped.filter((member) => member.unit.status === "group")) {
+      const key = member.unit.key ?? "";
+      grouped.set(key, [...(grouped.get(key) ?? []), member]);
+    }
+    const all = [...grouped.entries()].map(([key, members]) => toCandidate(key, members));
+    const coverage = scoped.reduce<{ from: string | null; to: string | null }>((range, member) => ({
+      from: !range.from || member.best.recruit_started_at < range.from ? member.best.recruit_started_at : range.from,
+      to: !range.to || member.best.recruit_started_at > range.to ? member.best.recruit_started_at : range.to,
+    }), { from: null, to: null });
+    const decided = scoped.filter((member) => isDecided(member.best)).length;
+    const contracted = scoped.filter((member) => isContracted(member.best)).length;
+
     return {
-      total: Number(first?.all_total ?? 0),
-      classified: Number(first?.classified ?? 0),
-      decided: Number(first?.all_decided ?? 0),
-      contracted: Number(first?.all_contracted ?? 0),
-      contractRate: Number(first?.all_decided)
-        ? Math.round((Number(first?.all_contracted) / Number(first?.all_decided)) * 1000) / 10
-        : 0,
-      coverage: { from: first?.from_at ?? null, to: first?.to_at ?? null },
+      processing,
+      minDecided: MIN_DECIDED,
+      minAmounts: MIN_AMOUNTS,
+      total: scoped.reduce((sum, member) => sum + member.rows.length, 0),
+      classified: scoped.length,
+      decided,
+      contracted,
+      contractRate: decided ? Math.round((contracted / decided) * 1000) / 10 : 0,
+      coverage,
       byVolume: [...all].sort((a, b) => b.total - a.total || b.decided - a.decided),
       byContractRate: [...all]
-        .filter((row) => row.decided >= 20)
-        .sort((a, b) => b.contractRate - a.contractRate || b.decided - a.decided)
-        ,
+        .filter((candidate) => candidate.decided >= MIN_DECIDED)
+        .sort((a, b) => b.contractRate - a.contractRate || b.decided - a.decided),
+      byContractAmount: [...all]
+        .filter((candidate) => candidate.contractAmountCount >= MIN_AMOUNTS)
+        .sort((a, b) => (b.contractMedian ?? 0) - (a.contractMedian ?? 0) || b.contractAmountCount - a.contractAmountCount),
     };
   }
 

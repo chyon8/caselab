@@ -6,6 +6,8 @@
 .lead { margin: 0 0 24px; font-size: 16px; }
 .note { margin: 22px 0 8px; font-size: 14px; color: var(--text-muted); }
 .method { margin: 0 0 42px; font-size: 13px; color: var(--text-faint); }
+.reportLink { display: inline-block; margin: 0 0 20px; color: var(--color-primary); font-size: 14px; font-weight: 600; text-decoration: none; }
+.reportLink:hover { text-decoration: underline; }
 .tabs { display: flex; flex-wrap: wrap; gap: 6px; }
 .tab { padding: 7px 14px; border-radius: var(--rounded-pill); background: var(--panel-bg); color: var(--text-muted); font-size: 13px; text-decoration: none; }
 .tab.active { background: var(--color-primary); color: var(--color-body-on-dark); font-weight: 600; }
@@ -48,3 +50,6 @@
   .metric { grid-column: 2; text-align: left; margin-top: 4px; }
   .metric strong { font-size: 23px; }
 }
+.viewTabs { display: flex; gap: 22px; margin: 0 0 32px; border-bottom: 1px solid var(--header-rule); }
+.viewTab { margin-bottom: -1px; padding: 10px 0; border-bottom: 2px solid transparent; color: var(--text-muted); font-size: 14px; text-decoration: none; }
+.viewTab.viewActive { border-bottom-color: var(--color-primary); color: var(--page-text); font-weight: 600; }

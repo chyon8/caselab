@@ -176,6 +176,9 @@ class MockDataSource implements DataSource {
 
   async getTargetDemandStats(): Promise<TargetDemandStats> {
     return {
+      processing: { eligiblePostings: 0, units: 0, group: 0, single: 0, ambiguous: 0, excluded: 0, groups: 0, unassigned: 0, industries: 0, industryGroups: 0, systems: 0, systemTypes: 0 },
+      minDecided: 10,
+      minAmounts: 5,
       total: 0,
       classified: 0,
       decided: 0,
@@ -184,6 +187,7 @@ class MockDataSource implements DataSource {
       coverage: { from: null, to: null },
       byVolume: [],
       byContractRate: [],
+      byContractAmount: [],
     };
   }
 

@@ -404,25 +404,71 @@ export interface TargetDemandExample {
   title: string;
   excerpt: string;
   status: string;
+  evidence: { industry: string; problem: string; system: string };
+  /** 공고별 세부 판정 "업종 × 업무 × 시스템" */
+  detail: string;
+  /** 같은 프로젝트의 재등록·분할 공고면 대표 공고 id. 집계에는 대표 1건만 들어간다 */
+  duplicateOf: string | null;
+}
+
+/** 상위 분류 카드 안의 세부 표기 한 줄 — "학원 12건" */
+export interface TargetDemandTally {
+  label: string;
+  count: number;
 }
 
 export interface TargetDemandCandidate {
   id: string;
   title: string;
+  /** 업종군 */
   industry: string;
-  problem: string;
+  /** 시스템 유형 */
   system: string;
+  /** 카드에 묶인 세부 업종·시스템·업무 표기와 고유 수요 건수 */
+  industries: TargetDemandTally[];
+  systems: TargetDemandTally[];
+  problems: TargetDemandTally[];
   inclusion: string;
   exclusion: string;
+  /** 재등록을 합친 고유 수요 건수 (= 모집량) */
   total: number;
+  /** 재등록까지 포함한 실제 공고 수 */
+  postings: number;
   decided: number;
   contracted: number;
   contractRate: number;
+  /** 계약률 95% 신뢰구간(Wilson, %). 결판 0건이면 null */
+  contractRateCi: { low: number; high: number } | null;
+  contractAmountCount: number;
+  contractMedian: number | null;
+  contractMean: number | null;
   lowSample: boolean;
   examples: TargetDemandExample[];
 }
 
+/** 분석 대상 전체가 어디로 배정됐는지 — 누락 0건을 화면에서 확인한다 */
+export interface TargetDemandProcessing {
+  eligiblePostings: number;
+  units: number;
+  group: number;
+  single: number;
+  ambiguous: number;
+  excluded: number;
+  groups: number;
+  unassigned: number;
+  /** 세부 표기 종류 수와 그것을 올린 상위 분류 수 */
+  industries: number;
+  industryGroups: number;
+  systems: number;
+  systemTypes: number;
+}
+
 export interface TargetDemandStats {
+  processing: TargetDemandProcessing;
+  /** 계약률 순위에 넣는 최소 결판 건수 */
+  minDecided: number;
+  /** 계약금액 순위에 넣는 최소 금액 확인 건수 */
+  minAmounts: number;
   total: number;
   classified: number;
   decided: number;
@@ -431,6 +477,7 @@ export interface TargetDemandStats {
   coverage: { from: string | null; to: string | null };
   byVolume: TargetDemandCandidate[];
   byContractRate: TargetDemandCandidate[];
+  byContractAmount: TargetDemandCandidate[];
 }
 
 /** 지원자가 거의 없었던 프로젝트 한 건 — 비율만 보면 "어떤 건이 그랬나"를 못 본다 */

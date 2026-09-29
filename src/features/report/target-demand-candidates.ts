@@ -6,7 +6,8 @@ export interface TargetDemandCandidateDefinition {
   system: string;
   inclusion: string;
   exclusion: string;
-  pattern: string;
+  /** 업종·문제·시스템이 각각 원문에 있어야 후보에 포함한다. */
+  criteria: [string, string, string];
 }
 
 /** 성과를 보기 전에 원문에서 먼저 고정한 후보 정의. 업종·문제·시스템을 한 세트로 유지한다. */
@@ -19,7 +20,11 @@ export const TARGET_DEMAND_CANDIDATES: TargetDemandCandidateDefinition[] = [
     system: "생산관리·품질관리·설비관리·MES 시스템",
     inclusion: "제조사·공장·생산라인과 생산·품질·불량·설비 업무가 함께 명시된 공고",
     exclusion: "제품 설계·PCB·펌웨어처럼 제조 운영 시스템이 아닌 개발",
-    pattern: "((제조|공장|생산라인|제조사|제조업|산업용).{0,240}(생산|품질|불량|설비|mes|검사|작업지시)|(생산|품질|불량|설비|mes|검사).{0,240}(제조|공장|생산라인))",
+    criteria: [
+      "(제조업|제조사|공장|생산 ?라인|생산 현장|양산)",
+      "(생산관리|생산량|품질관리|품질|불량|설비관리|설비 점검|작업지시|공정 관리|검사)",
+      "(시스템 구축|시스템 개발|관리 시스템|mes|대시보드|자동화)",
+    ],
   },
   {
     id: "manufacturing-erp-materials",
@@ -29,7 +34,11 @@ export const TARGET_DEMAND_CANDIDATES: TargetDemandCandidateDefinition[] = [
     system: "제조 ERP·MRP·자재·생산계획 통합 시스템",
     inclusion: "제조·공장 주체와 ERP·BOM·자재·MRP·생산계획·발주가 함께 명시된 공고",
     exclusion: "일반 기업용 ERP 소개나 단순 재고·쇼핑몰 관리",
-    pattern: "(제조|공장|생산|제조업).{0,240}(erp|bom|mrp|자재|생산계획|작업지시|발주)",
+    criteria: [
+      "(제조업|제조사|공장|생산라인)",
+      "(erp|bom|mrp|자재관리|생산계획|작업지시|발주 관리)",
+      "(시스템 구축|시스템 개발|통합 시스템|erp 구축|mes 구축)",
+    ],
   },
   {
     id: "medical-records-integration",
@@ -39,7 +48,11 @@ export const TARGET_DEMAND_CANDIDATES: TargetDemandCandidateDefinition[] = [
     system: "전자차트·접수·검사 연동·의료 업무 시스템",
     inclusion: "의료기관 주체와 환자·진료·접수·검사·처방·청구 흐름이 함께 명시된 공고",
     exclusion: "의료 콘텐츠·건강 커뮤니티처럼 의료기관 운영 문제가 아닌 서비스",
-    pattern: "(병원|의원|치과|약국|피부과|의료기관).{0,240}(전자차트|접수|환자|진료|검사|처방|청구|진단)",
+    criteria: [
+      "(병원|의원|치과|약국|피부과|의료기관)",
+      "(전자차트|접수|데스크|환자|진료|검사|처방|청구|진단|전원)",
+      "(연동 시스템|접수 시스템|검사 프로그램|의료 업무 시스템|관리 시스템|시스템 구축)",
+    ],
   },
   {
     id: "academy-attendance-communication",
@@ -49,7 +62,11 @@ export const TARGET_DEMAND_CANDIDATES: TargetDemandCandidateDefinition[] = [
     system: "학원 운영·출결·성적표·학부모 소통 시스템",
     inclusion: "학원·교육기관과 출결·성적·학부모·통학 업무가 함께 명시된 공고",
     exclusion: "강의 콘텐츠 제작·교육 홈페이지·단순 동영상 플랫폼",
-    pattern: "(학원|교육기관|스터디카페|학교).{0,240}(출결|성적|학부모|통학|등하원)",
+    criteria: [
+      "(학원|교육기관|스터디카페|학교)",
+      "(출결|성적|학부모|통학|등하원)",
+      "(운영 시스템|출결 시스템|성적표|관리 시스템|시스템 구축|앱 개발)",
+    ],
   },
   {
     id: "academy-learning-history",
@@ -59,7 +76,11 @@ export const TARGET_DEMAND_CANDIDATES: TargetDemandCandidateDefinition[] = [
     system: "학습이력·오답·채점·상담 관리 시스템",
     inclusion: "학원·교육기관과 오답·문제풀이·학습이력·채점·상담이 함께 명시된 공고",
     exclusion: "출결만 관리하거나 강의 판매·소개만 하는 공고",
-    pattern: "(학원|교육기관|학교).{0,240}(오답|문제풀이|학습이력|학습관리|상담|채점)",
+    criteria: [
+      "(학원|교육기관|학교)",
+      "(오답|문제풀이|학습이력|학습관리|상담|채점)",
+      "(학습 관리 시스템|관리 시스템|플랫폼 구축|시스템 개발|앱 개발)",
+    ],
   },
   {
     id: "logistics-dispatch-operations",
@@ -69,7 +90,11 @@ export const TARGET_DEMAND_CANDIDATES: TargetDemandCandidateDefinition[] = [
     system: "TMS·배차·운송관제·화물추적 시스템",
     inclusion: "화물·운송사·포워딩 등 주체와 배차·운행·배송·운임 업무가 함께 명시된 공고",
     exclusion: "일반 차량 서비스나 쇼핑몰의 단순 배송 기능",
-    pattern: "(물류|화물|운송사|운송|포워딩|선사|택배).{0,240}(배차|운행|배송상태|운임|상하차|화물추적|tms)",
+    criteria: [
+      "(물류|화물|운송사|포워딩|선사|택배|탁송)",
+      "(배차|운행|배송상태|운임|상하차|화물추적|tms)",
+      "(운송 관리 시스템|배차 시스템|운송관제|화물추적 시스템|tms 구축|시스템 구축)",
+    ],
   },
   {
     id: "seller-order-inventory-integration",
@@ -79,16 +104,66 @@ export const TARGET_DEMAND_CANDIDATES: TargetDemandCandidateDefinition[] = [
     system: "쇼핑몰·오픈마켓 주문·재고·출고 통합 시스템",
     inclusion: "온라인 판매 주체와 주문·재고·발주·송장·출고·정산 중 두 업무 이상이 명시된 공고",
     exclusion: "상품 소개·단일 쇼핑몰·결제 기능만 필요한 신규 구축",
-    pattern: "(쇼핑몰|이커머스|온라인 판매|셀러|오픈마켓|유통|리테일).{0,240}(주문|재고|발주|송장|출고|정산).{0,240}(주문|재고|발주|송장|출고|정산)",
+    criteria: [
+      "(쇼핑몰|이커머스|온라인 판매|셀러|오픈마켓|유통|리테일)",
+      "((주문|재고|발주|송장|출고|정산).{0,80}(주문|재고|발주|송장|출고|정산))",
+      "(통합 시스템|재고관리 시스템|주문관리 시스템|erp 연동|자동화 시스템|시스템 구축)",
+    ],
   },
   {
-    id: "internal-workflow-automation",
-    title: "기업 내부 반복업무·문서 자동화",
-    industry: "기업 내부 업무",
-    problem: "엑셀·메일·수기 승인에 의존해 반복 입력과 업무 이력 관리가 발생",
-    system: "업무자동화·전자결재·사내 ERP·CRM 시스템",
-    inclusion: "사내·내부 업무와 엑셀·수기·반복·승인·인사·근태·ERP·CRM 문제가 함께 명시된 공고",
-    exclusion: "외부 고객 대상 플랫폼이나 단순 홈페이지·랜딩페이지",
-    pattern: "(사내|내부|기업|업무).{0,240}(엑셀|수기|반복|자동화|전자결재|인사|근태|업무관리|erp|crm)",
+    id: "internal-hr-attendance",
+    title: "기업 인사·근태·직원 정보 관리",
+    industry: "기업 내부 인사 업무",
+    problem: "직원 정보·근태·휴가·급여 자료를 엑셀과 수기 방식으로 따로 관리",
+    system: "HR·근태·인사관리 시스템",
+    inclusion: "사내·기업 내부 주체와 인사·직원·근태·휴가·급여 업무가 함께 명시된 공고",
+    exclusion: "채용 플랫폼이나 외부 고객용 회원관리 기능",
+    criteria: [
+      "(사내|내부|기업|회사)",
+      "(인사|직원|근태|휴가|급여|출퇴근|조직도)",
+      "(hr 시스템|근태 시스템|인사관리 시스템|시스템 구축|관리 시스템)",
+    ],
+  },
+  {
+    id: "internal-approval-documents",
+    title: "기업 결재·문서·업무 요청 처리",
+    industry: "기업 내부 행정 업무",
+    problem: "문서·업무 요청·승인 흐름을 메일·엑셀·수기로 처리해 이력과 책임 소재가 분산",
+    system: "전자결재·문서관리·업무요청 워크플로우",
+    inclusion: "사내·내부 업무와 전자결재·승인·문서·품의·업무요청이 함께 명시된 공고",
+    exclusion: "고객용 게시판이나 단순 파일 업로드 기능",
+    criteria: [
+      "(사내|내부|기업|회사)",
+      "(전자결재|결재|승인|품의|문서관리|업무요청|워크플로우)",
+      "(전자결재 시스템|문서관리 시스템|워크플로우 시스템|시스템 구축|업무 시스템)",
+    ],
+  },
+  {
+    id: "internal-sales-crm",
+    title: "기업 영업·고객 이력 관리",
+    industry: "기업 영업·고객관리",
+    problem: "고객·상담·영업 단계·거래 이력이 여러 문서와 담당자별로 흩어짐",
+    system: "CRM·영업관리·고객 이력 시스템",
+    inclusion: "기업 내부 영업 주체와 고객관리·상담·영업기회·거래처 이력이 함께 명시된 공고",
+    exclusion: "소비자용 커뮤니티나 단순 문의 폼·회원가입 기능",
+    criteria: [
+      "(사내|내부|기업|회사)",
+      "(crm|고객관리|거래처|영업관리|영업기회|상담이력|고객 이력)",
+      "(crm 시스템|영업관리 시스템|고객관리 시스템|시스템 구축|관리 시스템)",
+    ],
+  },
+  {
+    id: "internal-orders-quotes",
+    title: "기업 견적·발주·거래처 업무 관리",
+    industry: "기업 조달·거래처 업무",
+    problem: "견적·발주·거래처·납품 정보를 엑셀과 메일로 주고받아 진행 상태를 추적하기 어려움",
+    system: "견적·발주·거래처 관리 ERP 시스템",
+    inclusion: "기업 내부 업무와 견적·발주·거래처·납품·구매 흐름이 함께 명시된 공고",
+    exclusion: "온라인 쇼핑몰의 소비자 주문 처리나 단순 상품 판매",
+    criteria: [
+      "(사내|내부|기업|회사)",
+      "(견적|발주|거래처|납품|구매관리|조달)",
+      "(견적 관리 시스템|발주 관리 시스템|erp 시스템|erp 구축|업무관리 시스템|시스템 구축)",
+    ],
   },
 ];

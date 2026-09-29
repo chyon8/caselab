@@ -5,6 +5,39 @@ import { usePathname, useRouter } from "next/navigation";
 import { useApp } from "@/state/AppContext";
 import styles from "./AppShell.module.css";
 
+// 접힌 사이드바용 아이콘 (lucide 스타일 라인 아이콘, currentColor)
+const NAV_ICONS: Record<string, React.ReactNode> = {
+  "/": (
+    <>
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </>
+  ),
+  "/report": (
+    <>
+      <path d="M3 3v18h18" />
+      <path d="M8 17v-5" />
+      <path d="M13 17V8" />
+      <path d="M18 17v-9" />
+    </>
+  ),
+  "/report/target-demand": (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1" />
+    </>
+  ),
+  "/settings": (
+    <>
+      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
+};
+
 const NAV_ITEMS = [
   { label: "전체 프로젝트", href: "/" },
   { label: "리포트", href: "/report" },
@@ -75,8 +108,24 @@ export default function AppShell({
               onClick={item.href === "/" ? app.resetFilters : undefined}
               className={`${styles["nav-item"]} ${isActive(item.href) ? styles.active : ""} ${sc ? styles.centered : ""}`}
               aria-label={sc ? item.label : undefined}
+              title={sc ? item.label : undefined}
             >
-              {sc ? item.label.charAt(0) : item.label}
+              {sc ? (
+                <svg
+                  className={styles["nav-icon"]}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  {NAV_ICONS[item.href]}
+                </svg>
+              ) : (
+                item.label
+              )}
             </Link>
           ))}
         </nav>

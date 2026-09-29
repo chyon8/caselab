@@ -99,6 +99,13 @@
   text-align: center;
 }
 
+.nav-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  margin: 0 auto;
+}
+
 /* 다크모드 토글 (사이드바 하단, 전역) */
 .theme-btn {
   margin-top: auto;

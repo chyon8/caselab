@@ -1,0 +1,1080 @@
+{
+  "note": "제출 전 원문 859건 표본. 14일 내 모집 전환. adjusted_diff_pctp는 첨부×신규/재방문×사업형태 층화 Mantel-Haenszel 위험차. 1인(AI) 판정, 재제출 건 포함.",
+  "overall": {
+    "n": 859,
+    "recruited": 456,
+    "rate_pct": 53.1,
+    "ci95": [
+      49.7,
+      56.4
+    ]
+  },
+  "coverage": {
+    "empty_or_unclear": {
+      "n": 147,
+      "recruited": 46,
+      "rate_pct": 31.3,
+      "ci95": [
+        24.4,
+        39.2
+      ]
+    },
+    "with_content": {
+      "n": 712,
+      "recruited": 410,
+      "rate_pct": 57.6,
+      "ci95": [
+        53.9,
+        61.2
+      ]
+    },
+    "industry_known": {
+      "n": 612,
+      "recruited": 364,
+      "rate_pct": 59.5,
+      "ci95": [
+        55.5,
+        63.3
+      ]
+    },
+    "industry_unknown_with_content": {
+      "n": 100,
+      "recruited": 46,
+      "rate_pct": 46,
+      "ci95": [
+        36.6,
+        55.7
+      ]
+    }
+  },
+  "content_vs_empty": {
+    "a": {
+      "n": 712,
+      "recruited": 410,
+      "rate_pct": 57.6,
+      "ci95": [
+        53.9,
+        61.2
+      ]
+    },
+    "b": {
+      "n": 147,
+      "recruited": 46,
+      "rate_pct": 31.3,
+      "ci95": [
+        24.4,
+        39.2
+      ]
+    },
+    "diff_pctp": 26.3,
+    "diff_ci95": [
+      17.6,
+      34.1
+    ],
+    "adjusted_diff_pctp": 19.1
+  },
+  "industry_known_vs_unknown": {
+    "a": {
+      "n": 612,
+      "recruited": 364,
+      "rate_pct": 59.5,
+      "ci95": [
+        55.5,
+        63.3
+      ]
+    },
+    "b": {
+      "n": 100,
+      "recruited": 46,
+      "rate_pct": 46,
+      "ci95": [
+        36.6,
+        55.7
+      ]
+    },
+    "diff_pctp": 13.5,
+    "diff_ci95": [
+      3,
+      23.6
+    ],
+    "adjusted_diff_pctp": 9.1
+  },
+  "by_system": [
+    {
+      "name": "기타(비개발)",
+      "n": 78,
+      "recruited": 47,
+      "rate_pct": 60.3,
+      "ci95": [
+        49.2,
+        70.4
+      ],
+      "diff_vs_rest_pctp": 3,
+      "diff_ci95": [
+        -8.7,
+        13.9
+      ],
+      "adjusted_diff_pctp": 2.2
+    },
+    {
+      "name": "홈페이지·랜딩(소개·문의)",
+      "n": 59,
+      "recruited": 38,
+      "rate_pct": 64.4,
+      "ci95": [
+        51.7,
+        75.4
+      ],
+      "diff_vs_rest_pctp": 7.4,
+      "diff_ci95": [
+        -5.8,
+        19.1
+      ],
+      "adjusted_diff_pctp": 5
+    },
+    {
+      "name": "장비·IoT 연동·관제",
+      "n": 46,
+      "recruited": 29,
+      "rate_pct": 63,
+      "ci95": [
+        48.6,
+        75.5
+      ],
+      "diff_vs_rest_pctp": 5.8,
+      "diff_ci95": [
+        -9.1,
+        18.9
+      ],
+      "adjusted_diff_pctp": 1.7
+    },
+    {
+      "name": "ERP·사내 업무시스템",
+      "n": 41,
+      "recruited": 24,
+      "rate_pct": 58.5,
+      "ci95": [
+        43.4,
+        72.2
+      ],
+      "diff_vs_rest_pctp": 1,
+      "diff_ci95": [
+        -14.6,
+        15.2
+      ],
+      "adjusted_diff_pctp": -1.9
+    },
+    {
+      "name": "자사몰·쇼핑몰",
+      "n": 33,
+      "recruited": 22,
+      "rate_pct": 66.7,
+      "ci95": [
+        49.6,
+        80.2
+      ],
+      "diff_vs_rest_pctp": 9.5,
+      "diff_ci95": [
+        -7.9,
+        23.6
+      ],
+      "adjusted_diff_pctp": 3.1
+    },
+    {
+      "name": "문서·업무 자동화(RPA)",
+      "n": 32,
+      "recruited": 16,
+      "rate_pct": 50,
+      "ci95": [
+        33.6,
+        66.4
+      ],
+      "diff_vs_rest_pctp": -7.9,
+      "diff_ci95": [
+        -24.7,
+        8.9
+      ],
+      "adjusted_diff_pctp": -3.6
+    },
+    {
+      "name": "유지보수·인프라·기술개선",
+      "n": 30,
+      "recruited": 21,
+      "rate_pct": 70,
+      "ci95": [
+        52.1,
+        83.3
+      ],
+      "diff_vs_rest_pctp": 13,
+      "diff_ci95": [
+        -5.3,
+        26.8
+      ],
+      "adjusted_diff_pctp": 14.1
+    },
+    {
+      "name": "AI 챗봇·에이전트·지식검색",
+      "n": 25,
+      "recruited": 12,
+      "rate_pct": 48,
+      "ci95": [
+        30,
+        66.5
+      ],
+      "diff_vs_rest_pctp": -9.9,
+      "diff_ci95": [
+        -28.3,
+        8.9
+      ],
+      "adjusted_diff_pctp": -11.3
+    },
+    {
+      "name": "서비스 매칭·중개 플랫폼",
+      "n": 24,
+      "recruited": 9,
+      "rate_pct": 37.5,
+      "ci95": [
+        21.2,
+        57.3
+      ],
+      "diff_vs_rest_pctp": -20.8,
+      "diff_ci95": [
+        -37.5,
+        -0.6
+      ],
+      "adjusted_diff_pctp": -15.3
+    },
+    {
+      "name": "AI 생성·변환 서비스",
+      "n": 23,
+      "recruited": 8,
+      "rate_pct": 34.8,
+      "ci95": [
+        18.8,
+        55.1
+      ],
+      "diff_vs_rest_pctp": -23.6,
+      "diff_ci95": [
+        -40,
+        -2.9
+      ],
+      "adjusted_diff_pctp": -26.4
+    },
+    {
+      "name": "AI 분석·비전·예측 모델",
+      "n": 21,
+      "recruited": 11,
+      "rate_pct": 52.4,
+      "ci95": [
+        32.4,
+        71.7
+      ],
+      "diff_vs_rest_pctp": -5.4,
+      "diff_ci95": [
+        -25.7,
+        14.3
+      ],
+      "adjusted_diff_pctp": 4.5
+    },
+    {
+      "name": "LMS·교육 플랫폼",
+      "n": 20,
+      "recruited": 10,
+      "rate_pct": 50,
+      "ci95": [
+        29.9,
+        70.1
+      ],
+      "diff_vs_rest_pctp": -7.8,
+      "diff_ci95": [
+        -28.2,
+        12.6
+      ],
+      "adjusted_diff_pctp": -13.9
+    },
+    {
+      "name": "멤버십·리워드·마케팅 도구",
+      "n": 20,
+      "recruited": 15,
+      "rate_pct": 75,
+      "ci95": [
+        53.1,
+        88.8
+      ],
+      "diff_vs_rest_pctp": 17.9,
+      "diff_ci95": [
+        -4.3,
+        32.2
+      ],
+      "adjusted_diff_pctp": 19.4
+    },
+    {
+      "name": "CRM·영업·상담관리",
+      "n": 20,
+      "recruited": 11,
+      "rate_pct": 55,
+      "ci95": [
+        34.2,
+        74.2
+      ],
+      "diff_vs_rest_pctp": -2.7,
+      "diff_ci95": [
+        -23.8,
+        16.9
+      ],
+      "adjusted_diff_pctp": 1.6
+    },
+    {
+      "name": "데이터 수집·대시보드",
+      "n": 19,
+      "recruited": 8,
+      "rate_pct": 42.1,
+      "ci95": [
+        23.1,
+        63.7
+      ]
+    },
+    {
+      "name": "정보 조회·알림 서비스",
+      "n": 18,
+      "recruited": 11,
+      "rate_pct": 61.1,
+      "ci95": [
+        38.6,
+        79.7
+      ]
+    },
+    {
+      "name": "예약·예매 플랫폼",
+      "n": 18,
+      "recruited": 12,
+      "rate_pct": 66.7,
+      "ci95": [
+        43.7,
+        83.7
+      ]
+    },
+    {
+      "name": "커뮤니티·SNS",
+      "n": 14,
+      "recruited": 8,
+      "rate_pct": 57.1,
+      "ci95": [
+        32.6,
+        78.6
+      ]
+    },
+    {
+      "name": "금융·결제 서비스",
+      "n": 13,
+      "recruited": 10,
+      "rate_pct": 76.9,
+      "ci95": [
+        49.7,
+        91.8
+      ]
+    },
+    {
+      "name": "신청·접수·행사 운영",
+      "n": 13,
+      "recruited": 8,
+      "rate_pct": 61.5,
+      "ci95": [
+        35.5,
+        82.3
+      ]
+    },
+    {
+      "name": "콘텐츠·구독·스트리밍",
+      "n": 12,
+      "recruited": 10,
+      "rate_pct": 83.3,
+      "ci95": [
+        55.2,
+        95.3
+      ]
+    },
+    {
+      "name": "게임·3D·XR",
+      "n": 11,
+      "recruited": 7,
+      "rate_pct": 63.6,
+      "ci95": [
+        35.4,
+        84.8
+      ]
+    },
+    {
+      "name": "오픈마켓·중고·거래 중개",
+      "n": 11,
+      "recruited": 8,
+      "rate_pct": 72.7,
+      "ci95": [
+        43.4,
+        90.3
+      ]
+    },
+    {
+      "name": "매장 운영·주문·POS",
+      "n": 10,
+      "recruited": 7,
+      "rate_pct": 70,
+      "ci95": [
+        39.7,
+        89.2
+      ]
+    },
+    {
+      "name": "현장관리·안전점검·정비",
+      "n": 10,
+      "recruited": 3,
+      "rate_pct": 30,
+      "ci95": [
+        10.8,
+        60.3
+      ]
+    },
+    {
+      "name": "키오스크·무인매장 SW",
+      "n": 10,
+      "recruited": 5,
+      "rate_pct": 50,
+      "ci95": [
+        23.7,
+        76.3
+      ]
+    },
+    {
+      "name": "소개팅·소셜 매칭",
+      "n": 10,
+      "recruited": 7,
+      "rate_pct": 70,
+      "ci95": [
+        39.7,
+        89.2
+      ]
+    },
+    {
+      "name": "주문수집·재고·물류 운영",
+      "n": 10,
+      "recruited": 8,
+      "rate_pct": 80,
+      "ci95": [
+        49,
+        94.3
+      ]
+    },
+    {
+      "name": "B2B 도매몰·수주관리",
+      "n": 10,
+      "recruited": 3,
+      "rate_pct": 30,
+      "ci95": [
+        10.8,
+        60.3
+      ]
+    },
+    {
+      "name": "생산·품질관리(MES·ERP)",
+      "n": 9,
+      "recruited": 3,
+      "rate_pct": 33.3,
+      "ci95": [
+        12.1,
+        64.6
+      ]
+    },
+    {
+      "name": "건강관리·케어 앱",
+      "n": 8,
+      "recruited": 6,
+      "rate_pct": 75,
+      "ci95": [
+        40.9,
+        92.9
+      ]
+    },
+    {
+      "name": "의료기관 업무시스템",
+      "n": 7,
+      "recruited": 2,
+      "rate_pct": 28.6,
+      "ci95": [
+        8.2,
+        64.1
+      ]
+    },
+    {
+      "name": "견적·계산 도구",
+      "n": 6,
+      "recruited": 4,
+      "rate_pct": 66.7,
+      "ci95": [
+        30,
+        90.3
+      ]
+    },
+    {
+      "name": "구인구직·인력 매칭",
+      "n": 6,
+      "recruited": 3,
+      "rate_pct": 50,
+      "ci95": [
+        18.8,
+        81.2
+      ]
+    },
+    {
+      "name": "학원·교습소 운영관리",
+      "n": 5,
+      "recruited": 1,
+      "rate_pct": 20,
+      "ci95": [
+        3.6,
+        62.4
+      ]
+    },
+    {
+      "name": "자동매매·시세 봇",
+      "n": 4,
+      "recruited": 0,
+      "rate_pct": 0,
+      "ci95": [
+        0,
+        49
+      ]
+    },
+    {
+      "name": "주문제작 견적·주문 플랫폼",
+      "n": 2,
+      "recruited": 1,
+      "rate_pct": 50,
+      "ci95": [
+        9.5,
+        90.5
+      ]
+    },
+    {
+      "name": "배차·운송관리",
+      "n": 2,
+      "recruited": 1,
+      "rate_pct": 50,
+      "ci95": [
+        9.5,
+        90.5
+      ]
+    },
+    {
+      "name": "블록체인·가상자산 서비스",
+      "n": 2,
+      "recruited": 1,
+      "rate_pct": 50,
+      "ci95": [
+        9.5,
+        90.5
+      ]
+    }
+  ],
+  "by_system_ai_grouped": [
+    {
+      "name": "그 외",
+      "n": 643,
+      "recruited": 379,
+      "rate_pct": 58.9,
+      "ci95": [
+        55.1,
+        62.7
+      ],
+      "diff_vs_rest_pctp": 14,
+      "diff_ci95": [
+        1.7,
+        25.8
+      ],
+      "adjusted_diff_pctp": 12.4
+    },
+    {
+      "name": "AI 3종",
+      "n": 69,
+      "recruited": 31,
+      "rate_pct": 44.9,
+      "ci95": [
+        33.8,
+        56.6
+      ],
+      "diff_vs_rest_pctp": -14,
+      "diff_ci95": [
+        -25.8,
+        -1.7
+      ],
+      "adjusted_diff_pctp": -12.4
+    }
+  ],
+  "by_industry": [
+    {
+      "name": "제조",
+      "n": 56,
+      "recruited": 34,
+      "rate_pct": 60.7,
+      "ci95": [
+        47.6,
+        72.4
+      ],
+      "diff_vs_rest_pctp": 1.4,
+      "diff_ci95": [
+        -12.4,
+        13.8
+      ],
+      "adjusted_diff_pctp": -2.7
+    },
+    {
+      "name": "이커머스·온라인판매",
+      "n": 44,
+      "recruited": 29,
+      "rate_pct": 65.9,
+      "ci95": [
+        51.1,
+        78.1
+      ],
+      "diff_vs_rest_pctp": 6.9,
+      "diff_ci95": [
+        -8.4,
+        19.8
+      ],
+      "adjusted_diff_pctp": 0.4
+    },
+    {
+      "name": "미디어·콘텐츠·출판",
+      "n": 38,
+      "recruited": 26,
+      "rate_pct": 68.4,
+      "ci95": [
+        52.5,
+        80.9
+      ],
+      "diff_vs_rest_pctp": 9.5,
+      "diff_ci95": [
+        -6.9,
+        22.7
+      ],
+      "adjusted_diff_pctp": 6.5
+    },
+    {
+      "name": "건설·인테리어·시설관리",
+      "n": 29,
+      "recruited": 13,
+      "rate_pct": 44.8,
+      "ci95": [
+        28.4,
+        62.5
+      ],
+      "diff_vs_rest_pctp": -15.4,
+      "diff_ci95": [
+        -32.3,
+        2.7
+      ],
+      "adjusted_diff_pctp": -12.4
+    },
+    {
+      "name": "공공기관·협회·국방",
+      "n": 29,
+      "recruited": 17,
+      "rate_pct": 58.6,
+      "ci95": [
+        40.7,
+        74.5
+      ],
+      "diff_vs_rest_pctp": -0.9,
+      "diff_ci95": [
+        -19.2,
+        15.5
+      ],
+      "adjusted_diff_pctp": 0.8
+    },
+    {
+      "name": "IT·통신·보안",
+      "n": 24,
+      "recruited": 18,
+      "rate_pct": 75,
+      "ci95": [
+        55.1,
+        88
+      ],
+      "diff_vs_rest_pctp": 16.2,
+      "diff_ci95": [
+        -4.1,
+        29.8
+      ],
+      "adjusted_diff_pctp": 14.4
+    },
+    {
+      "name": "금융·보험·핀테크",
+      "n": 23,
+      "recruited": 13,
+      "rate_pct": 56.5,
+      "ci95": [
+        36.8,
+        74.4
+      ],
+      "diff_vs_rest_pctp": -3.1,
+      "diff_ci95": [
+        -23.2,
+        15.2
+      ],
+      "adjusted_diff_pctp": 2.5
+    },
+    {
+      "name": "여행·숙박·레저·공간",
+      "n": 23,
+      "recruited": 14,
+      "rate_pct": 60.9,
+      "ci95": [
+        40.8,
+        77.8
+      ],
+      "diff_vs_rest_pctp": 1.4,
+      "diff_ci95": [
+        -19,
+        18.8
+      ],
+      "adjusted_diff_pctp": 5.6
+    },
+    {
+      "name": "헬스케어·돌봄·상담",
+      "n": 23,
+      "recruited": 15,
+      "rate_pct": 65.2,
+      "ci95": [
+        44.9,
+        81.2
+      ],
+      "diff_vs_rest_pctp": 6,
+      "diff_ci95": [
+        -14.7,
+        22.5
+      ],
+      "adjusted_diff_pctp": 3.5
+    },
+    {
+      "name": "피트니스·스포츠·골프",
+      "n": 22,
+      "recruited": 17,
+      "rate_pct": 77.3,
+      "ci95": [
+        56.6,
+        89.9
+      ],
+      "diff_vs_rest_pctp": 18.5,
+      "diff_ci95": [
+        -2.6,
+        31.7
+      ],
+      "adjusted_diff_pctp": 11
+    },
+    {
+      "name": "커뮤니티·생활앱",
+      "n": 21,
+      "recruited": 11,
+      "rate_pct": 52.4,
+      "ci95": [
+        32.4,
+        71.7
+      ],
+      "diff_vs_rest_pctp": -7.3,
+      "diff_ci95": [
+        -27.7,
+        12.4
+      ],
+      "adjusted_diff_pctp": -6.5
+    },
+    {
+      "name": "병의원·약국·의료관광",
+      "n": 21,
+      "recruited": 11,
+      "rate_pct": 52.4,
+      "ci95": [
+        32.4,
+        71.7
+      ],
+      "diff_vs_rest_pctp": -7.3,
+      "diff_ci95": [
+        -27.7,
+        12.4
+      ],
+      "adjusted_diff_pctp": -6.3
+    },
+    {
+      "name": "학원·과외·교육서비스",
+      "n": 20,
+      "recruited": 9,
+      "rate_pct": 45,
+      "ci95": [
+        25.8,
+        65.8
+      ],
+      "diff_vs_rest_pctp": -15,
+      "diff_ci95": [
+        -34.5,
+        6.2
+      ],
+      "adjusted_diff_pctp": -13.5
+    },
+    {
+      "name": "의료기기·제약·연구",
+      "n": 20,
+      "recruited": 10,
+      "rate_pct": 50,
+      "ci95": [
+        29.9,
+        70.1
+      ],
+      "diff_vs_rest_pctp": -9.8,
+      "diff_ci95": [
+        -30.3,
+        10.7
+      ],
+      "adjusted_diff_pctp": -6.9
+    },
+    {
+      "name": "행사·공연·웨딩·사진",
+      "n": 19,
+      "recruited": 11,
+      "rate_pct": 57.9,
+      "ci95": [
+        36.3,
+        76.9
+      ]
+    },
+    {
+      "name": "부동산·주거",
+      "n": 18,
+      "recruited": 14,
+      "rate_pct": 77.8,
+      "ci95": [
+        54.8,
+        91
+      ]
+    },
+    {
+      "name": "법률·세무·컨설팅",
+      "n": 15,
+      "recruited": 11,
+      "rate_pct": 73.3,
+      "ci95": [
+        48,
+        89.1
+      ]
+    },
+    {
+      "name": "뷰티·미용",
+      "n": 15,
+      "recruited": 10,
+      "rate_pct": 66.7,
+      "ci95": [
+        41.7,
+        84.8
+      ]
+    },
+    {
+      "name": "온라인교육·기업교육",
+      "n": 14,
+      "recruited": 7,
+      "rate_pct": 50,
+      "ci95": [
+        26.8,
+        73.2
+      ]
+    },
+    {
+      "name": "도매·유통·무역",
+      "n": 14,
+      "recruited": 7,
+      "rate_pct": 50,
+      "ci95": [
+        26.8,
+        73.2
+      ]
+    },
+    {
+      "name": "외식·F&B",
+      "n": 13,
+      "recruited": 9,
+      "rate_pct": 69.2,
+      "ci95": [
+        42.4,
+        87.3
+      ]
+    },
+    {
+      "name": "물류·운송·모빌리티",
+      "n": 13,
+      "recruited": 7,
+      "rate_pct": 53.8,
+      "ci95": [
+        29.1,
+        76.8
+      ]
+    },
+    {
+      "name": "마케팅·광고",
+      "n": 13,
+      "recruited": 5,
+      "rate_pct": 38.5,
+      "ci95": [
+        17.7,
+        64.5
+      ]
+    },
+    {
+      "name": "매장·프랜차이즈·무인점포",
+      "n": 13,
+      "recruited": 8,
+      "rate_pct": 61.5,
+      "ci95": [
+        35.5,
+        82.3
+      ]
+    },
+    {
+      "name": "자동차",
+      "n": 12,
+      "recruited": 5,
+      "rate_pct": 41.7,
+      "ci95": [
+        19.3,
+        68
+      ]
+    },
+    {
+      "name": "게임",
+      "n": 11,
+      "recruited": 6,
+      "rate_pct": 54.5,
+      "ci95": [
+        28,
+        78.7
+      ]
+    },
+    {
+      "name": "에너지·환경",
+      "n": 10,
+      "recruited": 9,
+      "rate_pct": 90,
+      "ci95": [
+        59.6,
+        98.2
+      ]
+    },
+    {
+      "name": "데이팅·결혼정보",
+      "n": 10,
+      "recruited": 8,
+      "rate_pct": 80,
+      "ci95": [
+        49,
+        94.3
+      ]
+    },
+    {
+      "name": "HR·채용",
+      "n": 8,
+      "recruited": 4,
+      "rate_pct": 50,
+      "ci95": [
+        21.5,
+        78.5
+      ]
+    },
+    {
+      "name": "학교·공교육",
+      "n": 7,
+      "recruited": 1,
+      "rate_pct": 14.3,
+      "ci95": [
+        2.6,
+        51.3
+      ]
+    },
+    {
+      "name": "반려동물",
+      "n": 5,
+      "recruited": 2,
+      "rate_pct": 40,
+      "ci95": [
+        11.8,
+        76.9
+      ]
+    },
+    {
+      "name": "인쇄·굿즈·주문제작",
+      "n": 5,
+      "recruited": 1,
+      "rate_pct": 20,
+      "ci95": [
+        3.6,
+        62.4
+      ]
+    },
+    {
+      "name": "가상자산·블록체인",
+      "n": 4,
+      "recruited": 2,
+      "rate_pct": 50,
+      "ci95": [
+        15,
+        85
+      ]
+    }
+  ],
+  "cross_min8": [
+    {
+      "name": "제조 × 장비·IoT 연동·관제",
+      "n": 18,
+      "recruited": 9,
+      "rate_pct": 50,
+      "ci95": [
+        29,
+        71
+      ]
+    },
+    {
+      "name": "이커머스·온라인판매 × 자사몰·쇼핑몰",
+      "n": 18,
+      "recruited": 12,
+      "rate_pct": 66.7,
+      "ci95": [
+        43.7,
+        83.7
+      ]
+    },
+    {
+      "name": "여행·숙박·레저·공간 × 예약·예매 플랫폼",
+      "n": 9,
+      "recruited": 7,
+      "rate_pct": 77.8,
+      "ci95": [
+        45.3,
+        93.7
+      ]
+    },
+    {
+      "name": "건설·인테리어·시설관리 × 현장관리·안전점검·정비",
+      "n": 9,
+      "recruited": 3,
+      "rate_pct": 33.3,
+      "ci95": [
+        12.1,
+        64.6
+      ]
+    },
+    {
+      "name": "제조 × 생산·품질관리(MES·ERP)",
+      "n": 8,
+      "recruited": 2,
+      "rate_pct": 25,
+      "ci95": [
+        7.1,
+        59.1
+      ]
+    }
+  ]
+}
