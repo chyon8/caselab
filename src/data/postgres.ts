@@ -912,7 +912,7 @@ export class PostgresDataSource implements DataSource {
     const MIN_AMOUNTS = 5;
     const days = Number.isInteger(periodDays) && (periodDays as number) > 0 ? periodDays : null;
     const window = days ? `AND p.recruit_started_at >= now() - interval '${days} days'` : "";
-    const { units, evidence } = getTargetDemandLedger();
+    const { units, evidence } = await getTargetDemandLedger();
     const count = (status: string) => units.filter((unit) => unit.status === status).length;
     const processing = {
       eligiblePostings: units.reduce((sum, unit) => sum + unit.ids.length, 0),

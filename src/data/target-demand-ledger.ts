@@ -1,5 +1,4 @@
-import fs from "node:fs";
-import path from "node:path";
+import { query } from "@/lib/db";
 
 /** 원문 판독으로 확정한 고유 수요 1건. 재등록·분할 공고는 ids에 함께 묶인다. */
 export interface TargetDemandLedgerUnit {
@@ -25,27 +24,56 @@ export interface TargetDemandEvidence {
   system: string;
 }
 
-let cached: { units: TargetDemandLedgerUnit[]; evidence: Map<string, TargetDemandEvidence> } | undefined;
-
 /**
- * 분류 원장과 공고별 원문 근거를 읽는다. 외부 API는 호출하지 않는다.
- * 원장은 scripts/target-demand-v2-*.mjs로 재생성하며, 파일이 없으면 빈 결과를 돌려준다.
+ * 분류 원장과 공고별 원문 근거를 Neon target_demand_ledger에서 읽는다. 외부 API는 호출하지 않는다.
+ * 원장은 scripts/target-demand-v2-*.mjs로 재생성하고 target-demand-v2-load.mjs로 적재한다.
  */
-export function getTargetDemandLedger() {
-  if (cached) return cached;
-  const dir = path.join(process.cwd(), ".private", "target-demand");
-  const ledgerFile = path.join(dir, "v2", "ledger.json");
-  const extractionFile = path.join(dir, "extractions.jsonl");
-  if (!fs.existsSync(ledgerFile)) return { units: [], evidence: new Map<string, TargetDemandEvidence>() };
-
-  const units = JSON.parse(fs.readFileSync(ledgerFile, "utf8")) as TargetDemandLedgerUnit[];
+export async function getTargetDemandLedger() {
+  const rows = await query<{
+    project_id: string;
+    unit_id: string;
+    status: TargetDemandLedgerUnit["status"];
+    industry: string | null;
+    problem: string | null;
+    system: string | null;
+    industry_group: string | null;
+    system_type: string | null;
+    group_key: string | null;
+    detail_key: string | null;
+    reason: string | null;
+    evidence_industry: string | null;
+    evidence_problem: string | null;
+    evidence_system: string | null;
+  }>(
+    `SELECT project_id::text, unit_id::text, status, industry, problem, system, industry_group, system_type,
+            group_key, detail_key, reason, evidence_industry, evidence_problem, evidence_system
+       FROM target_demand_ledger ORDER BY unit_id, project_id`,
+  );
+  const byUnit = new Map<string, TargetDemandLedgerUnit>();
   const evidence = new Map<string, TargetDemandEvidence>();
-  if (fs.existsSync(extractionFile)) {
-    for (const line of fs.readFileSync(extractionFile, "utf8").split("\n").filter(Boolean)) {
-      const row = JSON.parse(line) as { id: string; result?: { eligible?: boolean; evidence?: TargetDemandEvidence } };
-      if (row.result?.eligible && row.result.evidence) evidence.set(row.id, row.result.evidence);
+  for (const row of rows) {
+    const unit = byUnit.get(row.unit_id);
+    if (unit) unit.ids.push(row.project_id);
+    else byUnit.set(row.unit_id, {
+      unit: row.unit_id,
+      ids: [row.project_id],
+      status: row.status,
+      industry: row.industry ?? undefined,
+      problem: row.problem ?? undefined,
+      system: row.system ?? undefined,
+      industryGroup: row.industry_group ?? undefined,
+      systemType: row.system_type ?? undefined,
+      key: row.group_key ?? undefined,
+      detailKey: row.detail_key ?? undefined,
+      reason: row.reason ?? undefined,
+    });
+    if (row.evidence_industry !== null || row.evidence_problem !== null || row.evidence_system !== null) {
+      evidence.set(row.project_id, {
+        industry: row.evidence_industry ?? "",
+        problem: row.evidence_problem ?? "",
+        system: row.evidence_system ?? "",
+      });
     }
   }
-  cached = { units, evidence };
-  return cached;
+  return { units: [...byUnit.values()], evidence };
 }
