@@ -1202,13 +1202,20 @@ export class PostgresDataSource implements DataSource {
   /**
    * 제출→모집 전환. 모집단이 projects(모집 전환 건)가 아니라 submission_analysis_projects(제출 전체)다.
    * 전환 = 모집일이 있음(기간 제한 없음). 월·기간은 제출일(KST) 기준 — 10월 제출·11월 전환은 10월 전환.
-   * 결과 대기도 분모에 넣는다. 권한 있는 계정에서만 호출된다(report/page.tsx).
+   * 결과 대기도 분모에 넣는다. 권한 있는 계정에서만 호출된다(report/conversion/page.tsx).
+   * 무효 제출은 모든 집계에서 빼고 건수만 따로 낸다(사용자 결정 2026-09-30):
+   *  - 검수 매니저가 없는 제출(«미배정») — 거의 전부 제출 직후(중앙값 약 2분) 고객이 스스로 취소
+   *  - 모집 전 고객 직접 취소 — 7~8월 부적합 원장에서 전부 «무효»였다
+   * 거절 중 무효(중복등록·실수 등)는 본진 DB에 사유가 없어 아직 못 뺀다.
    */
   async getSubmissionConversionStats(periodDays?: number | null): Promise<SubmissionConversionStats> {
     const days = Number.isInteger(periodDays) && (periodDays as number) > 0 ? periodDays : null;
     const window = days ? `AND submitted_at >= now() - interval '${days} days'` : "";
-    const base = `FROM submission_analysis_projects
-                  WHERE submitted_at >= '${SUBMISSION_CONVERSION_FROM} 00:00+09'::timestamptz ${window}`;
+    const scope = `FROM submission_analysis_projects
+                   WHERE submitted_at >= '${SUBMISSION_CONVERSION_FROM} 00:00+09'::timestamptz ${window}`;
+    const valid = `inspection_manager IS NOT NULL
+                   AND NOT (recruited_at IS NULL AND is_cancelled IS TRUE AND is_rejected IS NOT TRUE)`;
+    const base = `${scope} AND ${valid}`;
     const rate = `round(100.0 * count(*) FILTER (WHERE recruited_at IS NOT NULL) / count(*), 1)`;
     const group = (label: string, order: string, having = "", params: unknown[] = []) =>
       query<BreakdownRow>(
@@ -1234,14 +1241,13 @@ export class PostgresDataSource implements DataSource {
           total: string;
           recruited: string;
           rejected: string;
-          cancelled: string;
+          excluded: string;
           as_of: string | null;
         }>(
           `SELECT count(*) AS total,
                   count(*) FILTER (WHERE recruited_at IS NOT NULL) AS recruited,
                   count(*) FILTER (WHERE recruited_at IS NULL AND is_rejected) AS rejected,
-                  count(*) FILTER (WHERE recruited_at IS NULL AND is_rejected IS NOT TRUE
-                                     AND is_cancelled) AS cancelled,
+                  (SELECT count(*) ${scope} AND NOT (${valid})) AS excluded,
                   (SELECT max(source_extracted_at) FROM submission_analysis_projects) AS as_of
              ${base}`,
         ),
@@ -1285,7 +1291,7 @@ export class PostgresDataSource implements DataSource {
         ),
         // 계정명 → 실명은 getManagerStats와 같이 SQL에서 한다(같은 사람이 두 줄로 갈리지 않게)
         group(
-          `COALESCE($1::jsonb ->> inspection_manager, inspection_manager, '미배정')`,
+          `COALESCE($1::jsonb ->> inspection_manager, inspection_manager)`,
           "2 DESC",
           "",
           [JSON.stringify(MANAGER_NAMES)],
@@ -1295,13 +1301,12 @@ export class PostgresDataSource implements DataSource {
     const total = Number(totals?.total ?? 0);
     const recruited = Number(totals?.recruited ?? 0);
     const rejected = Number(totals?.rejected ?? 0);
-    const cancelled = Number(totals?.cancelled ?? 0);
     return {
       total,
       recruited,
       rejected,
-      cancelled,
-      pending: total - recruited - rejected - cancelled,
+      pending: total - recruited - rejected,
+      excluded: Number(totals?.excluded ?? 0),
       rate: total ? Math.round((recruited / total) * 1000) / 10 : 0,
       asOf: totals?.as_of ?? null,
       byMonth: toBreakdown(byMonth, CONVERSION_SOFT_SAMPLE),

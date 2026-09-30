@@ -1,12 +1,3 @@
--- 제출→모집 전환 매일 적재. 본진 MySQL/MariaDB SELECT only.
--- 매 실행마다 최근 60일 제출분을 처음부터 다시 읽는다 — 새 제출 추가와 기존 건 상태(모집·거절·취소)
--- 갱신이 이것 하나로 된다. 1~8월 전환의 99%가 제출 후 20일 안에 일어났다(2026-09-30 실측).
--- 커서를 저장하지 않는다: 입력 item의 id(시작 0, 이후 적재 응답의 last_id)로 페이지를 넘긴다.
--- SELECT 절은 submission_analysis_backfill.sql에 담당 매니저(inspection_manager, 2026-09-30 추가)를 더한 것이다.
--- 매니저명 규칙은 projects_incremental.sql과 같다.
--- 고객 식별자·담당자명·연락처·회사명은 SELECT하지 않는다.
--- 첫 실행만 60을 400으로 바꿔 2026-01부터 전부 다시 받는다 — 백필분에 없는 담당 매니저를 채우려면 필요하다.
-
 SELECT
   pp.id AS project_id,
   pp.previous_project_id,
@@ -141,5 +132,4 @@ WHERE pp.project_type = 'task_based'
   AND pp.date_submitted >= GREATEST('2025-12-31 15:00:00', UTC_TIMESTAMP() - INTERVAL 60 DAY)
   AND pp.id > {{ $json.id }}
 ORDER BY pp.id ASC
--- 초기 원문과 여러 자유서술을 포함하므로 Vercel 요청 크기를 넘기지 않게 200건으로 제한한다.
 LIMIT 200;

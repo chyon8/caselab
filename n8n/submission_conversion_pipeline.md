@@ -28,6 +28,8 @@ Schedule(매일 1회) → 시작 커서 → 원천 조회 → 적재 → IF 반�
 
 - 기존 백필 워크플로의 `분석 원천 조회` 노드를 복제한다(본진 `/query` 호출)
 - SQL: [`submission_conversion_daily.sql`](./submission_conversion_daily.sql) 전체
+- 본진 `/query`는 쿼리가 `SELECT`로 시작하지 않으면 `Only SELECT queries are allowed`로 거부한다. 그래서 이 SQL 파일에는 주석을 넣지 않는다(설명은 이 문서에 둔다)
+- SELECT 절은 백필 SQL에 `inspection_manager`(담당 검수 매니저, projects_incremental.sql과 같은 규칙)를 더한 것이다. 200건 제한은 초기 원문 때문에 Vercel 요청 크기를 넘지 않게 하려는 것이다
 - SQL 안의 `{{ $json.id }}`는 들어오는 item(시작 커서 또는 다음 커서)의 `id`다
 
 ### 적재

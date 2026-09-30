@@ -550,12 +550,14 @@ export interface ManagerStat {
  * 구분별 Breakdown의 decided는 여기서 "제출 수"다.
  */
 export interface SubmissionConversionStats {
+  /** 유효 제출 (무효를 뺀 분모) */
   total: number;
   recruited: number;
   rejected: number;
-  cancelled: number;
-  /** 모집·거절·취소 어느 쪽도 아직 아님 — 분모에는 포함 */
+  /** 모집·거절 어느 쪽도 아직 아님 — 분모에는 포함 */
   pending: number;
+  /** 무효로 보고 모든 집계에서 뺀 제출 — 미배정 + 모집 전 고객 직접 취소 */
+  excluded: number;
   /** 전환 / 제출 (%) */
   rate: number;
   /** 마지막 적재의 본진 추출 시각 (ISO) */
@@ -566,7 +568,7 @@ export interface SubmissionConversionStats {
   byBusinessForm: Breakdown[];
   byAcquisition: Breakdown[];
   byField: Breakdown[];
-  /** 검수 매니저별. 담당이 없는 제출은 «미배정» */
+  /** 검수 매니저별 (미배정은 집계 대상이 아니다) */
   byManager: Breakdown[];
 }
 

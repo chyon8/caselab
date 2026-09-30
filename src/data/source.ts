@@ -204,7 +204,7 @@ class MockDataSource implements DataSource {
 
   async getSubmissionConversionStats(): Promise<SubmissionConversionStats> {
     return {
-      total: 0, recruited: 0, rejected: 0, cancelled: 0, pending: 0, rate: 0, asOf: null,
+      total: 0, recruited: 0, rejected: 0, pending: 0, excluded: 0, rate: 0, asOf: null,
       byMonth: [], byHistory: [], byAttachment: [], byBusinessForm: [], byAcquisition: [], byField: [], byManager: [],
     };
   }
