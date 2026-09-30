@@ -1206,7 +1206,7 @@ export class PostgresDataSource implements DataSource {
    * 무효 제출은 모든 집계에서 빼고 건수만 따로 낸다(사용자 결정 2026-09-30):
    *  - 검수 매니저가 없는 제출(«미배정») — 거의 전부 제출 직후(중앙값 약 2분) 고객이 스스로 취소
    *  - 모집 전 고객 직접 취소 — 7~8월 부적합 원장에서 전부 «무효»였다
-   * 거절 중 무효(중복등록·실수 등)는 본진 DB에 사유가 없어 아직 못 뺀다.
+   *  - 거절 중 무효(중복등록·실수·Test 등) — 최신 거절 로그 note 첫머리로 판정한 reject_invalid
    */
   async getSubmissionConversionStats(periodDays?: number | null): Promise<SubmissionConversionStats> {
     const days = Number.isInteger(periodDays) && (periodDays as number) > 0 ? periodDays : null;
@@ -1214,7 +1214,8 @@ export class PostgresDataSource implements DataSource {
     const scope = `FROM submission_analysis_projects
                    WHERE submitted_at >= '${SUBMISSION_CONVERSION_FROM} 00:00+09'::timestamptz ${window}`;
     const valid = `inspection_manager IS NOT NULL
-                   AND NOT (recruited_at IS NULL AND is_cancelled IS TRUE AND is_rejected IS NOT TRUE)`;
+                   AND NOT (recruited_at IS NULL AND is_cancelled IS TRUE AND is_rejected IS NOT TRUE)
+                   AND NOT (recruited_at IS NULL AND reject_invalid IS TRUE)`;
     const base = `${scope} AND ${valid}`;
     const rate = `round(100.0 * count(*) FILTER (WHERE recruited_at IS NOT NULL) / count(*), 1)`;
     const group = (label: string, order: string, having = "", params: unknown[] = []) =>

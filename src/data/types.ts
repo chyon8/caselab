@@ -556,7 +556,7 @@ export interface SubmissionConversionStats {
   rejected: number;
   /** 모집·거절 어느 쪽도 아직 아님 — 분모에는 포함 */
   pending: number;
-  /** 무효로 보고 모든 집계에서 뺀 제출 — 미배정 + 모집 전 고객 직접 취소 */
+  /** 무효로 보고 모든 집계에서 뺀 제출 — 미배정 + 모집 전 고객 직접 취소 + 무효 거절 */
   excluded: number;
   /** 전환 / 제출 (%) */
   rate: number;

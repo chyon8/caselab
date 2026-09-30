@@ -62,7 +62,7 @@ export default function SubmissionConversionReport({
     { value: `${c.rate}%`, label: "전환률", sub: "전환 ÷ 제출" },
     { value: c.rejected.toLocaleString(), label: "거절", sub: `제출의 ${pct(c.rejected, c.total)}%` },
     { value: c.pending.toLocaleString(), label: "결과 대기", sub: "분모에 포함" },
-    { value: c.excluded.toLocaleString(), label: "무효 제외", sub: "직접 취소·미배정" },
+    { value: c.excluded.toLocaleString(), label: "무효 제외", sub: "직접 취소·미배정·무효 거절" },
   ];
 
   const groups = [
@@ -98,9 +98,9 @@ export default function SubmissionConversionReport({
         {SUBMISSION_CONVERSION_FROM.slice(0, 4)}년 {Number(SUBMISSION_CONVERSION_FROM.slice(5, 7))}월
         이후 제출된 외주 중 유효 {c.total.toLocaleString()}건 기준. 기간 탭은 <strong>제출일</strong>
         기준입니다. 제출 후 언제든 모집되면 전환으로 세고, 아직 결과 대기인{" "}
-        {c.pending.toLocaleString()}건도 분모에 포함했습니다. 모집 전에 고객이 직접 취소했거나 검수
-        매니저가 배정되기 전에 끝난 제출 {c.excluded.toLocaleString()}건은 무효로 보고 모든 집계에서
-        뺐습니다. 거절 중 무효(중복등록·실수 등)는 본진 DB에 사유가 없어 아직 분모에 남아 있습니다.
+        {c.pending.toLocaleString()}건도 분모에 포함했습니다. 모집 전에 고객이 직접 취소했거나, 검수
+        매니저가 배정되기 전에 끝났거나, 중복등록·실수·Test 등으로 거절된 제출{" "}
+        {c.excluded.toLocaleString()}건은 무효로 보고 모든 집계에서 뺐습니다.
         제출 20건 미만인 줄은 흐리게 표시했습니다.
         {mounted && c.asOf && <> 데이터 기준 시각 {formatKst(c.asOf)}.</>}
       </p>

@@ -19,6 +19,27 @@ SELECT
   (SELECT COALESCE(NULLIF(TRIM(CONCAT(COALESCE(u.last_name,''), COALESCE(u.first_name,''))), ''), u.username)
      FROM auth_user u
     WHERE u.id = pp.inspection_manager_id) AS inspection_manager,
+  (SELECT CASE WHEN TRIM(il.note) LIKE '어뷰징%'
+                 OR TRIM(il.note) LIKE '중복 등록%'
+                 OR TRIM(il.note) LIKE '중복등록%'
+                 OR TRIM(il.note) LIKE '프로젝트 중복등록%'
+                 OR TRIM(il.note) LIKE 'Test%'
+                 OR TRIM(il.note) LIKE '테스트%'
+                 OR TRIM(il.note) LIKE '실수%'
+                 OR TRIM(il.note) LIKE '지원사업 선정 전%'
+                 OR TRIM(il.note) LIKE '지원 사업 선정 전%'
+                 OR TRIM(il.note) LIKE '발주처와 계약 전%'
+                 OR TRIM(il.note) LIKE '등록 불가 업무%'
+                 OR TRIM(il.note) LIKE '위시켓 이용 제한%'
+                 OR TRIM(il.note) LIKE '위시켓 이용 불가%'
+                 OR TRIM(il.note) LIKE 'IT 업무가 아님%'
+                 OR TRIM(il.note) LIKE '이용 약관 위배%'
+                 OR TRIM(il.note) LIKE '타깃 서비스 이용 약관 위배%'
+                 OR TRIM(il.note) LIKE '대학교 과제%'
+               THEN 1 ELSE 0 END
+     FROM process_log_inspectionlog il
+    WHERE il.project_id = pp.id AND il.status = 'reject'
+    ORDER BY il.id DESC LIMIT 1) AS reject_invalid,
 
   iv.id AS initial_snapshot_id,
   iv.description AS initial_description,

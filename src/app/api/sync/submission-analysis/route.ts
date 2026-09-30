@@ -70,6 +70,7 @@ interface RawAnalysisProject {
   is_first_client_project_in_cohort?: number | boolean | null;
   first_contract_date_reference_only?: string | null;
   inspection_manager?: string | null;
+  reject_invalid?: number | boolean | null;
 }
 
 const COLS = [
@@ -88,7 +89,7 @@ const COLS = [
   "prior_platform_submissions", "prior_platform_recruitments", "prior_task_submissions",
   "prior_task_recruitments", "prior_task_contracts_reference_only",
   "is_first_client_project_in_cohort", "first_contract_date_reference_only",
-  "inspection_manager",
+  "inspection_manager", "reject_invalid",
 ] as const;
 
 function bool(value: number | boolean | null | undefined): boolean | null {
@@ -132,6 +133,7 @@ function mapRow(row: RawAnalysisProject): unknown[] | null {
     number(row.prior_task_submissions), number(row.prior_task_recruitments),
     number(row.prior_task_contracts_reference_only), bool(row.is_first_client_project_in_cohort),
     row.first_contract_date_reference_only ?? null, row.inspection_manager ?? null,
+    bool(row.reject_invalid),
   ];
 }
 
