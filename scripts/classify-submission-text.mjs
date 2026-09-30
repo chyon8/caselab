@@ -94,6 +94,8 @@ async function targets() {
     SELECT project_id, initial_description, raw_status, submitted_at, recruited_at
       FROM submission_analysis_projects
      WHERE snapshot_modified_at <= submitted_at
+       -- 매일 적재로 9월 이후 제출분이 쌓인다. 교정/검증 분할이 바뀌지 않게 1~8월로 고정한다.
+       AND submitted_at < '2026-08-31T15:00:00Z'
        AND initial_description IS NOT NULL
        AND length(btrim(initial_description)) > 0
      ORDER BY project_id

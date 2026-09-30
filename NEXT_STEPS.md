@@ -6,6 +6,130 @@
 
 ---
 
+## 제출→모집 전환률 상시 집계 — 구현 명세 (2026-09-30)
+
+> 상태: **Step 1(코드) 완료, 2026-09-30 사용자 요청으로 별도 페이지 분리 + 매니저별 추가. 사용자 로컬 확인(Step 2) 대기.** 이 섹션만 보고 이어서 개발할 수 있게 적었다. 작업 규칙은 [CLAUDE.md](./CLAUDE.md)를 따른다(인라인 스타일·하드코딩 색상·`any` 금지, AI는 git 명령을 직접 실행하지 않고 사용자에게 제공, 본진은 SELECT만, 한 번에 200건까지).
+
+### 배경 (확인된 사실)
+
+- 매일 도는 `projects` 동기화([n8n/projects_incremental.sql](./n8n/projects_incremental.sql))는 **모집 전환된 공고만** 가져온다. 전환되지 않은 제출 건이 없으므로 이것만으로는 전환률을 계산할 수 없다.
+- 제출 전체는 [n8n/submission_analysis_backfill.sql](./n8n/submission_analysis_backfill.sql)로 **한 번 수동 백필**했다. 대상은 2026-01-01~08-31 KST 외주이고, `submission_analysis_projects`에 4,319건(모집일 있음 1,932건)이 들어 있다. 9월 이후 제출 건은 없다.
+- 이미 있는 것
+  - 적재 API: [route.ts](./src/app/api/sync/submission-analysis/route.ts). `project_id` 기준 upsert라 같은 건을 다시 보내면 상태가 갱신된다.
+  - 테이블: [migrations/021](./migrations/021_submission_analysis.sql), [022](./migrations/022_submission_analysis_detail_timing.sql). 스키마는 바꾸지 않는다.
+- 제출부터 모집 전환까지 걸리는 시간(1~8월 전환 1,932건 실측): 중앙값 0.2일, 90% 3.6일 이내, 95% 6.3일 이내, 99% 19.9일 이내. 그래서 전환 기간은 제한하지 않고, 상태 갱신은 최근 60일치만 다시 받으면 충분하다.
+
+### 확정된 결정 (사용자)
+
+| 항목 | 결정 |
+|---|---|
+| 대상 | **외주만** (`project_type = 'task_based'`) |
+| 시작 시점 | **2026-01-01 KST 제출분부터**. 기존 적재분을 그대로 쓰므로 추가 백필은 없다 |
+| 전환 기준 | **기간 제한 없음.** 제출 후 언제든 모집되면 전환이다(14일 등 기준 없음) |
+| 월 귀속 | **제출월 기준.** 10월에 제출하고 11월에 전환된 건은 10월 전환으로 센다. 그래서 최근 달 수치는 며칠간 조금 오를 수 있다 |
+| 재제출 | **제출 1회를 1건으로 센다.** 재제출(`previous_project_id` 있음)은 1~8월 기준 234건, 5.4%다 |
+| 열람 권한 | **sangmin@wishket.com만.** 다른 계정이면 서버가 조회 자체를 하지 않는다(화면에서만 숨기는 방식 금지) |
+| 화면 위치 | **별도 페이지 `/report/conversion`**, 사이드바 "제출 전환". 권한 없는 계정에는 메뉴가 안 보이고, 주소로 들어오면 404 |
+| 매니저별 | **검수 매니저별 전환률도 본다.** 담당이 없는 제출은 «미배정» |
+| 나눠 볼 항목 | 아래 "구분" 표. 채워진 비율이 낮거나 제출 당시 값인지 불확실한 항목은 뺀다 |
+
+### 집계 정의
+
+대상 행은 `submission_analysis_projects` 중 `submitted_at >= '2025-12-31T15:00:00Z'`인 전부다. 삭제·숨김 건도 제외하지 않는다(기존 4,319건과 같은 기준).
+
+| 지표 | 조건 |
+|---|---|
+| 제출 | 대상 행 전체 |
+| 전환 | `recruited_at IS NOT NULL` |
+| 거절 | `recruited_at IS NULL AND is_rejected = true` |
+| 취소 | `recruited_at IS NULL AND is_rejected IS NOT TRUE AND is_cancelled = true` |
+| 결과 대기 | 위 세 가지 모두 아님 |
+| **전환률** | 전환 ÷ 제출. 결과 대기 건도 분모에 넣고, 대기 건수를 옆에 같이 보여준다 |
+
+- 월은 `submitted_at`을 KST(+9시간)로 바꾼 달이다.
+- 기간 탭(전체·1년·6개월·3개월, [period.ts](./src/features/report/period.ts))은 이 섹션에서 **제출일 기준**으로 적용한다. 리포트의 다른 섹션은 모집일 기준이므로 섹션 안내 문구에 기준을 밝힌다.
+- 표본이 20건 미만인 구분 값도 보여주되 "표본 적음"으로 표시한다(기존 `MIN_N = 20`과 같음).
+
+**구분 (1~8월 기준 채워진 비율)**
+
+| 구분 | 컬럼 → 값 | 채워진 비율 |
+|---|---|---|
+| 월별 추이 | `submitted_at` (KST 월) | 100% |
+| 첫 제출 고객 / 재이용 고객 | `prior_task_submissions` = 0 → 첫 제출, > 0 → 재이용, NULL → 미상 | 99% |
+| 제출 시 첨부 | `linked_file_count_at_submit` > 0 → 있음, 그 외 → 없음 | 100% |
+| 검수 매니저 | `inspection_manager`(024에서 추가) → `MANAGER_NAMES`로 실명, NULL → 미배정 | 백필분 0%, n8n 첫 실행(400일 창) 후 채워짐 |
+| 사업 형태 | `business_form`: `corporate_business` 법인사업자, `individual_business` 개인사업자, `individual` 개인, `team` 팀, NULL → 미상 | 95% |
+| 대표 분야 | `representative_field` 원문 그대로, NULL → 미상. 66종이라 **제출 20건 이상 분야만** 싣는다(1~8월 기준 38종) | 75% |
+| 가입 경로 (고객 계정 기준, 이번 제출의 유입 경로 아님) | `acquisition_path`: `BY_NAVER` 네이버, `BY_AI` AI 검색, `BY_GOOGLE` 구글, `BY_FRIEND` 지인 추천, `BY_BLOG` 블로그, `BY_WEBINAR` 웨비나, `BY_META` 메타, `BY_YOZMIT` 요즘IT, `BY_ETC` 기타, 빈 문자열·NULL → 미응답 | 60% |
+
+뺀 항목과 이유
+- 기획 상태(`plan_status`), 지원사업(`is_supporting_project`), 내부 인력(`inside_manpower`): 제출 당시 값인지 확인되지 않았다.
+- 예산 옵션(`budget_option`, 41%), 턴키(`is_turnkey`, 1건): 비어 있는 경우가 너무 많다.
+
+### 구현 순서
+
+**Step 1 — 코드 (개발자, 집에서 가능) ✅ 2026-09-30 완료**
+
+검증 결과: 새 집계로 기간 전체를 돌리면 제출 4,319건, 전환 1,932건(44.7%), 거절 2,000건, 취소 350건, 대기 37건이 나온다. 기존 결과와 일치한다. `tsc` 통과. 이 저장소에는 ESLint 설정 파일이 없어 lint는 돌리지 않았다.
+
+1. **새 파일 [`n8n/submission_conversion_daily.sql`](./n8n/submission_conversion_daily.sql):** 백필 SQL의 SELECT 절을 그대로 복사하고 WHERE만 바꾼다.
+   ```sql
+   WHERE pp.project_type = 'task_based'
+     AND pp.date_submitted >= GREATEST('2025-12-31 15:00:00', UTC_TIMESTAMP() - INTERVAL 60 DAY)
+     AND pp.id > {{ $json.id }}
+   ORDER BY pp.id ASC
+   LIMIT 200;
+   ```
+   - 매일 최근 60일 제출분을 **다시** 받는다. 새 제출 추가와 기존 건 상태 갱신이 이것 하나로 된다.
+   - 첫 실행이 2026-10-30 이후면 9월 초가 60일 창 밖으로 빠진다. 그때는 첫 실행에만 60을 늘린다.
+2. **새 파일 [`n8n/submission_conversion_pipeline.md`](./n8n/submission_conversion_pipeline.md):** 매일 도는 n8n 워크플로 가이드. 커서를 저장하지 않고 매번 처음부터 도는 구조다.
+   ```text
+   Schedule(매일 1회) → Set "시작 커서" {id: 0} → 원천 조회 → 적재 → IF received == 200
+                                               ▲                        │ true
+                                               └── Set "다음 커서" {id: {{$json.last_id}}} ┘
+   ```
+   - 원천 조회와 적재 노드는 기존 백필 워크플로의 노드를 복제한다. 적재는 `POST /api/sync/submission-analysis`, 헤더는 기존 `X-CaseLab-Key`, body는 `{{ { rows: $json.data } }}`.
+   - `/api/sync/cursor`는 쓰지 않는다.
+   - IF 반복은 최대 30회로 제한한다. 60일이면 약 1,100건, 6회 정도 돈다.
+   - 기존 [submission_analysis_pipeline.md](./n8n/submission_analysis_pipeline.md) 맨 위에는 "1회성 백필 완료, 상시 집계는 새 문서" 안내를 한 줄 넣는다.
+3. **[route.ts](./src/app/api/sync/submission-analysis/route.ts) 수정**
+   - `SOURCE`를 `"submission_conversion"`으로 바꾼다. `sync_state`는 마지막 실행 시각 기록용으로만 쓴다.
+   - 응답에 `last_id: lastId`를 추가한다.
+   - 매핑, upsert, 200건 제한은 그대로 둔다.
+4. **데이터 계층**
+   - [types.ts](./src/data/types.ts)에 `SubmissionConversionStats`를 추가한다.
+     - 합계: 제출·전환·거절·취소·대기·전환률
+     - 월별 배열
+     - 구분별 배열: `{ label, total, recruited, rate, lowSample }`
+     - 데이터 기준 시각: `MAX(source_extracted_at)`
+   - [source.ts](./src/data/source.ts) 인터페이스에 `getSubmissionConversionStats(periodDays?: number | null)`를 추가한다. Mock에서는 빈 값을 반환한다.
+   - [postgres.ts](./src/data/postgres.ts)에서 SQL로 집계한다. `getManagerStats`와 같은 방식으로 하고, 원본 행을 브라우저로 보내지 않는다.
+5. **권한:** [allowed-emails.ts](./src/lib/auth/allowed-emails.ts)에 `REPORT_CONVERSION_EMAILS = ["sangmin@wishket.com"]`와 `canSeeSubmissionConversion()`을 추가한다. 매니저별 지표와 권한 범위가 따로 바뀔 수 있어서 목록을 분리한다.
+6. **화면 (별도 페이지로 변경됨)**
+   - [report/conversion/page.tsx](./src/app/(app)/report/conversion/page.tsx): 권한이 없으면 `notFound()`로 막고 조회하지 않는다.
+   - [SubmissionConversionReport.tsx](./src/features/report/SubmissionConversionReport.tsx): 기간 탭(제출일 기준), 숫자 카드 6개(제출·전환·전환률·거절·취소·결과 대기), 구분별 `RateBars`(월별·검수 매니저별·첫 제출/재이용·첨부·사업 형태·가입 경로·대표 분야). `RateBars`·`Section`·`spread`·`formatKst`는 [Report.tsx](./src/features/report/Report.tsx)에서 export해 재사용한다.
+   - [AppShell.tsx](./src/components/AppShell.tsx): 사이드바 "제출 전환" 메뉴는 권한 있는 계정에만 보인다.
+   - `/report`에는 아무것도 추가하지 않는다.
+6-1. **매니저별:** [migrations/024](./migrations/024_submission_analysis_manager.sql)로 `inspection_manager` 컬럼을 추가했다(Neon 적용 완료). 일일 SQL과 적재 API가 이 값을 받는다. 1~8월 백필분에는 값이 없으므로 n8n 첫 실행만 400일 창으로 돌려 채운다.
+   - **미확인:** 본진에서 거절·취소된 제출에도 `inspection_manager_id`가 채워지는지는 이 세션에서 확인하지 못했다. 거절 건이 주로 «미배정»이면 매니저별 전환률이 부풀려 보인다. 첫 실행 뒤 매니저별 거절 건수로 확인한다.
+7. **[scripts/analyze-submission-conversion.mjs](./scripts/analyze-submission-conversion.mjs):** 전체가 4,319건이 아니면 오류를 낸다. 데이터가 늘면 멈추므로 조회 SQL에 `WHERE submitted_at < '2026-08-31T15:00:00Z'`를 넣어 1~8월로 범위를 고정한다.
+8. **[scripts/classify-submission-text.mjs](./scripts/classify-submission-text.mjs):** 같은 이유로 대상 SQL을 1~8월로 고정한다. 새 데이터가 쌓여도 교정/검증 분할이 바뀌지 않게 하기 위해서다.
+9. **검증:** 기간 전체, 2026-01~08 범위로 새 집계를 돌려 제출 4,319건·전환 1,932건이 나오는지 확인한다. `npx tsc --noEmit`과 lint를 통과해야 한다.
+
+**Step 2 — 로컬 화면 확인 (사용자):** 로컬 `/report/conversion`을 확인한다. sangmin 계정에는 사이드바 "제출 전환"이 보이고, 다른 계정에는 메뉴가 없고 주소로 들어가면 404가 나와야 한다. 매니저별은 n8n 첫 실행 전까지 전부 «미배정»이다.
+
+**Step 3 — 배포 (사용자):** 개발자가 준 git 명령으로 push한다. 적재 API가 바뀌므로 **Step 4보다 먼저** 배포해야 한다.
+
+**Step 4 — n8n 설정 (사용자, 본진 접근이 필요해서 회사에서):** [n8n/submission_conversion_pipeline.md](./n8n/submission_conversion_pipeline.md)대로 워크플로를 만든다. 첫 실행은 수동으로, **400일 창**으로 한 번 돌린다. 이때 1~8월 담당 매니저가 채워지고 9월 제출분이 처음 들어온다. 배치마다 `skipped = 0`인지 확인하고 received·upserted 합계를 개발자에게 전달한다.
+
+**Step 5 — 적재 검증 (개발자 + 사용자):** 개발자가 본진 월별 외주 제출 수 SELECT를 준다. 사용자가 n8n에서 실행해 결과를 전달하면, 개발자가 CaseLab 월별 건수와 대조한다.
+
+**Step 6 — 운영 확인 (사용자):** 배포 화면에 9월까지 나오는지, 다음 날 자동 실행이 돌았는지(n8n 실행 기록) 확인한다.
+
+**Step 7 — 기록 (개발자):** 이 섹션을 완료 상태로 줄이고, HANDOFF.md의 "진행 중" 항목을 "가동 중" 파이프라인 표로 옮긴다.
+
+---
+
 ## 공고 기반 타깃 수요 분석 v2 — 상위 분류 재집계 (2026-09-29)
 
 > 이전 결과(28종 수요 태그, 24개 고정 타깃·182건)와 세 축 완전일치 그룹(1위 29건)은 폐기. `/report/target-demand`는 아래 원장만 읽는다.

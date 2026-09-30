@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { canSeeSubmissionConversion } from "@/lib/auth/allowed-emails";
 import { useApp } from "@/state/AppContext";
 import styles from "./AppShell.module.css";
 
@@ -30,6 +31,11 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
       <circle cx="12" cy="12" r="1" />
     </>
   ),
+  "/report/conversion": (
+    <>
+      <path d="M3 4h18l-7 8v6l-4 2v-8z" />
+    </>
+  ),
   "/settings": (
     <>
       <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
@@ -42,6 +48,8 @@ const NAV_ITEMS = [
   { label: "전체 프로젝트", href: "/" },
   { label: "리포트", href: "/report" },
   { label: "수요 리포트", href: "/report/target-demand" },
+  // 권한 있는 계정에만 보인다(REPORT_CONVERSION_EMAILS). 페이지도 서버에서 따로 막는다
+  { label: "제출 전환", href: "/report/conversion", restricted: true },
   { label: "설정", href: "/settings" },
 ];
 
@@ -101,7 +109,9 @@ export default function AppShell({
         {!sc && <div className={styles.subtitle}>프로젝트 케이스 허브</div>}
         {sc && <div className={styles["collapsed-gap"]} />}
         <nav className={styles.nav}>
-          {NAV_ITEMS.map((item) => (
+          {NAV_ITEMS.filter(
+            (item) => !item.restricted || canSeeSubmissionConversion(user?.email),
+          ).map((item) => (
             <Link
               key={item.href}
               href={item.href}

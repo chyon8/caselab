@@ -146,6 +146,8 @@ const rows = await sql.query(`
          prior_task_contracts_reference_only, business_form, acquisition_path,
          first_contract_date_reference_only
     FROM submission_analysis_projects
+   -- 매일 적재(2026-09-30~)로 9월 이후 제출분이 쌓인다. 이 분석은 1~8월 코호트로 고정한다.
+   WHERE submitted_at < '2026-08-31T15:00:00Z'
    ORDER BY project_id
 `);
 

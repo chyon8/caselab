@@ -4,6 +4,7 @@ import {
   LOW_PROPOSAL_FROM,
   LOW_PROPOSAL_PAGE,
   REPORT_MONTHS,
+  SUBMISSION_CONVERSION_FROM,
 } from "@/features/report/period";
 import { getTargetDemandLedger } from "./target-demand-ledger";
 import type { PoolQna } from "@/lib/review-tips";
@@ -40,6 +41,7 @@ import type {
   QnaItem,
   QnaSummary,
   ReportStats,
+  SubmissionConversionStats,
   TargetDemandCandidate,
   TargetDemandStats,
   SimilarProject,
@@ -393,6 +395,9 @@ const WON = `stage >= 3 AND status <> '완료(취소)'`;
 const MIN_SAMPLE = 30;
 /** 이 아래는 숨기진 않되 신뢰할 수 없다고 표시한다 */
 const SOFT_SAMPLE = 100;
+
+/** 제출→모집 전환 구분값이 이보다 적으면 "표본 적음" (분석 스크립트의 MIN_N과 같다) */
+const CONVERSION_SOFT_SAMPLE = 20;
 
 /** 리스크 태그 랭킹에 실을 개수 */
 const RISK_TOP_N = 10;
@@ -1192,6 +1197,121 @@ export class PostgresDataSource implements DataSource {
         lowSample: decided < MIN_SAMPLE,
       };
     });
+  }
+
+  /**
+   * 제출→모집 전환. 모집단이 projects(모집 전환 건)가 아니라 submission_analysis_projects(제출 전체)다.
+   * 전환 = 모집일이 있음(기간 제한 없음). 월·기간은 제출일(KST) 기준 — 10월 제출·11월 전환은 10월 전환.
+   * 결과 대기도 분모에 넣는다. 권한 있는 계정에서만 호출된다(report/page.tsx).
+   */
+  async getSubmissionConversionStats(periodDays?: number | null): Promise<SubmissionConversionStats> {
+    const days = Number.isInteger(periodDays) && (periodDays as number) > 0 ? periodDays : null;
+    const window = days ? `AND submitted_at >= now() - interval '${days} days'` : "";
+    const base = `FROM submission_analysis_projects
+                  WHERE submitted_at >= '${SUBMISSION_CONVERSION_FROM} 00:00+09'::timestamptz ${window}`;
+    const rate = `round(100.0 * count(*) FILTER (WHERE recruited_at IS NOT NULL) / count(*), 1)`;
+    const group = (label: string, order: string, having = "", params: unknown[] = []) =>
+      query<BreakdownRow>(
+        `SELECT ${label} AS label, count(*) AS decided, ${rate} AS rate
+           ${base}
+          GROUP BY 1 ${having}
+          ORDER BY ${order}`,
+        params,
+      );
+
+    const [
+      [totals],
+      byMonth,
+      byHistory,
+      byAttachment,
+      byBusinessForm,
+      byAcquisition,
+      byField,
+      byManager,
+    ] =
+      await Promise.all([
+        query<{
+          total: string;
+          recruited: string;
+          rejected: string;
+          cancelled: string;
+          as_of: string | null;
+        }>(
+          `SELECT count(*) AS total,
+                  count(*) FILTER (WHERE recruited_at IS NOT NULL) AS recruited,
+                  count(*) FILTER (WHERE recruited_at IS NULL AND is_rejected) AS rejected,
+                  count(*) FILTER (WHERE recruited_at IS NULL AND is_rejected IS NOT TRUE
+                                     AND is_cancelled) AS cancelled,
+                  (SELECT max(source_extracted_at) FROM submission_analysis_projects) AS as_of
+             ${base}`,
+        ),
+        group(`to_char(submitted_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM')`, "1"),
+        group(
+          `CASE WHEN prior_task_submissions IS NULL THEN '미상'
+                WHEN prior_task_submissions = 0 THEN '첫 제출 고객'
+                ELSE '재이용 고객' END`,
+          "2 DESC",
+        ),
+        group(
+          `CASE WHEN linked_file_count_at_submit > 0 THEN '첨부 있음' ELSE '첨부 없음' END`,
+          "2 DESC",
+        ),
+        group(
+          `CASE business_form WHEN 'corporate_business' THEN '법인사업자'
+                              WHEN 'individual_business' THEN '개인사업자'
+                              WHEN 'individual' THEN '개인'
+                              WHEN 'team' THEN '팀'
+                              ELSE '미상' END`,
+          "2 DESC",
+        ),
+        group(
+          `CASE acquisition_path WHEN 'BY_NAVER' THEN '네이버'
+                                 WHEN 'BY_AI' THEN 'AI 검색'
+                                 WHEN 'BY_GOOGLE' THEN '구글'
+                                 WHEN 'BY_FRIEND' THEN '지인 추천'
+                                 WHEN 'BY_BLOG' THEN '블로그'
+                                 WHEN 'BY_WEBINAR' THEN '웨비나'
+                                 WHEN 'BY_META' THEN '메타'
+                                 WHEN 'BY_YOZMIT' THEN '요즘IT'
+                                 WHEN 'BY_ETC' THEN '기타'
+                                 ELSE '미응답' END`,
+          "2 DESC",
+        ),
+        // 66종이라 전부 실으면 표가 끝없이 길다 — 제출이 표본 기준 이상인 분야만
+        group(
+          `COALESCE(representative_field, '미상')`,
+          "2 DESC",
+          `HAVING count(*) >= ${CONVERSION_SOFT_SAMPLE}`,
+        ),
+        // 계정명 → 실명은 getManagerStats와 같이 SQL에서 한다(같은 사람이 두 줄로 갈리지 않게)
+        group(
+          `COALESCE($1::jsonb ->> inspection_manager, inspection_manager, '미배정')`,
+          "2 DESC",
+          "",
+          [JSON.stringify(MANAGER_NAMES)],
+        ),
+      ]);
+
+    const total = Number(totals?.total ?? 0);
+    const recruited = Number(totals?.recruited ?? 0);
+    const rejected = Number(totals?.rejected ?? 0);
+    const cancelled = Number(totals?.cancelled ?? 0);
+    return {
+      total,
+      recruited,
+      rejected,
+      cancelled,
+      pending: total - recruited - rejected - cancelled,
+      rate: total ? Math.round((recruited / total) * 1000) / 10 : 0,
+      asOf: totals?.as_of ?? null,
+      byMonth: toBreakdown(byMonth, CONVERSION_SOFT_SAMPLE),
+      byHistory: toBreakdown(byHistory, CONVERSION_SOFT_SAMPLE),
+      byAttachment: toBreakdown(byAttachment, CONVERSION_SOFT_SAMPLE),
+      byBusinessForm: toBreakdown(byBusinessForm, CONVERSION_SOFT_SAMPLE),
+      byAcquisition: toBreakdown(byAcquisition, CONVERSION_SOFT_SAMPLE),
+      byField: toBreakdown(byField, CONVERSION_SOFT_SAMPLE),
+      byManager: toBreakdown(byManager, CONVERSION_SOFT_SAMPLE),
+    };
   }
 
   async getLastSyncAt(): Promise<string | null> {

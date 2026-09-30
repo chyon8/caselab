@@ -14,6 +14,7 @@ import type {
   ProjectQuery,
   ProjectStatus,
   ReportStats,
+  SubmissionConversionStats,
   TargetDemandStats,
   SimilarProject,
   SimilarStats,
@@ -89,6 +90,8 @@ export interface DataSource {
   getLowProposalProjects(periodDays?: number | null, page?: number): Promise<LowProposalPage>;
   /** 매니저별 성과 지표 — 볼 권한이 있는 계정에서만 호출한다(REPORT_MANAGER_EMAILS) */
   getManagerStats(periodDays?: number | null): Promise<ManagerStat[]>;
+  /** 제출→모집 전환 — 볼 권한이 있는 계정에서만 호출한다(REPORT_CONVERSION_EMAILS). periodDays는 제출일 기준 */
+  getSubmissionConversionStats(periodDays?: number | null): Promise<SubmissionConversionStats>;
   /** 마지막 동기화 시각(ISO) — 리포트가 "언제 기준 데이터인지" 밝히는 데 쓴다 */
   getLastSyncAt(): Promise<string | null>;
   getNotifications(): Promise<AppNotification[]>;
@@ -197,6 +200,13 @@ class MockDataSource implements DataSource {
 
   async getManagerStats(): Promise<ManagerStat[]> {
     return [];
+  }
+
+  async getSubmissionConversionStats(): Promise<SubmissionConversionStats> {
+    return {
+      total: 0, recruited: 0, rejected: 0, cancelled: 0, pending: 0, rate: 0, asOf: null,
+      byMonth: [], byHistory: [], byAttachment: [], byBusinessForm: [], byAcquisition: [], byField: [], byManager: [],
+    };
   }
 
   async getLastSyncAt(): Promise<string | null> {

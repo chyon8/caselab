@@ -543,6 +543,33 @@ export interface ManagerStat {
   lowSample: boolean;
 }
 
+/**
+ * 제출→모집 전환 (submission_analysis_projects). 리포트의 다른 집계와 모집단이 다르다 —
+ * 모집 전환 건이 아니라 **제출된 외주 전체**가 분모다. 월·기간은 제출일(KST) 기준.
+ * 볼 권한이 있는 계정에서만 조회한다(REPORT_CONVERSION_EMAILS).
+ * 구분별 Breakdown의 decided는 여기서 "제출 수"다.
+ */
+export interface SubmissionConversionStats {
+  total: number;
+  recruited: number;
+  rejected: number;
+  cancelled: number;
+  /** 모집·거절·취소 어느 쪽도 아직 아님 — 분모에는 포함 */
+  pending: number;
+  /** 전환 / 제출 (%) */
+  rate: number;
+  /** 마지막 적재의 본진 추출 시각 (ISO) */
+  asOf: string | null;
+  byMonth: Breakdown[];
+  byHistory: Breakdown[];
+  byAttachment: Breakdown[];
+  byBusinessForm: Breakdown[];
+  byAcquisition: Breakdown[];
+  byField: Breakdown[];
+  /** 검수 매니저별. 담당이 없는 제출은 «미배정» */
+  byManager: Breakdown[];
+}
+
 export interface AppNotification {
   id: string;
   type: "status" | "qna";

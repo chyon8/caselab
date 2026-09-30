@@ -28,6 +28,11 @@ export const REPORT_MONTHS = 24;
  * 것만** 본다 — 2024년 건을 넘겨보는 건 검수에 쓸모가 없다. 쿼리와 화면 문구가 같은 값을 봐야 한다.
  */
 export const LOW_PROPOSAL_FROM = "2026-01-01";
+/**
+ * 제출→모집 전환 집계의 시작일(KST 제출일). 이 날 이후 제출분만 매일 적재한다
+ * (n8n/submission_conversion_daily.sql). 쿼리와 화면 문구가 같은 값을 봐야 한다.
+ */
+export const SUBMISSION_CONVERSION_FROM = "2026-01-01";
 /** 목록 한 페이지 건수 — 한 번에 쭉 내리지 않고 넘겨 본다 */
 export const LOW_PROPOSAL_PAGE = 25;
 

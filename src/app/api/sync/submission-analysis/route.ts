@@ -4,7 +4,10 @@ import { scrubPii } from "@/lib/sync/pii";
 import { SAVE_CURSOR_SQL } from "@/lib/sync/sync-state";
 import { valuesClause } from "@/lib/sync/sql";
 
-const SOURCE = "submission_analysis_2026_01_08";
+// 2026-01~08 1회성 백필(submission_analysis_2026_01_08)은 끝났고, 지금은 매일 최근 60일을 다시 받는다
+// (n8n/submission_conversion_pipeline.md). n8n이 last_id로 스스로 페이지를 넘기므로
+// sync_state는 마지막 실행 시각 기록용이다.
+const SOURCE = "submission_conversion";
 const PAGE_SIZE = 200;
 
 interface RawAnalysisProject {
@@ -66,6 +69,7 @@ interface RawAnalysisProject {
   prior_task_contracts_reference_only?: number | string | null;
   is_first_client_project_in_cohort?: number | boolean | null;
   first_contract_date_reference_only?: string | null;
+  inspection_manager?: string | null;
 }
 
 const COLS = [
@@ -84,6 +88,7 @@ const COLS = [
   "prior_platform_submissions", "prior_platform_recruitments", "prior_task_submissions",
   "prior_task_recruitments", "prior_task_contracts_reference_only",
   "is_first_client_project_in_cohort", "first_contract_date_reference_only",
+  "inspection_manager",
 ] as const;
 
 function bool(value: number | boolean | null | undefined): boolean | null {
@@ -126,7 +131,7 @@ function mapRow(row: RawAnalysisProject): unknown[] | null {
     number(row.prior_platform_submissions), number(row.prior_platform_recruitments),
     number(row.prior_task_submissions), number(row.prior_task_recruitments),
     number(row.prior_task_contracts_reference_only), bool(row.is_first_client_project_in_cohort),
-    row.first_contract_date_reference_only ?? null,
+    row.first_contract_date_reference_only ?? null, row.inspection_manager ?? null,
   ];
 }
 
@@ -193,6 +198,7 @@ export async function POST(req: Request): Promise<Response> {
     upserted: mappedRows.length,
     skipped,
     cursor,
+    last_id: lastId,
     done: rows.length < PAGE_SIZE,
   });
 }

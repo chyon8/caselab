@@ -14,13 +14,13 @@ import LowProposalList from "./LowProposalList";
 import styles from "./Report.module.css";
 
 /** 막대가 나타내는 %가 무슨 %인지 — 섹션마다 다르다. 안 쓰면 계약률과 구성비가 같은 칸에서 섞여 보인다 */
-type Metric = "계약률" | "구성비" | "언급률" | "저지원 비율";
+type Metric = "계약률" | "구성비" | "언급률" | "저지원 비율" | "전환률";
 
 /**
  * 막대 하나. 비율(%)을 그대로 폭으로 쓴다 — 최댓값 기준으로 정규화하면
  * "37.7%가 100% 폭"이 되어 실제보다 격차가 커 보인다.
  */
-function RateBars({
+export function RateBars({
   rows,
   metric,
   sampleLabel = "표본",
@@ -61,7 +61,7 @@ function RateBars({
   );
 }
 
-function Section({
+export function Section({
   title,
   note,
   finding,
@@ -425,7 +425,7 @@ function rangeLabel({ from, to }: ReportStats["coverage"]): string {
 }
 
 /** SyncButton과 같은 형식 — 같은 값(마지막 동기화 시각)이 화면마다 다르게 보이면 안 된다 */
-function formatKst(iso: string): string {
+export function formatKst(iso: string): string {
   return new Date(iso).toLocaleString("ko-KR", {
     timeZone: "Asia/Seoul",
     month: "numeric",
@@ -439,7 +439,7 @@ function formatKst(iso: string): string {
  * 최고·최저 구간을 데이터에서 뽑아 한 줄로 만든다.
  * 표본이 충분한 행만 쓴다 — 30건짜리 구간이 "가장 낮음"으로 뽑히면 없는 경향을 만들어낸다.
  */
-function spread(rows: Breakdown[]): string | null {
+export function spread(rows: Breakdown[]): string | null {
   const solid = rows.filter((r) => !r.lowSample);
   if (solid.length < 2) return null;
   const hi = solid.reduce((a, b) => (b.rate > a.rate ? b : a));

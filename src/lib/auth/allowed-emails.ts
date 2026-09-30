@@ -28,3 +28,17 @@ export function canSeeManagerStats(email: string | undefined | null): boolean {
   const e = email.trim().toLowerCase();
   return REPORT_MANAGER_EMAILS.some((allowed) => allowed.trim().toLowerCase() === e);
 }
+
+/**
+ * 리포트의 **제출→모집 전환** 섹션을 볼 수 있는 계정. 거절·취소 수치가 실려 범위를 따로 둔다.
+ * 매니저별 지표와 권한이 따로 바뀔 수 있어 목록을 분리했다. 여기 없으면 조회 자체를 하지 않는다.
+ */
+export const REPORT_CONVERSION_EMAILS = [
+  "sangmin@wishket.com", // 이상민
+];
+
+export function canSeeSubmissionConversion(email: string | undefined | null): boolean {
+  if (!email) return false;
+  const e = email.trim().toLowerCase();
+  return REPORT_CONVERSION_EMAILS.some((allowed) => allowed.trim().toLowerCase() === e);
+}

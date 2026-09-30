@@ -1,5 +1,7 @@
 # 제출→모집 분석 일회성 백필
 
+> **완료(2026-09, 4,319건). 다시 돌리지 않는다.** 상시 적재는 [submission_conversion_pipeline.md](./submission_conversion_pipeline.md). 적재 API의 sync_state 기록 이름이 바뀌어 이 문서의 `분석 커서` 흐름은 더 이상 맞지 않는다.
+
 운영 `projects` 동기화와 분리한 수동 워크플로다. 2026년 1~8월 외주 전체 제출을
 `submission_analysis_projects`에 저장한다. 고객 식별자·연락처·담당자명·회사명은 전송하지 않는다.
 
