@@ -192,6 +192,41 @@ OR project_project.date_rejected IS NOT NULL
 
 > ⚠️ 실제 데이터에서 `close_recruiting` + `is_cancelled=1` 조합이 많음. **status만 보면 안 되고 반드시 `is_cancelled`, `is_rejected`를 함께 봐야 함.**
 
+### 검수 거절 사유: `process_log_inspectionlog` ⭐ (확인 2026-09-30)
+
+검수 매니저의 거절 사유는 `project_project`에 없고 이 로그 테이블의 **`note`(자유 텍스트)**에 있다. 컬럼명에 `reason`·`reject`가 없어 컬럼명 검색으로는 안 잡힌다.
+
+| 컬럼 | 타입 | 설명 |
+|---|---|---|
+| `id` | int | 로그 PK |
+| `project_id` | int | → project_project.id |
+| `temporary_project_id` | int | |
+| `manager_id` | int | 기록한 매니저 |
+| `status` | varchar | 검수 단계. 거절은 `'reject'` |
+| `note` | longtext | 매니저 메모. 거절 로그는 **첫 줄이 사유 문구**, 이후 줄은 상세(고객 메일 원문·이메일·실명 포함 가능 → 원문 반출 금지) |
+| `start_call` / `end_call` | datetime | 통화 시각 |
+| `is_complete` | tinyint | |
+
+- **사유 = 프로젝트별 `status='reject'` 로그 중 id가 가장 큰(최신) 행의 `note`.** 사내 Tableau «부적합 사유» 계산 필드와 같은 규칙이다.
+- 자주 나오는 첫 줄: `연락 안됨 7`, `재연락 7`, `프로젝트 연기`, `프로젝트 진행 취소`, `단가 안 맞음`, `견적 문의/단순 문의`, `타 업체와 진행`, `기획 및 내용 구체화 필요`, `중복 등록`/`중복등록`, `실수`, `Test`, `IT 업무가 아님`, `지원 사업 선정 전`, `기타` 등. 정해진 문구가 아닌 자유 서술도 섞인다.
+- **무효(Tableau «부적합 사유|유무효») 판정 문구:** 어뷰징, 중복 등록/중복등록/프로젝트 중복등록, Test/테스트, 실수, 지원사업·지원 사업 선정 전, 발주처와 계약 전, 등록 불가 업무, 위시켓 이용 제한/불가, IT 업무가 아님, (타깃 서비스) 이용 약관 위배, 대학교 과제. 그 외는 유효. CaseLab 구현은 `n8n/submission_conversion_daily.sql`의 `reject_invalid`.
+- `is_rejected=1`인데 거절 로그가 없는 제출도 있다(2026년 7~8월 55건, 현재 status 전부 `submitted`). Tableau 원장은 이들을 «기타(미지정)»=유효로 둔다.
+
+### 취소 사유: `project_project.cancel_type` (확인 2026-09-30)
+
+검수 거절 건에는 **비어 있다.** 고객 취소에만 채워진다.
+
+| 구분 | 값 |
+|---|---|
+| 모집 전 고객 직접 취소 (원장상 무효) | `add_mistake`, `project_cancel`, `change_plan`, `duplicate`, `by_inhouse` |
+| 모집 후 취소 (원장상 «모집 전환») | `work_scope_change`, `client_postpone`, `expire`, `cannot_contact`, `price_change`, `bad_proposals` |
+
+### 사유 찾을 때 헛걸음했던 곳
+
+- `project_project.management_status` — 전부 `pp1`
+- `project_project_management_label` — 거절 사유 아님(사용자 확인)
+- `projectmanagement_projectmanagementstatus.cancellation_reason` — 숫자 코드 8종(913121~4, 322007~10)뿐
+
 ---
 
 ## 3. 카테고리 / 태그 / 분류 체계
