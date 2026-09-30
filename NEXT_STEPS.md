@@ -19,8 +19,8 @@
 | 전환 기준 | **기간 제한 없음.** 제출 후 언제든 모집되면 전환 |
 | 월 귀속 | **제출월.** 10월 제출·11월 전환은 10월 전환. 최근 달은 며칠간 조금 오를 수 있다 |
 | 재제출 | **제출 1회 = 1건.** `previous_project_id`로 묶지 않는다 |
-| 무효 제외 | **무효 제출은 모든 집계에서 빼고 건수만 표시한다**(2026-09-30). 지금 DB로 가려내는 무효는 두 가지다. ① 검수 매니저가 없는 제출(«미배정»): 거의 전부 제출 직후(중앙값 약 2분) 고객이 스스로 취소한 건. ② 모집 전 고객 직접 취소(`recruited_at IS NULL AND is_cancelled AND NOT is_rejected`): 8월 부적합 원장에서 전부 «무효»였다 |
-| 목표 | **유효 전환율 = 전환 ÷ (제출 − 무효).** 거절 중 무효(중복등록·실수·Test·이용 불가 등)까지 빼는 것이 최종 목표이고, 거절 사유 출처를 찾는 중이다(아래) |
+| 무효 제외 | **무효 제출은 모든 집계에서 빼고 건수만 표시한다**(2026-09-30). DB로 가려내는 무효는 세 가지다. ① 검수 매니저가 없는 제출(«미배정»): 거의 전부 제출 직후(중앙값 약 2분) 고객이 스스로 취소한 건. ② 모집 전 고객 직접 취소(`recruited_at IS NULL AND is_cancelled AND NOT is_rejected`): 8월 부적합 원장에서 전부 «무효»였다. ③ 무효 거절(`reject_invalid`, 아래 «무효 거절 판정») |
+| 목표 | **유효 전환율 = 전환 ÷ (제출 − 무효).** 무효 거절까지 빼서 달성(2026-09-30) |
 | 열람 | **sangmin@wishket.com만** (`REPORT_CONVERSION_EMAILS`). 다른 계정은 메뉴 없음, 주소로 오면 404, 서버 조회도 안 함 |
 | 화면 | `/report`와 분리한 별도 페이지. 기간 탭은 **제출일 기준** |
 | 구분 | 월별, 검수 매니저별, 첫 제출/재이용 고객, 제출 시 첨부, 사업 형태, **가입 경로**, 대표 분야(제출 20건 이상만) |
@@ -29,7 +29,7 @@
 
 ### 집계 정의
 
-대상은 `submission_analysis_projects` 중 `submitted_at >= 2026-01-01 KST`이고 무효(위 ①②)가 아닌 건이다(삭제·숨김 포함). 20건 미만인 줄은 "표본 적음"으로 흐리게 표시한다.
+대상은 `submission_analysis_projects` 중 `submitted_at >= 2026-01-01 KST`이고 무효(위 ①②③)가 아닌 건이다(삭제·숨김 포함). 20건 미만인 줄은 "표본 적음"으로 흐리게 표시한다.
 
 | 지표 | 조건 |
 |---|---|
@@ -45,7 +45,7 @@
   - 커서는 저장하지 않는다. 시작 커서 `id=0` Set 노드 → 적재 응답의 `last_id` → 다음 커서 Set 노드로 페이지를 넘긴다.
   - 60일로 충분한 근거: 1~8월 전환의 99%가 제출 후 20일 안에 일어났다.
   - 본진 `/query`는 쿼리가 `SELECT`로 시작해야 한다. SQL 파일에 **주석을 넣지 않는다**(주석이 있으면 `Only SELECT queries are allowed`로 거부된다).
-- **DB:** [migrations/024](./migrations/024_submission_analysis_manager.sql)로 `inspection_manager` 컬럼을 추가했다(Neon 적용 완료). 스키마는 021/022/024.
+- **DB:** [migrations/024](./migrations/024_submission_analysis_manager.sql)로 `inspection_manager`, [025](./migrations/025_submission_analysis_reject_invalid.sql)로 `reject_invalid` 컬럼을 추가했다(Neon 적용 완료). 스키마는 021/022/024/025.
 - **코드**
   - 조회: [postgres.ts](./src/data/postgres.ts)의 `getSubmissionConversionStats`
   - 페이지: [report/conversion/page.tsx](./src/app/(app)/report/conversion/page.tsx)
@@ -66,23 +66,20 @@
 - [ ] 사용자: n8n SQL을 `INTERVAL 60 DAY`로 되돌리고 워크플로 **Active** 켜기
 - [ ] 사용자: 다음 날 자동 실행 성공 확인(n8n 실행 기록 또는 `sync_state.source='submission_conversion'`의 `last_run_at`)
 - 참고: `manager_sumin`(9건)은 실명표에 없어 계정명 그대로 나온다. 사용자 판단으로 그대로 둔다(2026-09-30).
-- 무효 제외 후 기간 전체(2026-09-30 기준): 유효 제출 4,378, 전환 2,092(47.8%), 거절 2,199, 대기 87, 무효 제외 392.
+- 무효 거절까지 제외한 기간 전체(2026-09-30 기준): 유효 제출 3,714, 전환 2,094(56.4%).
 
-### 거절 사유 출처 찾기 (진행 중)
+### 무효 거절 판정 (2026-09-30 완료)
 
-- **확인한 것**
-  - 7~8월 부적합 원장 CSV(`.private/submission-conversion/rejection-review-*.csv`, UTF-16 탭 구분)를 프로젝트 ID로 대조했다. 매니저 거절 건(연락안됨·기타·연기·중복등록·실수 등)은 `project_project.cancel_type`이 **전부 비어 있다.**
-  - `cancel_type`이 채워지는 건 두 경우뿐이다. 모집 전 고객 직접 취소(`add_mistake`·`project_cancel`·`change_plan`·`duplicate`·`by_inhouse`, 원장상 무효)와 모집 후 취소(`work_scope_change`·`client_postpone`·`expire`·`cannot_contact`·`price_change`·`bad_proposals`, 원장상 «모집 전환»)다.
-  - 본진 `/query` DB 안에서 `reason`·`reject`·`cancel_type`·`label` 컬럼을 전수 검색했다. 검수 거절 사유를 담은 컬럼은 없다.
-    - `management_status`는 전부 `pp1`이다.
-    - `project_project_management_label`은 사용자가 아니라고 확인했다.
-    - `projectmanagement_projectmanagementstatus.cancellation_reason`은 숫자 코드 8종(913121~4, 322007~10)뿐이라 원장의 20여 종과 맞지 않는다.
-  - 사내 MCP도 `cancel_type='add_mistake'`로 근사해 3개월 거절 805건 중 1건만 잡았다. 원장상 8월 실수는 13건이다.
-- **다음:** 같은 서버의 **다른 스키마**를 검색한다(`table_schema <> DATABASE()`로 `reject`·`reason`·`unsuit` 컬럼 찾기). 사용자는 "DB에 무조건 있다"는 입장이다. 없으면 사내 MCP에 부적합 사유 저장 위치를 직접 묻는다.
-- **원장 유효/무효 대응(8월):**
-  - 무효: 직접 취소, 중복등록, 실수, 위시켓 이용 불가, 지원사업 선정 전, 이용 약관 위배, Test, 대학교 과제
-  - 유효: 그 외 전부(연락안됨·기타·연기·단순 문의·단가·잔여·타 업체·자체 진행 등)
-  - 한 사유는 항상 한쪽으로만 분류됐다. 판정 주체와 기준은 모른다.
+- **출처:** 본진 `process_log_inspectionlog.note`. 프로젝트별 `status='reject'` 로그 중 **id가 가장 큰(최신)** 행의 메모다. 사내 Tableau «부적합 사유 → 부적합 사유|유무효» 계산 필드도 같은 원천을 쓴다.
+  - 예전 컬럼명 검색(`reason`·`reject` 등)에 안 걸린 이유: 컬럼 이름이 그냥 `note`다.
+- **판정:** 메모를 TRIM한 첫머리가 아래로 시작하면 무효(`reject_invalid = true`). 거절 로그가 없으면 NULL이고 유효로 센다.
+  - 어뷰징, 중복 등록/중복등록/프로젝트 중복등록, Test/테스트, 실수, 지원사업·지원 사업 선정 전, 발주처와 계약 전, 등록 불가 업무, 위시켓 이용 제한/불가, IT 업무가 아님, (타깃 서비스) 이용 약관 위배, 대학교 과제
+  - `등록 불가 프로젝트 (사행성)`은 원장대로 **유효**(사용자 결정 2026-09-30).
+- **개인정보:** 메모 원문에 이메일·실명·고객 메일이 섞여 있다. 본진 SQL 안에서 판정만 하고 **원문은 CaseLab으로 가져오지 않는다.**
+- **구성:** [migrations/025](./migrations/025_submission_analysis_reject_invalid.sql)(Neon 적용 완료) → [submission_conversion_daily.sql](./n8n/submission_conversion_daily.sql)의 `reject_invalid` → 적재 API → `getSubmissionConversionStats`의 무효 조건 `NOT (recruited_at IS NULL AND reject_invalid IS TRUE)`.
+- **검증(7~8월 원장 대조):** 무효=무효 46, 유효=유효 316, **불일치 0**. 거절 메모가 없는 55건은 원장도 전부 «기타(미지정)»=유효였다(현재 상태가 모두 `submitted` — 거절 후 재제출로 추정, 미확인).
+- **적용 후(2026-09-30, 2026-01~09):** 무효 거절 667건 제외. 유효 제출 4,381 → 3,714, 전환 2,094, 전환율 47.8% → **56.4%**.
+- **한계:** Tableau 원식에는 프로젝트 ID 100건을 사유로 직접 지정하는 예외가 있다. 원식을 받지 못해 반영하지 않았다. 7~8월 대조에서는 영향이 없었다.
 
 ---
 
