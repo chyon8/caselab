@@ -93,7 +93,7 @@ export interface DataSource {
   getManagerStats(periodDays?: number | null): Promise<ManagerStat[]>;
   /** 제출→모집 전환 — 볼 권한이 있는 계정에서만 호출한다(REPORT_CONVERSION_EMAILS). periodDays는 제출일 기준 */
   getSubmissionConversionStats(periodDays?: number | null): Promise<SubmissionConversionStats>;
-  /** 제출 후 미모집 사유 — 권한은 제출 전환과 같다(REPORT_CONVERSION_EMAILS). periodDays는 제출일 기준 */
+  /** 제출 후 미모집 사유 — 로그인한 계정 모두 볼 수 있다. periodDays는 제출일 기준 */
   getNonRecruitmentStats(periodDays?: number | null): Promise<NonRecruitmentStats>;
   /** 마지막 동기화 시각(ISO) — 리포트가 "언제 기준 데이터인지" 밝히는 데 쓴다 */
   getLastSyncAt(): Promise<string | null>;

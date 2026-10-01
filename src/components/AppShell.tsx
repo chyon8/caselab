@@ -57,7 +57,7 @@ const NAV_ITEMS = [
   { label: "수요 리포트", href: "/report/target-demand" },
   // 권한 있는 계정에만 보인다(REPORT_CONVERSION_EMAILS). 페이지도 서버에서 따로 막는다
   { label: "제출 전환", href: "/report/conversion", restricted: true },
-  { label: "미모집 사유", href: "/report/non-recruitment", restricted: true },
+  { label: "미모집 사유", href: "/report/non-recruitment" },
   { label: "설정", href: "/settings" },
 ];
 
