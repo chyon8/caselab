@@ -6,6 +6,27 @@
 
 ---
 
+## 제출 후 미모집 사유 — 완료 (2026-10-01)
+
+> 화면 `/report/non-recruitment`, 보고서 `public/reports/non-recruitment-report.html`. 계획·진행은 [PLAN.md](./analysis/non-recruitment-reasons/PLAN.md), 본진 조사 SQL과 결과는 [ACTIONS.md](./analysis/non-recruitment-reasons/ACTIONS.md).
+
+### 확인된 도메인 사실 (사용자 확인·본진 실측)
+
+- **상세 항목(직군·대표 분야·기획 상태 등)은 고객이 등록할 때 입력하고, 비어 있으면 검수 중에 매니저가 채운다.** 그래서 지금 값이 비어 있으면 «검수가 진행되지 않은 건»이고 거절의 원인이 아니다. `submission_analysis_projects`의 `categories`·`representative_field`·`plan_status` 등은 원인 분석에 쓰지 않는다.
+- **모집되면 매니저가 제목을 바꾼다.** 고객이 제출한 원본은 본진 `submit_temporaryproject`(`project_id`로 연결, 원래 `title`·상세 항목·`wishchat_*` 보존)에 있다.
+- **제출 방식 3가지**(원래 제목으로 구분): `[간편 상담 신청]` = 별도 간편 상담 폼, `[상담 신청]` = 등록 폼을 중간까지 쓰고 «여기까지 작성 후 제출», 접두어 없음 = 등록 폼 끝까지 작성. 2026-01~ 외주 기준 유효 제출 모집률 70.1% / 40.8% / 39.7%.
+- **등록 시 연락 가능 시간(`inspection_contact_datetime_string`)과 즉시 연락 희망(`is_inspection_contact_asap`)을 이미 받는다.** 연락 안됨 비율 입력 안 함 12.2% / 시간대 입력 8.7% / 즉시 희망 4.3%.
+- **검수 로그 `process_log_inspectionlog.status`에 진행 기록이 남는다**: `not_respone`(응답 없음), `need_call`, `has_due`, `reject`, `recruit`. 거절 후 살아난 28건 중 14건은 «응답 없음» 1~7번 끝에 거절됐다가 고객이 다시 나타난 건이었다.
+- 본진 `lead_score`/`lead_grade`는 쓰지 않는다(사용자: 신뢰할 수 없음).
+- `free_consulting_requestconsulting`(무료 상담)은 프로젝트와 연결 키가 없다. `anonymous_client_uuid`(비회원 제출, 26%)는 간편 상담 표시가 아니다.
+
+### 백로그: 제출 온도 측정 (사용자 구상 중, 미착수)
+
+- 목표: 제출 내용만 보고 모집될지 예측(높음·보통·낮음). 용도는 «더 도와야 할 건 찾기»이고 매니저 평가·우선순위 배제에 쓰지 않는다(낮은 온도를 덜 챙기면 예측이 스스로 맞아지는 문제).
+- 1단계(재료): n8n 일일 SQL에 **제출 시 고객 입력값만** 추가 — `submit_temporaryproject`의 제출 방식(원래 제목 접두어)·예산·예산 옵션·기획 상태·일정, 연락 가능 시간 입력 여부·즉시 희망, 설명 길이(원문 X). migration + 적재 API + 400일 창 1회 재적재(사용자).
+- 2단계(점수): 1~6월로 회귀식, 7~9월로 검증. 구간별 실제 모집률 표로 판단.
+- 3단계: 쓸지 결정 → 4단계: 띄울 곳(검수 중 제출 목록이 CaseLab에 없음) 결정.
+
 ## 제출→모집 전환률 상시 집계 — 가동 (2026-09-30)
 
 > 상태: **코드 배포 완료, n8n 첫 적재 완료(4,770건).** 남은 것은 아래 "남은 것"뿐이다.
@@ -73,7 +94,7 @@
 - **출처:** 본진 `process_log_inspectionlog.note`. 프로젝트별 `status='reject'` 로그 중 **id가 가장 큰(최신)** 행의 메모다. 사내 Tableau «부적합 사유 → 부적합 사유|유무효» 계산 필드도 같은 원천을 쓴다.
   - 예전 컬럼명 검색(`reason`·`reject` 등)에 안 걸린 이유: 컬럼 이름이 그냥 `note`다.
 - **판정:** 메모를 TRIM한 첫머리가 아래로 시작하면 무효(`reject_invalid = true`). 거절 로그가 없으면 NULL이고 유효로 센다.
-  - 어뷰징, 중복 등록/중복등록/프로젝트 중복등록, Test/테스트, 실수, 지원사업·지원 사업 선정 전, 발주처와 계약 전, 등록 불가 업무, 위시켓 이용 제한/불가, IT 업무가 아님, (타깃 서비스) 이용 약관 위배, 대학교 과제
+  - 어뷰징, 중복 등록/중복등록/프로젝트 중복등록, Test/테스트, 실수, 지원사업·지원 사업 선정 전, 발주처와 계약 전·발주처와 계약 체결 전(2026-10-01 추가), 등록 불가 업무, 위시켓 이용 제한/불가, IT 업무가 아님, (타깃 서비스) 이용 약관 위배, 대학교 과제
   - `등록 불가 프로젝트 (사행성)`은 원장대로 **유효**(사용자 결정 2026-09-30).
 - **개인정보:** 메모 원문에 이메일·실명·고객 메일이 섞여 있다. 본진 SQL 안에서 판정만 하고 **원문은 CaseLab으로 가져오지 않는다.**
 - **구성:** [migrations/025](./migrations/025_submission_analysis_reject_invalid.sql)(Neon 적용 완료) → [submission_conversion_daily.sql](./n8n/submission_conversion_daily.sql)의 `reject_invalid` → 적재 API → `getSubmissionConversionStats`의 무효 조건 `NOT (recruited_at IS NULL AND reject_invalid IS TRUE)`.

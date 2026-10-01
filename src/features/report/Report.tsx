@@ -14,7 +14,7 @@ import LowProposalList from "./LowProposalList";
 import styles from "./Report.module.css";
 
 /** 막대가 나타내는 %가 무슨 %인지 — 섹션마다 다르다. 안 쓰면 계약률과 구성비가 같은 칸에서 섞여 보인다 */
-type Metric = "계약률" | "구성비" | "언급률" | "저지원 비율" | "전환률";
+type Metric = "계약률" | "구성비" | "언급률" | "저지원 비율" | "전환률" | "거절률";
 
 /**
  * 막대 하나. 비율(%)을 그대로 폭으로 쓴다 — 최댓값 기준으로 정규화하면

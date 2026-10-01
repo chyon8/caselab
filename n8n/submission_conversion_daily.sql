@@ -29,6 +29,7 @@ SELECT
                  OR TRIM(il.note) LIKE '지원사업 선정 전%'
                  OR TRIM(il.note) LIKE '지원 사업 선정 전%'
                  OR TRIM(il.note) LIKE '발주처와 계약 전%'
+                 OR TRIM(il.note) LIKE '발주처와 계약 체결 전%'
                  OR TRIM(il.note) LIKE '등록 불가 업무%'
                  OR TRIM(il.note) LIKE '위시켓 이용 제한%'
                  OR TRIM(il.note) LIKE '위시켓 이용 불가%'

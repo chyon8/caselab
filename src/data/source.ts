@@ -8,6 +8,7 @@ import type {
   KanbanColumn,
   LowProposalPage,
   ManagerStat,
+  NonRecruitmentStats,
   Project,
   ProjectFull,
   ProjectPage,
@@ -92,6 +93,8 @@ export interface DataSource {
   getManagerStats(periodDays?: number | null): Promise<ManagerStat[]>;
   /** 제출→모집 전환 — 볼 권한이 있는 계정에서만 호출한다(REPORT_CONVERSION_EMAILS). periodDays는 제출일 기준 */
   getSubmissionConversionStats(periodDays?: number | null): Promise<SubmissionConversionStats>;
+  /** 제출 후 미모집 사유 — 권한은 제출 전환과 같다(REPORT_CONVERSION_EMAILS). periodDays는 제출일 기준 */
+  getNonRecruitmentStats(periodDays?: number | null): Promise<NonRecruitmentStats>;
   /** 마지막 동기화 시각(ISO) — 리포트가 "언제 기준 데이터인지" 밝히는 데 쓴다 */
   getLastSyncAt(): Promise<string | null>;
   getNotifications(): Promise<AppNotification[]>;
@@ -206,6 +209,14 @@ class MockDataSource implements DataSource {
     return {
       total: 0, recruited: 0, rejected: 0, pending: 0, excluded: 0, rate: 0, asOf: null,
       byMonth: [], byHistory: [], byAttachment: [], byBusinessForm: [], byAcquisition: [], byField: [], byManager: [],
+    };
+  }
+
+  async getNonRecruitmentStats(): Promise<NonRecruitmentStats> {
+    return {
+      submitted: 0, valid: 0, validRejected: 0, invalidRejected: 0, cancelled: 0, cancelledUnassigned: 0,
+      noContact: 0, asOf: null, validReasons: [], invalidReasons: [], cancelTypes: [], byMonth: [],
+      columns: [], segments: [],
     };
   }
 

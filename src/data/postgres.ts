@@ -7,6 +7,7 @@ import {
   SUBMISSION_CONVERSION_FROM,
 } from "@/features/report/period";
 import { getTargetDemandLedger } from "./target-demand-ledger";
+import { buildNonRecruitmentStats, type NonRecruitmentRow } from "./non-recruitment";
 import type { PoolQna } from "@/lib/review-tips";
 import {
   daysBetween,
@@ -32,6 +33,7 @@ import type {
   ManagerNote,
   ManagerStat,
   MeetingExtract,
+  NonRecruitmentStats,
   Posting,
   Project,
   ProjectFull,
@@ -398,6 +400,26 @@ const SOFT_SAMPLE = 100;
 
 /** 제출→모집 전환 구분값이 이보다 적으면 "표본 적음" (분석 스크립트의 MIN_N과 같다) */
 const CONVERSION_SOFT_SAMPLE = 20;
+
+/** 제출→모집 전환의 유효 제출 조건(무효 정의는 getSubmissionConversionStats 주석). 미모집 사유 화면도 같은 분모를 쓴다 */
+const CONVERSION_VALID = `inspection_manager IS NOT NULL
+                   AND NOT (recruited_at IS NULL AND is_cancelled IS TRUE AND is_rejected IS NOT TRUE)
+                   AND NOT (recruited_at IS NULL AND reject_invalid IS TRUE)`;
+const BUSINESS_FORM_LABEL = `CASE business_form WHEN 'corporate_business' THEN '법인사업자'
+                              WHEN 'individual_business' THEN '개인사업자'
+                              WHEN 'individual' THEN '개인'
+                              WHEN 'team' THEN '팀'
+                              ELSE '미상' END`;
+const ACQUISITION_LABEL = `CASE acquisition_path WHEN 'BY_NAVER' THEN '네이버'
+                                 WHEN 'BY_AI' THEN 'AI 검색'
+                                 WHEN 'BY_GOOGLE' THEN '구글'
+                                 WHEN 'BY_FRIEND' THEN '지인 추천'
+                                 WHEN 'BY_BLOG' THEN '블로그'
+                                 WHEN 'BY_WEBINAR' THEN '웨비나'
+                                 WHEN 'BY_META' THEN '메타'
+                                 WHEN 'BY_YOZMIT' THEN '요즘IT'
+                                 WHEN 'BY_ETC' THEN '기타'
+                                 ELSE '미응답' END`;
 
 /** 리스크 태그 랭킹에 실을 개수 */
 const RISK_TOP_N = 10;
@@ -1213,9 +1235,7 @@ export class PostgresDataSource implements DataSource {
     const window = days ? `AND submitted_at >= now() - interval '${days} days'` : "";
     const scope = `FROM submission_analysis_projects
                    WHERE submitted_at >= '${SUBMISSION_CONVERSION_FROM} 00:00+09'::timestamptz ${window}`;
-    const valid = `inspection_manager IS NOT NULL
-                   AND NOT (recruited_at IS NULL AND is_cancelled IS TRUE AND is_rejected IS NOT TRUE)
-                   AND NOT (recruited_at IS NULL AND reject_invalid IS TRUE)`;
+    const valid = CONVERSION_VALID;
     const base = `${scope} AND ${valid}`;
     const rate = `round(100.0 * count(*) FILTER (WHERE recruited_at IS NOT NULL) / count(*), 1)`;
     const group = (label: string, order: string, having = "", params: unknown[] = []) =>
@@ -1264,24 +1284,11 @@ export class PostgresDataSource implements DataSource {
           "2 DESC",
         ),
         group(
-          `CASE business_form WHEN 'corporate_business' THEN '법인사업자'
-                              WHEN 'individual_business' THEN '개인사업자'
-                              WHEN 'individual' THEN '개인'
-                              WHEN 'team' THEN '팀'
-                              ELSE '미상' END`,
+          BUSINESS_FORM_LABEL,
           "2 DESC",
         ),
         group(
-          `CASE acquisition_path WHEN 'BY_NAVER' THEN '네이버'
-                                 WHEN 'BY_AI' THEN 'AI 검색'
-                                 WHEN 'BY_GOOGLE' THEN '구글'
-                                 WHEN 'BY_FRIEND' THEN '지인 추천'
-                                 WHEN 'BY_BLOG' THEN '블로그'
-                                 WHEN 'BY_WEBINAR' THEN '웨비나'
-                                 WHEN 'BY_META' THEN '메타'
-                                 WHEN 'BY_YOZMIT' THEN '요즘IT'
-                                 WHEN 'BY_ETC' THEN '기타'
-                                 ELSE '미응답' END`,
+          ACQUISITION_LABEL,
           "2 DESC",
         ),
         // 66종이라 전부 실으면 표가 끝없이 길다 — 제출이 표본 기준 이상인 분야만
@@ -1318,6 +1325,45 @@ export class PostgresDataSource implements DataSource {
       byField: toBreakdown(byField, CONVERSION_SOFT_SAMPLE),
       byManager: toBreakdown(byManager, CONVERSION_SOFT_SAMPLE),
     };
+  }
+
+  /**
+   * 제출 후 미모집 사유(/report/non-recruitment). 모집단·기간·유효 정의는 getSubmissionConversionStats와 같다.
+   * 사유 분류는 조회 시점에 한다(reject-reason-categories.ts) — 행 단위로 받아 non-recruitment.ts에서 묶는다.
+   * 제출 수천 건 × 짧은 컬럼이라 한 번에 받아도 가볍다.
+   */
+  async getNonRecruitmentStats(periodDays?: number | null): Promise<NonRecruitmentStats> {
+    const days = Number.isInteger(periodDays) && (periodDays as number) > 0 ? periodDays : null;
+    const window = days ? `AND submitted_at >= now() - interval '${days} days'` : "";
+    const [rows, [meta]] = await Promise.all([
+      query<NonRecruitmentRow>(
+        `SELECT to_char(submitted_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM') AS month,
+                (${CONVERSION_VALID}) AS valid,
+                recruited_at IS NOT NULL AS recruited,
+                is_rejected IS TRUE AS rejected,
+                is_cancelled IS TRUE AS cancelled,
+                reject_invalid IS TRUE AS reject_invalid,
+                reject_reason,
+                raw_cancel_type,
+                COALESCE($1::jsonb ->> inspection_manager, inspection_manager) AS manager,
+                COALESCE(representative_field, '미상') AS field,
+                ${BUSINESS_FORM_LABEL} AS business_form,
+                ${ACQUISITION_LABEL} AS acquisition,
+                CASE WHEN prior_platform_recruitments IS NULL THEN '미상'
+                     WHEN prior_platform_recruitments = 0 THEN '모집 경험 없음'
+                     ELSE '모집 경험 있음' END AS history,
+                COALESCE(replace(categories, ',', '+'), '미입력') AS job_types,
+                CASE WHEN linked_file_count_at_submit > 0 THEN '첨부 있음' ELSE '첨부 없음' END AS attachment,
+                initial_budget
+           FROM submission_analysis_projects
+          WHERE submitted_at >= '${SUBMISSION_CONVERSION_FROM} 00:00+09'::timestamptz ${window}`,
+        [JSON.stringify(MANAGER_NAMES)],
+      ),
+      query<{ as_of: string | null }>(
+        "SELECT max(source_extracted_at) AS as_of FROM submission_analysis_projects",
+      ),
+    ]);
+    return buildNonRecruitmentStats(rows, meta?.as_of ?? null, CONVERSION_SOFT_SAMPLE);
   }
 
   async getLastSyncAt(): Promise<string | null> {

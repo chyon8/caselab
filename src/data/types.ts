@@ -572,6 +572,53 @@ export interface SubmissionConversionStats {
   byManager: Breakdown[];
 }
 
+/** 세그먼트 한 줄의 사유별 비율 — 비율의 분모는 그 세그먼트의 유효 제출 */
+export interface ReasonSegmentRow {
+  label: string;
+  /** 유효 제출 */
+  total: number;
+  /** 유효 거절 / 유효 제출 (%) */
+  rejectRate: number;
+  /** NonRecruitmentStats.columns 순서. 각 사유 건수 / 유효 제출 (%) */
+  shares: number[];
+  lowSample: boolean;
+}
+
+export interface ReasonSegment {
+  title: string;
+  note?: string;
+  rows: ReasonSegmentRow[];
+}
+
+/**
+ * 제출 후 미모집 사유 (submission_analysis_projects). 모집단·기간·무효 정의는 SubmissionConversionStats와 같다.
+ * 중심은 유효 거절이고, 무효 거절과 모집 전 직접 취소는 따로 묶어 보여 준다.
+ * Breakdown의 decided는 건수, rate는 묶음 안 구성비(%)다.
+ */
+export interface NonRecruitmentStats {
+  /** 기간 안 전체 제출 (무효 포함) — 직접 취소 비율의 분모 */
+  submitted: number;
+  /** 유효 제출 — 전환율 화면과 같은 분모 */
+  valid: number;
+  validRejected: number;
+  invalidRejected: number;
+  /** 모집 전 고객 직접 취소 */
+  cancelled: number;
+  /** 그중 검수 매니저 배정 전 */
+  cancelledUnassigned: number;
+  /** 유효 거절 중 «연락 안됨» */
+  noContact: number;
+  asOf: string | null;
+  validReasons: Breakdown[];
+  invalidReasons: Breakdown[];
+  cancelTypes: Breakdown[];
+  /** 제출월별 유효 거절률 (분모 = 그 달 유효 제출) */
+  byMonth: Breakdown[];
+  /** 세그먼트 표의 사유 열 — 유효 거절 상위 사유 */
+  columns: string[];
+  segments: ReasonSegment[];
+}
+
 export interface AppNotification {
   id: string;
   type: "status" | "qna";

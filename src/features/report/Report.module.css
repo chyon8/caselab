@@ -386,3 +386,17 @@
     padding: 18px;
   }
 }
+
+/* 한 페이지 보고서(public/reports) 링크 — 미모집 사유 화면 상단 */
+.report-link {
+  display: inline-block;
+  margin: 0 0 20px;
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.report-link:hover {
+  text-decoration: underline;
+}

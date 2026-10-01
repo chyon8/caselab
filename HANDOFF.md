@@ -1,6 +1,6 @@
 # CaseLab 세션 핸드오프 — 여기부터 읽으세요
 
-> 새 세션 시작 시 이 파일 먼저. 최종 업데이트: **2026-09-30**
+> 새 세션 시작 시 이 파일 먼저. 최종 업데이트: **2026-10-01**
 > 제품/도메인 기준 문서는 CLAUDE.md §5-1 표 참조(design.md·SCORING_SPEC.md·DATA_SCHEMA.md 등).
 > 상세 진단·결정·백로그는 [NEXT_STEPS.md](./NEXT_STEPS.md).
 > 이 파일은 로컬 메모리가 아니라 git으로 관리 — 집/회사 어느 머신에서 세션을 열어도 여기서 이어간다.
@@ -9,9 +9,13 @@
 
 ---
 
-## 제출 후 미모집 사유 분석 — 계획 확정, 착수 대기 (2026-10-01)
+## 제출 후 미모집 사유 분석 — 완료, 배포 (2026-10-01)
 
-- 다음 착수. 계획·결정·단계는 [analysis/non-recruitment-reasons/PLAN.md](./analysis/non-recruitment-reasons/PLAN.md)에 있다. 개발은 사용자가 지시하면 시작한다.
+- 화면 `/report/non-recruitment`(사이드바 "미모집 사유", **sangmin만**): 유효 거절 사유 분포·월별 거절률·세그먼트 × 사유 표·무효 거절·모집 전 직접 취소. 거절 메모 첫 줄(`reject_reason`)을 규칙 사전([reject-reason-categories.ts](./src/features/report/reject-reason-categories.ts))으로 조회 시점에 분류한다.
+- 한 페이지 보고서 [public/reports/non-recruitment-report.html](./public/reports/non-recruitment-report.html)(화면 상단 링크): 인사이트·신뢰구간·제출 방식·거절 이후 살아난 건(프로젝트 링크)·**개선 후보 A~G**(결정 전 목록 — 할지 말지는 후보를 모아 나중에 사용자가 정한다). 2026-10-01 기준 스냅샷이고 생성 스크립트는 남기지 않았다.
+- 계획·진행: [PLAN.md](./analysis/non-recruitment-reasons/PLAN.md), 후속 조사·본진 SQL 결과: [ACTIONS.md](./analysis/non-recruitment-reasons/ACTIONS.md). 도메인 사실은 [NEXT_STEPS.md 첫 섹션](./NEXT_STEPS.md).
+- **다음 후보(미착수, 사용자 결정 대기):** ① 제출 «온도 측정»(사용자 구상 중 — 제출 시 고객 입력값만으로 모집 가능성 예측 — 계획은 NEXT_STEPS) ② 화면에 세그먼트 95% 신뢰구간 ③ 세그먼트 표 열을 사유 묶음 5개로, 월별을 사유 묶음 추이로.
+- 원칙: 매니저 잘못으로 읽히는 표·문구는 넣지 않는다(검수 매니저 × 사유 표 제거, «거절률 상승» 문구 제거 — 사용자 결정).
 
 ## 제출→모집 전환률 상시 집계 — 가동 (2026-09-30)
 
