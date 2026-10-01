@@ -40,6 +40,10 @@ SELECT
      FROM process_log_inspectionlog il
     WHERE il.project_id = pp.id AND il.status = 'reject'
     ORDER BY il.id DESC LIMIT 1) AS reject_invalid,
+  (SELECT LEFT(TRIM(SUBSTRING_INDEX(REPLACE(TRIM(il.note), CHAR(13), ''), CHAR(10), 1)), 100)
+     FROM process_log_inspectionlog il
+    WHERE il.project_id = pp.id AND il.status = 'reject'
+    ORDER BY il.id DESC LIMIT 1) AS reject_reason,
 
   iv.id AS initial_snapshot_id,
   iv.description AS initial_description,
